@@ -1,0 +1,64 @@
+package com.example.progetto_sad.model;
+
+import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.observer.Subject;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+public class Playlist implements Subject {
+
+    private String name;
+    private final List<Track> tracks = new ArrayList<>();
+    private final List<Observer> observers = new ArrayList<>();
+
+    public Playlist(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void addTrack(Track t) {
+        if (t == null) {
+            throw new IllegalArgumentException("La traccia non puo' essere null");
+        }
+        tracks.add(t);
+        notifyObservers();
+    }
+
+    public void removeTrack(Track t) {
+        if (tracks.remove(t)) {
+            notifyObservers();
+        }
+    }
+
+    public List<Track> getTracks() {
+        return Collections.unmodifiableList(new ArrayList<>(tracks));
+    }
+
+    @Override
+    public void attach(Observer o) {
+        if (o != null && !observers.contains(o)) {
+            observers.add(o);
+        }
+    }
+
+    @Override
+    public void detach(Observer o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (Observer o : observers) {
+            o.update();
+        }
+    }
+}

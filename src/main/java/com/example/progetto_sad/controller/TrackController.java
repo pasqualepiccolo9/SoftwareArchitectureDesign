@@ -20,13 +20,25 @@ public class TrackController {
         library.addTrack(track);
     }
 
-    // US2 - modifica dati traccia (assegnata ad altro membro)
-    public void updateTrack(Track t, String title, String author, String genre, int year) {
-        // TODO US2: validare i nuovi dati e aggiornare la traccia esistente nella libreria.
-        throw new UnsupportedOperationException("US2 non ancora implementata");
+    // US2 - modifica dati traccia
+    public void updateTrack(Track t, String title, String author, String genre, int year, int duration) {
+        if (t == null) {
+            throw new IllegalArgumentException("Nessuna traccia selezionata");
+        }
+        if (!library.contains(t)) {
+            throw new IllegalArgumentException("Traccia non presente in libreria");
+        }
+        TrackFactory.validateMetadata(title, author, genre, year);
+        TrackFactory.validateDuration(duration);
+        t.setTitle(title.trim());
+        t.setAuthor(author.trim());
+        t.setGenre(genre.trim());
+        t.setYear(year);
+        t.setDuration(duration);
+        library.trackUpdated();
     }
 
-    // US4 - elenco tracce della libreria (assegnata ad altro membro per la vista)
+    // US4 - elenco tracce della libreria
     public List<Track> getTracks() {
         return library.getTracks();
     }

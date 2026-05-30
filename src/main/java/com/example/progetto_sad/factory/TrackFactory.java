@@ -12,12 +12,15 @@ public class TrackFactory {
     }
 
     public static Track createTrack(String title, String author, String genre, int year, String filePath) {
-        validate(title, author, genre, year, filePath);
+        validateMetadata(title, author, genre, year);
+        if (isBlank(filePath)) {
+            throw new IllegalArgumentException("Il file audio e' obbligatorio");
+        }
         int duration = extractDuration(filePath);
         return new Track(title.trim(), author.trim(), duration, genre.trim(), year);
     }
 
-    private static void validate(String title, String author, String genre, int year, String filePath) {
+    public static void validateMetadata(String title, String author, String genre, int year) {
         if (isBlank(title)) {
             throw new IllegalArgumentException("Il titolo e' obbligatorio");
         }
@@ -27,13 +30,16 @@ public class TrackFactory {
         if (isBlank(genre)) {
             throw new IllegalArgumentException("Il genere e' obbligatorio");
         }
-        if (isBlank(filePath)) {
-            throw new IllegalArgumentException("Il file audio e' obbligatorio");
-        }
         int currentYear = Year.now().getValue();
         if (year < MIN_YEAR || year > currentYear) {
             throw new IllegalArgumentException(
                     "L'anno deve essere compreso tra " + MIN_YEAR + " e " + currentYear);
+        }
+    }
+
+    public static void validateDuration(int duration) {
+        if (duration < 0) {
+            throw new IllegalArgumentException("La durata non puo' essere negativa");
         }
     }
 

@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Maven: compile",
+      "type": "shell",
+      "command": "${workspaceFolder}/mvnw.cmd",
+      "args": ["compile"],
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: test",
+      "type": "shell",
+      "command": "${workspaceFolder}/mvnw.cmd",
+      "args": ["test"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Maven: run JavaFX app",
+      "type": "shell",
+      "command": "${workspaceFolder}/mvnw.cmd",
+      "args": ["clean", "javafx:run"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

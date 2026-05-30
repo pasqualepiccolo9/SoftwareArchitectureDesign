@@ -67,4 +67,20 @@ class TrackFactoryTest {
         assertThrows(IllegalArgumentException.class,
                 () -> TrackFactory.createTrack("Imagine", "John", "Rock", 9999, VALID_PATH));
     }
+
+    @Test
+    void validateMetadataAcceptsValidData() {
+        TrackFactory.validateMetadata("Imagine", "John Lennon", "Rock", 1971);
+    }
+
+    @Test
+    void validateMetadataRejectsBlankTitle() {
+        assertThrows(IllegalArgumentException.class,
+                () -> TrackFactory.validateMetadata("  ", "John", "Rock", 1971));
+    }
+
+    @Test
+    void validateDurationRejectsNegativeValue() {
+        assertThrows(IllegalArgumentException.class, () -> TrackFactory.validateDuration(-5));
+    }
 }

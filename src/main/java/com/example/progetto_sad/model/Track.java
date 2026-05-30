@@ -4,7 +4,7 @@ public class Track {
 
     private String title;
     private String author;
-    private final int duration;
+    private int duration;
     private String genre;
     private int year;
 
@@ -34,6 +34,10 @@ public class Track {
 
     public int getDuration() {
         return duration;
+    }
+
+    public void setDuration(int duration) {
+        this.duration = duration;
     }
 
     public String getGenre() {

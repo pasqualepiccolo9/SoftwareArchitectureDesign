@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+<?import java.lang.String?>
+
+<!-- US1 - View per l'inserimento di una nuova traccia ("Aggiungi traccia"). -->
+<StackPane styleClass="backdrop"
+           stylesheets="@add-track-view.css"
+           xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml">
+
+    <VBox fx:id="dialogCard" styleClass="dialog-card" spacing="18"
+          maxWidth="560" maxHeight="-Infinity">
+        <padding>
+            <Insets top="24" right="28" bottom="24" left="28"/>
+        </padding>
+
+        <!-- Header: titolo + pulsante di chiusura -->
+        <HBox alignment="CENTER_LEFT">
+            <Label text="Aggiungi traccia" styleClass="dialog-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="closeButton" styleClass="close-button">
+                <graphic>
+                    <SVGPath styleClass="close-icon" content="M1 1 L13 13 M13 1 L1 13"/>
+                </graphic>
+            </Button>
+        </HBox>
+
+        <!-- File audio (obbligatorio) -->
+        <VBox spacing="6">
+            <HBox spacing="3">
+                <Label text="File audio" styleClass="field-label"/>
+                <Label text="*" styleClass="required-mark"/>
+            </HBox>
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <TextField fx:id="audioFileField" editable="false"
+                           promptText="Nessun file selezionato"
+                           styleClass="text-input" HBox.hgrow="ALWAYS"/>
+                <Button fx:id="browseButton" text="Sfoglia" styleClass="secondary-button">
+                    <graphic>
+                        <SVGPath styleClass="button-icon"
+                                 content="M7 1 L7 9 M3.5 4.5 L7 1 L10.5 4.5 M1 11 L13 11"/>
+                    </graphic>
+                </Button>
+            </HBox>
+            <Label text="La durata viene letta automaticamente dal file" styleClass="field-hint"/>
+        </VBox>
+
+        <!-- Titolo (obbligatorio) -->
+        <VBox spacing="6">
+            <HBox spacing="3">
+                <Label text="Titolo" styleClass="field-label"/>
+                <Label text="*" styleClass="required-mark"/>
+            </HBox>
+            <TextField fx:id="titleField" promptText="Inserisci il titolo" styleClass="text-input"/>
+        </VBox>
+
+        <!-- Autore (obbligatorio) -->
+        <VBox spacing="6">
+            <HBox spacing="3">
+                <Label text="Autore" styleClass="field-label"/>
+                <Label text="*" styleClass="required-mark"/>
+            </HBox>
+            <TextField fx:id="authorField" promptText="Inserisci l'autore" styleClass="text-input"/>
+        </VBox>
+
+        <!-- Genere + Anno -->
+        <HBox spacing="16">
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                <Label text="Genere" styleClass="field-label"/>
+                <ComboBox fx:id="genreCombo" promptText="Seleziona genere"
+                          styleClass="combo-input" maxWidth="Infinity">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <String fx:value="Pop"/>
+                            <String fx:value="Rock"/>
+                            <String fx:value="Hip-Hop"/>
+                            <String fx:value="Jazz"/>
+                            <String fx:value="Classica"/>
+                            <String fx:value="Elettronica"/>
+                            <String fx:value="R&amp;B"/>
+                            <String fx:value="Metal"/>
+                            <String fx:value="Indie"/>
+                            <String fx:value="Colonna sonora"/>
+                            <String fx:value="Altro"/>
+                        </FXCollections>
+                    </items>
+                </ComboBox>
+            </VBox>
+            <VBox spacing="6" HBox.hgrow="ALWAYS">
+                <Label text="Anno" styleClass="field-label"/>
+                <TextField fx:id="yearField" promptText="2024" styleClass="text-input"/>
+            </VBox>
+        </HBox>
+
+        <Separator styleClass="divider"/>
+
+        <!-- Footer: Annulla / Salva -->
+        <HBox spacing="12" alignment="CENTER_RIGHT">
+            <Button fx:id="cancelButton" text="Annulla" styleClass="ghost-button"/>
+            <Button fx:id="saveButton" text="Salva traccia" styleClass="primary-button"/>
+        </HBox>
+    </VBox>
+</StackPane>

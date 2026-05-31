@@ -18,7 +18,8 @@
 <StackPane styleClass="backdrop"
            stylesheets="@add-track-view.css"
            xmlns="http://javafx.com/javafx"
-           xmlns:fx="http://javafx.com/fxml">
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.example.progetto_sad.controller.AddTrackController">
 
     <VBox fx:id="dialogCard" styleClass="dialog-card" spacing="18"
           maxWidth="560" maxHeight="-Infinity">
@@ -30,7 +31,7 @@
         <HBox alignment="CENTER_LEFT">
             <Label text="Aggiungi traccia" styleClass="dialog-title"/>
             <Region HBox.hgrow="ALWAYS"/>
-            <Button fx:id="closeButton" styleClass="close-button">
+            <Button fx:id="closeButton" styleClass="close-button" onAction="#onClose">
                 <graphic>
                     <SVGPath styleClass="close-icon" content="M1 1 L13 13 M13 1 L1 13"/>
                 </graphic>
@@ -47,7 +48,7 @@
                 <TextField fx:id="audioFileField" editable="false"
                            promptText="Nessun file selezionato"
                            styleClass="text-input" HBox.hgrow="ALWAYS"/>
-                <Button fx:id="browseButton" text="Sfoglia" styleClass="secondary-button">
+                <Button fx:id="browseButton" text="Sfoglia" styleClass="secondary-button" onAction="#onBrowse">
                     <graphic>
                         <SVGPath styleClass="button-icon"
                                  content="M7 1 L7 9 M3.5 4.5 L7 1 L10.5 4.5 M1 11 L13 11"/>
@@ -108,8 +109,8 @@
 
         <!-- Footer: Annulla / Salva -->
         <HBox spacing="12" alignment="CENTER_RIGHT">
-            <Button fx:id="cancelButton" text="Annulla" styleClass="ghost-button"/>
-            <Button fx:id="saveButton" text="Salva traccia" styleClass="primary-button"/>
+            <Button fx:id="cancelButton" text="Annulla" styleClass="ghost-button" onAction="#onCancel"/>
+            <Button fx:id="saveButton" text="Salva traccia" styleClass="primary-button" onAction="#onSave"/>
         </HBox>
     </VBox>
 </StackPane>

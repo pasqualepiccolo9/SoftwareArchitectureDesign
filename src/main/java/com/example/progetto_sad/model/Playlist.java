@@ -30,6 +30,17 @@ public List<Track> getTracks() {
         return new ArrayList<>(tracks); // Ritorna una copia per sicurezza
     }
 
+public void addTrack(Track t) {
+        if (t == null) {
+            throw new IllegalArgumentException("Selezione non valida: nessuna traccia selezionata.");
+        }
+        if (tracks.contains(t)) {
+            throw new IllegalArgumentException("La traccia è già presente in questa playlist.");
+        }
+        tracks.add(t);
+        notifyObservers();
+    }
+
 // Metodi base del Subject per l'Observer Pattern
     @Override
     public void attach(Observer o) {

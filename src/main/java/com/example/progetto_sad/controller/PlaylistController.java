@@ -23,11 +23,11 @@ public class PlaylistController {
             System.err.println("Errore UI: " + e.getMessage());
         }
     }
-   
-    // US6 - aggiunta traccia a playlist
+
     public void addTrackToPlaylist(Track t, Playlist p) {
-        // TODO US6: gestire duplicati/selezioni non valide, poi p.addTrack(t).
-        throw new UnsupportedOperationException("US6 non ancora implementata");
+        if (p != null) {
+            p.addTrack(t); 
+        }
     }
 
     // US7 - rimozione traccia da playlist

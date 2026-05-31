@@ -18,5 +18,51 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class PlaylistManagerTest {
     
+    private PlaylistManager manager;
+    
+@BeforeEach
+    void setUp() {
+        
+        manager = new PlaylistManager();
+    }
 
+    @Test
+    void testCreazionePlaylistValida() {
+        Playlist p = manager.createPlaylist("Rock Classics");
+        
+        // Verifica che la playlist sia stata creata
+        assertNotNull(p);
+        assertEquals("Rock Classics", p.getName());
+        
+        // Verifica che il manager l'abbia effettivamente salvata nella sua lista
+        assertEquals(1, manager.getPlaylists().size());
+        assertEquals("Rock Classics", manager.getPlaylists().get(0).getName());
+    }
+
+    @Test
+    void testCreazionePlaylistNomeVuoto() {
+        // Verifica che il manager (tramite la classe Playlist) blocchi i nomi vuoti
+        assertThrows(IllegalArgumentException.class, () -> {
+            manager.createPlaylist("");
+        });
+        
+        // Verifica che la lista sia rimasta a 0
+        assertEquals(0, manager.getPlaylists().size());
+    }
+
+    @Test
+    void testRimozionePlaylist() {
+        Playlist p1 = manager.createPlaylist("Pop");
+        Playlist p2 = manager.createPlaylist("Jazz");
+        
+        // Verifico che ci siano 2 playlist
+        assertEquals(2, manager.getPlaylists().size());
+        
+        // Rimuovo la prima
+        manager.removePlaylist(p1);
+        
+        // Verifico che ne sia rimasta solo 1 e che sia quella giusta
+        assertEquals(1, manager.getPlaylists().size());
+        assertEquals("Jazz", manager.getPlaylists().get(0).getName());
+    }
 }

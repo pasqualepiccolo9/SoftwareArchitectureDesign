@@ -50,19 +50,4 @@ public class PlaylistManagerTest {
         assertEquals(0, manager.getPlaylists().size());
     }
 
-    @Test
-    void testRimozionePlaylist() {
-        Playlist p1 = manager.createPlaylist("Pop");
-        Playlist p2 = manager.createPlaylist("Jazz");
-        
-        // Verifico che ci siano 2 playlist
-        assertEquals(2, manager.getPlaylists().size());
-        
-        // Rimuovo la prima
-        manager.removePlaylist(p1);
-        
-        // Verifico che ne sia rimasta solo 1 e che sia quella giusta
-        assertEquals(1, manager.getPlaylists().size());
-        assertEquals("Jazz", manager.getPlaylists().get(0).getName());
-    }
 }

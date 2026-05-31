@@ -42,4 +42,28 @@ public class PlaylistControllerTest {
         // T6.3: Verifica blocco selezione non valida
         assertThrows(IllegalArgumentException.class, () -> p.addTrack(null));
     }
+    
+    @Test
+    void testRimozioneTracciaValida() {
+        Playlist p = new Playlist("Jazz");
+        Track t = new Track("Title", "Author", 240,"Jazz", 2026);
+        p.addTrack(t);
+        p.removeTrack(t);
+        assertTrue(p.getTracks().isEmpty());
+    }
+
+    @Test
+    void testRimozionePlaylistVuotaOAssente() {
+        Playlist p = new Playlist("Jazz");
+        Track t = new Track("Title", "Author",240, "Jazz", 2026);
+        
+        // T7.3: Errore playlist vuota
+        assertThrows(IllegalStateException.class, () -> p.removeTrack(t));
+        
+        p.addTrack(t);
+        Track t2 = new Track("Other", "Author",200, "Jazz", 2026);
+        
+        // T7.3: Errore traccia assente
+        assertThrows(IllegalArgumentException.class, () -> p.removeTrack(t2));
+    }
 }

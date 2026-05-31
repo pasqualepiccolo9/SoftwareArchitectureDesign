@@ -24,6 +24,7 @@ public class PlaylistController {
         }
     }
 
+   // US6 - aggiunta traccia a playlist
     public void addTrackToPlaylist(Track t, Playlist p) {
         if (p != null) {
             p.addTrack(t); 
@@ -32,8 +33,9 @@ public class PlaylistController {
 
     // US7 - rimozione traccia da playlist
     public void removeTrackFromPlaylist(Track t, Playlist p) {
-        // TODO US7: rimuovere la traccia dalla playlist senza eliminarla dalla libreria.
-        throw new UnsupportedOperationException("US7 non ancora implementata");
+        if (p != null) {
+            p.removeTrack(t);
+        }
     }
 
     // US8 - visualizzazione contenuto playlist

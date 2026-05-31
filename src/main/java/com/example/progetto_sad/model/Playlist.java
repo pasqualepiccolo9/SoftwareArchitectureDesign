@@ -41,6 +41,17 @@ public void addTrack(Track t) {
         notifyObservers();
     }
 
+public void removeTrack(Track t) {
+        if (tracks.isEmpty()) {
+            throw new IllegalStateException("Impossibile rimuovere: la playlist è vuota.");
+        }
+        if (t == null || !tracks.contains(t)) {
+            throw new IllegalArgumentException("La traccia selezionata non è presente nella playlist.");
+        }
+        tracks.remove(t);
+        notifyObservers();
+    }
+
 // Metodi base del Subject per l'Observer Pattern
     @Override
     public void attach(Observer o) {

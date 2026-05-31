@@ -50,4 +50,32 @@ public class PlaylistManagerTest {
         assertEquals(0, manager.getPlaylists().size());
     }
 
+    @Test
+    void testRimozionePlaylistValida() {
+        Playlist p1 = manager.createPlaylist("Rock");
+        Playlist p2 = manager.createPlaylist("Jazz");
+        
+        assertEquals(2, manager.getPlaylists().size());
+        
+        // Rimuovo la playlist Rock
+        manager.removePlaylist(p1);
+        
+        assertEquals(1, manager.getPlaylists().size());
+        assertEquals("Jazz", manager.getPlaylists().get(0).getName());
+    }
+
+    @Test
+    void testRimozionePlaylistInesistente() {
+        // Creo una playlist fittizia ma NON la registro nel manager
+        Playlist p = new Playlist("Pop");
+        
+        // Verifico che il manager blocchi il tentativo di rimuovere qualcosa che non gestisce
+        assertThrows(IllegalArgumentException.class, () -> {
+            manager.removePlaylist(p);
+        });
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            manager.removePlaylist(null);
+        });
+    }
 }

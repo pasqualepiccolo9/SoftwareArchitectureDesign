@@ -23,6 +23,12 @@ public class PlaylistController {
             System.err.println("Errore UI: " + e.getMessage());
         }
     }
+   
+   public void removePlaylist(Playlist p) {
+        if (p != null) {
+            manager.removePlaylist(p);
+        }
+    }
 
    // US6 - aggiunta traccia a playlist
     public void addTrackToPlaylist(Track t, Playlist p) {

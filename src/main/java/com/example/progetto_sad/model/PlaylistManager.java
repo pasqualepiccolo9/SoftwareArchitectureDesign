@@ -17,6 +17,13 @@ public class PlaylistManager {
         playlists.add(playlist);
         return playlist;
     }
+    
+public void removePlaylist(Playlist p) {
+        if (p == null || !playlists.contains(p)) {
+            throw new IllegalArgumentException("Impossibile rimuovere: la playlist specificata non esiste.");
+        }
+        playlists.remove(p);
+    }
 
     public List<Playlist> getPlaylists() {
         return new ArrayList<>(playlists);

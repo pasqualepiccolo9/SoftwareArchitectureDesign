@@ -15,11 +15,15 @@ public class PlaylistController {
     }
 
     // US5 - creazione playlist
-    public void createPlaylist(String name) {
-        // TODO US5: validare il nome e creare la playlist tramite manager.createPlaylist(name).
-        throw new UnsupportedOperationException("US5 non ancora implementata");
+   public void createPlaylist(String name) {
+        try {
+            manager.createPlaylist(name);
+            System.out.println("Playlist '" + name + "' creata con successo.");
+        } catch (IllegalArgumentException e) {
+            System.err.println("Errore UI: " + e.getMessage());
+        }
     }
-
+   
     // US6 - aggiunta traccia a playlist
     public void addTrackToPlaylist(Track t, Playlist p) {
         // TODO US6: gestire duplicati/selezioni non valide, poi p.addTrack(t).

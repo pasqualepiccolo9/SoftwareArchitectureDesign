@@ -3,6 +3,8 @@ package com.example.progetto_sad.factory;
 import com.example.progetto_sad.model.Track;
 import org.junit.jupiter.api.Test;
 
+import java.time.Year;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -66,5 +68,35 @@ class TrackFactoryTest {
     void yearInTheFutureIsRejected() {
         assertThrows(IllegalArgumentException.class,
                 () -> TrackFactory.createTrack("Imagine", "John", "Rock", 9999, VALID_PATH));
+    }
+
+    // US1 - boundary: limite inferiore valido (MIN_YEAR = 1877) accettato
+    @Test
+    void minYearBoundaryIsAccepted() {
+        Track t = TrackFactory.createTrack("Brano", "Autore", "Rock", 1877, VALID_PATH);
+        assertEquals(1877, t.getYear());
+    }
+
+    // US1 - boundary: un anno appena sotto il minimo viene rifiutato
+    @Test
+    void yearJustBelowMinIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> TrackFactory.createTrack("Brano", "Autore", "Rock", 1876, VALID_PATH));
+    }
+
+    // US1 - boundary: limite superiore valido (anno corrente) accettato
+    @Test
+    void currentYearBoundaryIsAccepted() {
+        int currentYear = Year.now().getValue();
+        Track t = TrackFactory.createTrack("Brano", "Autore", "Rock", currentYear, VALID_PATH);
+        assertEquals(currentYear, t.getYear());
+    }
+
+    // US1 - boundary: un anno appena sopra l'anno corrente viene rifiutato
+    @Test
+    void yearJustAboveCurrentIsRejected() {
+        assertThrows(IllegalArgumentException.class,
+                () -> TrackFactory.createTrack("Brano", "Autore", "Rock",
+                        Year.now().getValue() + 1, VALID_PATH));
     }
 }

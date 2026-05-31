@@ -11,6 +11,21 @@ public class TrackFactory {
     private TrackFactory() {
     }
 
+    /**
+     * Crea una nuova traccia validando i dati inseriti dall'utente.
+     *
+     * Titolo, autore, genere e file audio devono essere non vuoti; l'anno deve
+     * essere compreso tra {@value #MIN_YEAR} e l'anno corrente. La durata viene
+     * estratta dal file audio e i campi testuali vengono ripuliti dagli spazi.
+     *
+     * @param title    titolo della traccia (obbligatorio)
+     * @param author   autore/artista (obbligatorio)
+     * @param genre    genere musicale (obbligatorio)
+     * @param year     anno di pubblicazione (tra {@value #MIN_YEAR} e l'anno corrente)
+     * @param filePath percorso del file audio (obbligatorio)
+     * @return la nuova traccia validata
+     * @throws IllegalArgumentException se un campo obbligatorio e' vuoto o l'anno e' fuori intervallo
+     */
     public static Track createTrack(String title, String author, String genre, int year, String filePath) {
         validate(title, author, genre, year, filePath);
         int duration = extractDuration(filePath);

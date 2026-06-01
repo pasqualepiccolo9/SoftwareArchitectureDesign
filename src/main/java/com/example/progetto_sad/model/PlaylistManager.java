@@ -6,20 +6,26 @@ import java.util.List;
 
 public class PlaylistManager {
 
-    private final List<Playlist> playlists = new ArrayList<>();
+    private final List<Playlist> playlists;
+    
+    public PlaylistManager() {
+        this.playlists = new ArrayList<>();
+    }
 
     public Playlist createPlaylist(String name) {
-        // TODO US5: validare il nome (non nullo/non vuoto) prima di creare la playlist.
         Playlist playlist = new Playlist(name);
         playlists.add(playlist);
         return playlist;
     }
-
-    public void removePlaylist(Playlist p) {
+    
+public void removePlaylist(Playlist p) {
+        if (p == null || !playlists.contains(p)) {
+            throw new IllegalArgumentException("Impossibile rimuovere: la playlist specificata non esiste.");
+        }
         playlists.remove(p);
     }
 
     public List<Playlist> getPlaylists() {
-        return Collections.unmodifiableList(new ArrayList<>(playlists));
+        return new ArrayList<>(playlists);
     }
 }

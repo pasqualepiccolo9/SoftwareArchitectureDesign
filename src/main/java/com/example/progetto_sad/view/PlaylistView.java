@@ -14,6 +14,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.stage.Window;
 
 import java.util.List;
 
@@ -23,16 +24,25 @@ public class PlaylistView implements Observer {
     @FXML private Label summaryLabel;
     @FXML private VBox trackListVBox;
     @FXML private Label emptyLabel;
+    @FXML private Button addTrackBtn;
 
     private Playlist playlist;
     private PlaylistController controller;
     private HBox selectedRow;
+    private List<Track> availableTracks = List.of();
+
+    public void setAvailableTracks(List<Track> tracks) {
+        this.availableTracks = tracks != null ? tracks : List.of();
+    }
 
     public void init(Playlist playlist, PlaylistController controller) {
         this.playlist = playlist;
         this.controller = controller;
         if (playlist != null) {
             playlist.attach(this);
+        }
+        if (addTrackBtn != null) {
+            addTrackBtn.setOnAction(e -> openAddTrackDialog());
         }
         refresh();
     }
@@ -48,6 +58,11 @@ public class PlaylistView implements Observer {
 
     private void refresh() {
         if (controller == null || playlistNameLabel == null) return;
+
+        if (addTrackBtn != null) {
+            boolean canAdd = playlist != null && !availableTracks.isEmpty();
+            addTrackBtn.setDisable(!canAdd);
+        }
 
         if (playlist == null) {
             playlistNameLabel.setText("—");
@@ -126,6 +141,17 @@ public class PlaylistView implements Observer {
         emptyLabel.setManaged(empty);
         trackListVBox.setVisible(!empty);
         trackListVBox.setManaged(!empty);
+    }
+
+    private void openAddTrackDialog() {
+        if (playlist == null || controller == null || availableTracks.isEmpty()
+                || addTrackBtn == null || addTrackBtn.getScene() == null) {
+            return;
+        }
+        Window owner = addTrackBtn.getScene().getWindow();
+        AddTrackDialogView dialog = new AddTrackDialogView();
+        dialog.init(availableTracks, playlist, controller, owner);
+        dialog.show();
     }
 
     private String formatDuration(int totalSeconds) {

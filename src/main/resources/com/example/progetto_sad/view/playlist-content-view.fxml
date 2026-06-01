@@ -26,7 +26,7 @@
                 </HBox>
                 <Label fx:id="summaryLabel" text="" styleClass="summary-label"/>
             </VBox>
-            <Button text="+ Aggiungi traccia" styleClass="add-track-btn" disable="true"/>
+            <Button fx:id="addTrackBtn" text="+ Aggiungi traccia" styleClass="add-track-btn"/>
         </HBox>
 
         <Separator styleClass="divider"/>

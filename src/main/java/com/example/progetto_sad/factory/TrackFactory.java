@@ -11,10 +11,28 @@ public class TrackFactory {
     private TrackFactory() {
     }
 
-    public static Track createTrack(String title, String author, String genre, int year, String filePath) {
+    /**
+     * Crea una nuova traccia validando i dati inseriti dall'utente.
+     *
+     * Titolo, autore, genere e file audio devono essere non vuoti; l'anno deve
+     * essere compreso tra {@value #MIN_YEAR} e l'anno corrente. La durata e' gia'
+     * stata estratta automaticamente dal file al caricamento (vedi
+     * AudioDurationExtractor) e qui viene solo inserita nella traccia; i campi
+     * testuali vengono ripuliti dagli spazi.
+     *
+     * @param title           titolo della traccia (obbligatorio)
+     * @param author          autore/artista (obbligatorio)
+     * @param genre           genere musicale (obbligatorio)
+     * @param year            anno di pubblicazione (tra {@value #MIN_YEAR} e l'anno corrente)
+     * @param filePath        percorso del file audio (obbligatorio)
+     * @param durationSeconds durata in secondi gia' estratta dal file audio
+     * @return la nuova traccia validata
+     * @throws IllegalArgumentException se un campo obbligatorio e' vuoto o l'anno e' fuori intervallo
+     */
+    public static Track createTrack(String title, String author, String genre, int year,
+                                    String filePath, int durationSeconds) {
         validate(title, author, genre, year, filePath);
-        int duration = extractDuration(filePath);
-        return new Track(title.trim(), author.trim(), duration, genre.trim(), year);
+        return new Track(title.trim(), author.trim(), durationSeconds, genre.trim(), year);
     }
 
     private static void validate(String title, String author, String genre, int year, String filePath) {
@@ -39,13 +57,5 @@ public class TrackFactory {
 
     private static boolean isBlank(String s) {
         return s == null || s.isBlank();
-    }
-
-    private static int extractDuration(String filePath) {
-        // TODO US1: estrarre la durata reale (in secondi) dal file audio.
-        // Richiede una libreria audio (es. javafx-media via javafx.scene.media.Media,
-        // oppure jaudiotagger) da concordare col team. La Sprint 1 non riproduce audio,
-        // quindi per ora si restituisce 0 come placeholder.
-        return 0;
     }
 }

@@ -26,6 +26,13 @@
             <version>21</version>
         </dependency>
 
+        <!-- US1 - estrazione automatica della durata dal file audio -->
+        <dependency>
+            <groupId>net.jthink</groupId>
+            <artifactId>jaudiotagger</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>

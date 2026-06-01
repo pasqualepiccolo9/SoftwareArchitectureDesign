@@ -10,44 +10,52 @@ import java.util.List;
 public class Playlist implements Subject {
 
     private String name;
-    private final List<Track> tracks = new ArrayList<>();
-    private final List<Observer> observers = new ArrayList<>();
+    private final List<Track> tracks;
+    private final List<Observer> observers;
 
     public Playlist(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("Il nome della playlist non può essere vuoto");
+        }
         this.name = name;
+        this.tracks = new ArrayList<>();
+        this.observers = new ArrayList<>();
     }
 
     public String getName() {
         return name;
     }
-
-    public void setName(String name) {
-        this.name = name;
+    
+public List<Track> getTracks() {
+        return new ArrayList<>(tracks); // Ritorna una copia per sicurezza
     }
 
-    public void addTrack(Track t) {
+public void addTrack(Track t) {
         if (t == null) {
-            throw new IllegalArgumentException("La traccia non puo' essere null");
+            throw new IllegalArgumentException("Selezione non valida: nessuna traccia selezionata.");
+        }
+        if (tracks.contains(t)) {
+            throw new IllegalArgumentException("La traccia è già presente in questa playlist.");
         }
         tracks.add(t);
         notifyObservers();
     }
 
-    public void removeTrack(Track t) {
-        if (tracks.remove(t)) {
-            notifyObservers();
+public void removeTrack(Track t) {
+        if (tracks.isEmpty()) {
+            throw new IllegalStateException("Impossibile rimuovere: la playlist è vuota.");
         }
+        if (t == null || !tracks.contains(t)) {
+            throw new IllegalArgumentException("La traccia selezionata non è presente nella playlist.");
+        }
+        tracks.remove(t);
+        notifyObservers();
     }
 
-    public List<Track> getTracks() {
-        return Collections.unmodifiableList(new ArrayList<>(tracks));
-    }
-
+// Metodi base del Subject per l'Observer Pattern
     @Override
     public void attach(Observer o) {
-        if (o != null && !observers.contains(o)) {
-            observers.add(o);
-        }
+        if (!observers.contains(o)) observers.add(o);
     }
 
     @Override
@@ -61,4 +69,5 @@ public class Playlist implements Subject {
             o.update();
         }
     }
+
 }

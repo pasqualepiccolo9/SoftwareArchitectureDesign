@@ -1,0 +1,164 @@
+/* US1 - Stile della view "Aggiungi traccia" (tema scuro, coerente col mockup). */
+
+.backdrop {
+    -fx-background-color: #141417;
+}
+
+/* Card centrale del dialog */
+.dialog-card {
+    -fx-background-color: #2a2b2f;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 40, 0.2, 0, 16);
+}
+
+.dialog-title {
+    -fx-text-fill: #f5f5f7;
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+}
+
+/* Etichette dei campi */
+.field-label {
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 13px;
+}
+
+.required-mark {
+    -fx-text-fill: #f06a6a;
+    -fx-font-size: 13px;
+}
+
+.field-hint {
+    -fx-text-fill: #87878d;
+    -fx-font-size: 12px;
+}
+
+/* Campi di testo e combo */
+.text-input,
+.combo-input {
+    -fx-background-color: #1d1e22;
+    -fx-background-radius: 8;
+    -fx-border-color: #3a3b41;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-text-fill: #f2f2f4;
+    -fx-prompt-text-fill: #6c6d73;
+    -fx-font-size: 14px;
+    -fx-padding: 10 12 10 12;
+}
+
+.text-input:focused,
+.combo-input:focused {
+    -fx-border-color: #6f7cff;
+}
+
+/* ComboBox: testo selezionato + freccia */
+.combo-input .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: #f2f2f4;
+    -fx-padding: 0;
+}
+
+.combo-input .arrow {
+    -fx-background-color: #b8b8bd;
+}
+
+/* ComboBox: popup a tendina */
+.combo-input .combo-box-popup .list-view {
+    -fx-background-color: #1d1e22;
+    -fx-border-color: #3a3b41;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.combo-input .combo-box-popup .list-cell {
+    -fx-padding: 8 12 8 12;
+    -fx-text-fill: #f2f2f4;
+}
+
+.combo-input .combo-box-popup .list-cell:hover,
+.combo-input .combo-box-popup .list-cell:filled:selected {
+    -fx-background-color: #34353b;
+}
+
+/* Pulsante secondario (Sfoglia) */
+.secondary-button {
+    -fx-background-color: #34353b;
+    -fx-background-radius: 8;
+    -fx-text-fill: #f2f2f4;
+    -fx-font-size: 14px;
+    -fx-padding: 10 16 10 16;
+    -fx-cursor: hand;
+}
+
+.secondary-button:hover {
+    -fx-background-color: #3e3f46;
+}
+
+/* Pulsante "ghost" (Annulla) */
+.ghost-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #45464d;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #e8e8ea;
+    -fx-font-size: 14px;
+    -fx-padding: 10 18 10 18;
+    -fx-cursor: hand;
+}
+
+.ghost-button:hover {
+    -fx-background-color: #2f3035;
+}
+
+/* Pulsante primario (Salva traccia) */
+.primary-button {
+    -fx-background-color: #f4f4ee;
+    -fx-background-radius: 8;
+    -fx-text-fill: #18181b;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 10 20;
+    -fx-cursor: hand;
+}
+
+.primary-button:hover {
+    -fx-background-color: #ffffff;
+}
+
+/* Pulsante di chiusura (X) */
+.close-button {
+    -fx-background-color: transparent;
+    -fx-padding: 5;
+    -fx-cursor: hand;
+}
+
+.close-button:hover {
+    -fx-background-color: #34353b;
+    -fx-background-radius: 6;
+}
+
+.close-icon {
+    -fx-fill: transparent;
+    -fx-stroke: #b8b8bd;
+    -fx-stroke-width: 1.6;
+    -fx-stroke-line-cap: round;
+}
+
+.button-icon {
+    -fx-fill: transparent;
+    -fx-stroke: #f2f2f4;
+    -fx-stroke-width: 1.4;
+    -fx-stroke-line-cap: round;
+    -fx-stroke-line-join: round;
+}
+
+/* Separatore */
+.divider {
+    -fx-padding: 4 0 4 0;
+}
+
+.divider .line {
+    -fx-border-color: #3a3b41;
+    -fx-border-width: 1 0 0 0;
+}

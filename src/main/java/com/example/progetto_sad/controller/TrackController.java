@@ -14,9 +14,21 @@ public class TrackController {
         this.library = library;
     }
 
-    // US1 - creazione e caricamento traccia
-    public void createTrack(String title, String author, String genre, int year, String filePath) {
-        Track track = TrackFactory.createTrack(title, author, genre, year, filePath);
+    /**
+     * US1 - Crea una nuova traccia dai dati del form (con la durata gia' estratta
+     * dal file) e la aggiunge alla libreria.
+     *
+     * @param title           titolo
+     * @param author          autore
+     * @param genre           genere
+     * @param year            anno di pubblicazione
+     * @param filePath        percorso del file audio
+     * @param durationSeconds durata in secondi gia' estratta dal file
+     * @throws IllegalArgumentException se i dati non sono validi
+     */
+    public void createTrack(String title, String author, String genre, int year,
+                            String filePath, int durationSeconds) {
+        Track track = TrackFactory.createTrack(title, author, genre, year, filePath, durationSeconds);
         library.addTrack(track);
     }
 
@@ -39,14 +51,23 @@ public class TrackController {
     }
 
     // US4 - elenco tracce della libreria
+    /**
+     * US4 - Restituisce l'elenco (in sola lettura) delle tracce in libreria.
+     *
+     * @return copia non modificabile delle tracce presenti
+     */
     public List<Track> getTracks() {
         return library.getTracks();
     }
 
-    // US3 - eliminazione traccia
+    /**
+     * US3 - Elimina una traccia dalla libreria.
+     *
+     * @param t la traccia da eliminare
+     * @throws IllegalArgumentException se nessuna traccia e' selezionata (null)
+     */
     public void deleteTrack(Track t) {
         if (t == null) {
-            // US3 - gestione del caso "nessuna traccia selezionata"
             throw new IllegalArgumentException("Nessuna traccia selezionata");
         }
         library.removeTrack(t);

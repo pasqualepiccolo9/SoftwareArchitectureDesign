@@ -33,6 +33,18 @@ class TrackControllerTest {
         assertEquals("Imagine", controller.getTracks().get(0).getTitle());
     }
 
+    // US1 - la creazione memorizza TUTTI i campi della traccia, non solo il titolo
+    @Test
+    void createTrackStoresAllFields() {
+        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH);
+
+        Track stored = controller.getTracks().get(0);
+        assertEquals("Imagine", stored.getTitle());
+        assertEquals("John Lennon", stored.getAuthor());
+        assertEquals("Rock", stored.getGenre());
+        assertEquals(1971, stored.getYear());
+    }
+
     // US1 - input non valido: la traccia non deve essere aggiunta
     @Test
     void createTrackWithInvalidDataDoesNotAddToLibrary() {

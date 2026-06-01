@@ -61,7 +61,7 @@ public class PlaylistContentTest {
         p.addTrack(t3);
         List<Track> result = controller.getPlaylistTracks(p);
         assertEquals(3, result.size());
-        assertTrue(result.containsAll(List.of(t1, t2, t3)));
+        assertEquals(List.of(t1, t2, t3), result);
     }
 
     @Test

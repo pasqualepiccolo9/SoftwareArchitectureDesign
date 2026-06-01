@@ -46,6 +46,13 @@ public class PlaylistController {
     }
 
     // US8 - visualizzazione contenuto playlist
+    /**
+     * Returns the ordered list of tracks contained in the selected playlist.
+     * If the playlist is null, an empty list is returned.
+     *
+     * @param p the selected playlist
+     * @return the list of tracks contained in the playlist, or an empty list if the playlist is null
+     */
     public List<Track> getPlaylistTracks(Playlist p) {
         if (p == null) {
             return Collections.emptyList();
@@ -53,6 +60,12 @@ public class PlaylistController {
         return p.getTracks();
     }
 
+    /**
+     * Checks whether the selected playlist is null or contains no tracks.
+     *
+     * @param p the selected playlist
+     * @return true if the playlist is null or empty, false otherwise
+     */
     public boolean isPlaylistEmpty(Playlist p) {
         return p == null || p.getTracks().isEmpty();
     }

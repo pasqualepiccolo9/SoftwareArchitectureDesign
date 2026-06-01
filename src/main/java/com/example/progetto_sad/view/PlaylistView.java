@@ -15,6 +15,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 
 import java.util.List;
 
@@ -25,6 +27,8 @@ public class PlaylistView implements Observer {
     @FXML private VBox trackListVBox;
     @FXML private Label emptyLabel;
     @FXML private Button addTrackBtn;
+
+    private Runnable onBackAction;
 
     private Playlist playlist;
     private PlaylistController controller;
@@ -50,6 +54,10 @@ public class PlaylistView implements Observer {
     @Override
     public void update() {
         Platform.runLater(this::refresh);
+    }
+
+    public void setOnBackAction(Runnable onBackAction) {
+        this.onBackAction = onBackAction;
     }
 
     public void display() {
@@ -111,7 +119,7 @@ public class PlaylistView implements Observer {
 
         Button removeBtn = new Button("✕");
         removeBtn.getStyleClass().add("remove-btn");
-        removeBtn.setOnAction(e -> controller.removeTrackFromPlaylist(t, playlist));
+        removeBtn.setOnAction(e -> confirmAndRemoveTrack(t));
         removeBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, MouseEvent::consume);
 
         HBox row = new HBox(12, icon, info, durationLabel, removeBtn);
@@ -158,5 +166,36 @@ public class PlaylistView implements Observer {
         int minutes = totalSeconds / 60;
         int seconds = totalSeconds % 60;
         return String.format("%d:%02d", minutes, seconds);
+    }
+
+    private void confirmAndRemoveTrack(Track track) {
+        if (track == null || playlist == null || controller == null) {
+            return;
+        }
+
+        ButtonType cancelButton = new ButtonType("Annulla");
+        ButtonType removeButton = new ButtonType("Rimuovi");
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Conferma rimozione");
+        alert.setHeaderText("Rimuovere la traccia dalla playlist?");
+        alert.setContentText(
+                "Vuoi davvero rimuovere \"" + track.getTitle() + "\" dalla playlist \""
+                        + playlist.getName() + "\"?"
+        );
+
+        alert.getButtonTypes().setAll(cancelButton, removeButton);
+
+        alert.showAndWait().ifPresent(response -> {
+            if (response == removeButton) {
+                controller.removeTrackFromPlaylist(track, playlist);
+            }
+        });
+    }
+    @FXML
+    private void handleBack() {
+        if (onBackAction != null) {
+            onBackAction.run();
+        }
     }
 }

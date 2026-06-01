@@ -18,6 +18,9 @@
 
         <!-- HEADER -->
         <HBox alignment="CENTER_LEFT" spacing="16">
+            <Button text="← Indietro"
+                    styleClass="back-btn"
+                    onAction="#handleBack" />
             <Label text="♫" styleClass="playlist-icon"/>
             <VBox spacing="4" HBox.hgrow="ALWAYS">
                 <HBox alignment="CENTER_LEFT" spacing="10">

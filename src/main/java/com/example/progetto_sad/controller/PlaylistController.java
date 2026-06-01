@@ -4,6 +4,7 @@ import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
 
+import java.util.Collections;
 import java.util.List;
 
 public class PlaylistController {
@@ -45,8 +46,27 @@ public class PlaylistController {
     }
 
     // US8 - visualizzazione contenuto playlist
+    /**
+     * Returns the ordered list of tracks contained in the selected playlist.
+     * If the playlist is null, an empty list is returned.
+     *
+     * @param p the selected playlist
+     * @return the list of tracks contained in the playlist, or an empty list if the playlist is null
+     */
     public List<Track> getPlaylistTracks(Playlist p) {
-        // TODO US8: restituire le tracce della playlist, gestendo i casi playlist vuota/nulla.
-        throw new UnsupportedOperationException("US8 non ancora implementata");
+        if (p == null) {
+            return Collections.emptyList();
+        }
+        return p.getTracks();
+    }
+
+    /**
+     * Checks whether the selected playlist is null or contains no tracks.
+     *
+     * @param p the selected playlist
+     * @return true if the playlist is null or empty, false otherwise
+     */
+    public boolean isPlaylistEmpty(Playlist p) {
+        return p == null || p.getTracks().isEmpty();
     }
 }

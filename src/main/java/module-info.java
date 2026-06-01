@@ -9,4 +9,5 @@ module com.example.progetto_sad {
     opens com.example.progetto_sad.controller to javafx.fxml;
     opens com.example.progetto_sad.view to javafx.graphics;
     exports com.example.progetto_sad;
+    opens com.example.progetto_sad.view to javafx.fxml;
 }

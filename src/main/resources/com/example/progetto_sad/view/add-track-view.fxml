@@ -55,7 +55,7 @@
                     </graphic>
                 </Button>
             </HBox>
-            <Label text="La durata viene letta automaticamente dal file" styleClass="field-hint"/>
+            <Label fx:id="durationHint" text="La durata viene letta automaticamente dal file" styleClass="field-hint"/>
         </VBox>
 
         <!-- Titolo (obbligatorio) -->

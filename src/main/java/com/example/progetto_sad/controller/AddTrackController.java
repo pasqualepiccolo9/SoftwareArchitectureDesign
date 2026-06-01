@@ -1,8 +1,10 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.util.AudioDurationExtractor;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
@@ -13,12 +15,15 @@ import java.io.File;
 /**
  * US1 - Controller JavaFX del form "Aggiungi traccia".
  *
- * Gestisce l'azione di conferma: raccoglie i dati inseriti nella UI e li passa a
+ * Gestisce l'azione di conferma: raccoglie i dati inseriti nella UI e la durata
+ * gia' estratta automaticamente dal file al caricamento, e li passa a
  * {@link TrackController}, che crea la traccia e la aggiunge alla libreria.
  * Non contiene logica di dominio: validazione e creazione sono delegate al
  * controller applicativo e alla factory.
  */
 public class AddTrackController {
+
+    private static final String DURATION_HINT_DEFAULT = "La durata viene letta automaticamente dal file";
 
     private final TrackController trackController;
 
@@ -32,9 +37,12 @@ public class AddTrackController {
     private ComboBox<String> genreCombo;
     @FXML
     private TextField yearField;
+    @FXML
+    private Label durationHint;
 
-    // File audio selezionato dall'utente (il path completo viene passato alla factory).
+    // File audio selezionato e durata estratta automaticamente al caricamento.
     private File selectedAudioFile;
+    private int selectedDurationSeconds;
 
     /**
      * @param trackController controller applicativo responsabile della creazione della traccia
@@ -44,7 +52,8 @@ public class AddTrackController {
     }
 
     /**
-     * Apre un selettore di file audio e mostra il nome del file scelto nel campo.
+     * Apre un selettore di file audio, ne estrae automaticamente la durata
+     * e mostra nel form il nome del file e la durata letta.
      */
     @FXML
     private void onBrowse() {
@@ -57,12 +66,19 @@ public class AddTrackController {
         if (file != null) {
             selectedAudioFile = file;
             audioFileField.setText(file.getName());
+
+            // US1 - la durata viene estratta automaticamente al momento del caricamento del file
+            selectedDurationSeconds = AudioDurationExtractor.extractSeconds(file);
+            durationHint.setText(selectedDurationSeconds > 0
+                    ? "Durata letta dal file: " + formatDuration(selectedDurationSeconds)
+                    : "Durata non leggibile dal file");
         }
     }
 
     /**
-     * Azione di conferma: passa i dati del form a TrackController per creare la traccia.
-     * In caso di dati non validi mostra il messaggio di errore senza chiudere il form.
+     * Azione di conferma: passa al controller i dati del form e la durata gia'
+     * estratta dal file, per creare la traccia. In caso di dati non validi
+     * mostra il messaggio di errore senza chiudere il form.
      */
     @FXML
     private void onSave() {
@@ -73,7 +89,7 @@ public class AddTrackController {
             String filePath = (selectedAudioFile != null) ? selectedAudioFile.getAbsolutePath() : null;
             int year = parseYear(yearField.getText());
 
-            trackController.createTrack(title, author, genre, year, filePath);
+            trackController.createTrack(title, author, genre, year, filePath, selectedDurationSeconds);
 
             showInfo("Traccia aggiunta",
                     safeTitle(title) + " e' stata aggiunta alla libreria. Tracce totali: "
@@ -118,7 +134,15 @@ public class AddTrackController {
         genreCombo.getSelectionModel().clearSelection();
         genreCombo.setValue(null);
         audioFileField.clear();
+        durationHint.setText(DURATION_HINT_DEFAULT);
         selectedAudioFile = null;
+        selectedDurationSeconds = 0;
+    }
+
+    private static String formatDuration(int totalSeconds) {
+        int minutes = totalSeconds / 60;
+        int seconds = totalSeconds % 60;
+        return minutes + ":" + String.format("%02d", seconds);
     }
 
     private void showInfo(String header, String content) {

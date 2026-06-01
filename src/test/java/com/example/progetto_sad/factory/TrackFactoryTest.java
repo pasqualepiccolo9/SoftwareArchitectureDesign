@@ -99,4 +99,20 @@ class TrackFactoryTest {
                 () -> TrackFactory.createTrack("Brano", "Autore", "Rock",
                         Year.now().getValue() + 1, VALID_PATH, DURATION));
     }
+
+    @Test
+    void validateMetadataAcceptsValidData() {
+        TrackFactory.validateMetadata("Imagine", "John Lennon", "Rock", 1971);
+    }
+
+    @Test
+    void validateMetadataRejectsBlankTitle() {
+        assertThrows(IllegalArgumentException.class,
+                () -> TrackFactory.validateMetadata("  ", "John", "Rock", 1971));
+    }
+
+    @Test
+    void validateDurationRejectsNegativeValue() {
+        assertThrows(IllegalArgumentException.class, () -> TrackFactory.validateDuration(-5));
+    }
 }

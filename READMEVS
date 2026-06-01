@@ -1,0 +1,62 @@
+# VS Code + JavaFX
+
+Stesso stack del resto del gruppo: JavaFX con FXML e Maven.
+IntelliJ va bene lo stesso, io uso VS Code.
+
+## Requisiti
+
+- VS Code + Extension Pack for Java
+- JDK 21
+
+## JavaFX (US2 / US4)
+
+Ho lavorato sulla UI JavaFX gia impostata nel progetto:
+
+- `hello-view.fxml` — layout con ListView e form di modifica
+- `HelloController.java` — controller FXML, selezione traccia e salvataggio
+- `LibraryView.java` — aggiorna la ListView quando cambia `TrackLibrary`
+
+L'app parte da `HelloApplication.java` che carica il file FXML.
+Per avviarla serve il plugin Maven JavaFX (`javafx:run`), come in IntelliJ.
+
+## Primo avvio VS Code
+
+1. File → Open Folder → cartella del repo
+2. Installa Extension Pack for Java
+3. Aspetta import Maven
+4. Ctrl+Shift+P → Java: Configure Java Runtime → JDK 21
+
+## PowerShell
+
+Dalla cartella del progetto:
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-21.0.11"
+$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+
+.\mvnw.cmd test
+.\mvnw.cmd javafx:run
+```
+
+`javafx:run` apre la finestra con la lista tracce e il form a destra.
+
+Solo compilazione:
+
+```powershell
+.\mvnw.cmd compile
+```
+
+## VS Code (task)
+
+- Ctrl+Shift+B → avvia app JavaFX
+- Tasks: Run Task → Maven: test
+
+## Debug
+
+F5 su `HelloApplication.java` → Debug HelloApplication
+
+## Note
+
+- Maven Wrapper incluso, non serve Maven installato a parte
+- Non tenere aperti VS Code e IntelliJ sullo stesso progetto insieme
+- La libreria e' vuota finche' il collega non finisce il form di inserimento (US1)

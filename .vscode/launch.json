@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Debug HelloApplication",
+      "request": "launch",
+      "mainClass": "com.example.progetto_sad/com.example.progetto_sad.HelloApplication",
+      "projectName": "Progetto_SAD"
+    }
+  ]
+}

@@ -30,6 +30,14 @@ public class TrackLibrary implements Subject {
         return Collections.unmodifiableList(new ArrayList<>(tracks));
     }
 
+    public boolean contains(Track t) {
+        return tracks.contains(t);
+    }
+
+    public void trackUpdated() {
+        notifyObservers();
+    }
+
     @Override
     public void attach(Observer o) {
         if (o != null && !observers.contains(o)) {

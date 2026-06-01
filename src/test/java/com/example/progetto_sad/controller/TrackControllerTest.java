@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// US1 - creazione traccia / US3 - eliminazione traccia
+// US1 - creazione traccia / US2 - modifica traccia / US3 - eliminazione traccia
 class TrackControllerTest {
 
     private static final String VALID_PATH = "C:/musica/brano.mp3";
@@ -81,5 +81,52 @@ class TrackControllerTest {
 
         assertDoesNotThrow(() -> controller.deleteTrack(notStored));
         assertEquals(1, controller.getTracks().size());
+    }
+
+    // US2
+    @Test
+    void updateTrackChangesExistingTrack() {
+        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH);
+        Track track = controller.getTracks().get(0);
+
+        controller.updateTrack(track, "Imagine (Remastered)", "John Lennon", "Rock", 1975, 300);
+
+        assertEquals("Imagine (Remastered)", track.getTitle());
+        assertEquals(1975, track.getYear());
+        assertEquals(300, track.getDuration());
+    }
+
+    @Test
+    void updateTrackWithInvalidDataDoesNotChangeTrack() {
+        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH);
+        Track track = controller.getTracks().get(0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> controller.updateTrack(track, "", "John Lennon", "Rock", 1971, 240));
+
+        assertEquals("Imagine", track.getTitle());
+    }
+
+    @Test
+    void updateNullTrackThrows() {
+        assertThrows(IllegalArgumentException.class,
+                () -> controller.updateTrack(null, "Titolo", "Autore", "Rock", 1971, 240));
+    }
+
+    @Test
+    void updateTrackNotInLibraryThrows() {
+        Track notStored = new Track("Altro", "Autore", 0, "Pop", 2000);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> controller.updateTrack(notStored, "Titolo", "Autore", "Rock", 1971, 240));
+    }
+
+    @Test
+    void updateTrackWithNegativeDurationThrows() {
+        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH);
+        Track track = controller.getTracks().get(0);
+
+        assertThrows(IllegalArgumentException.class,
+                () -> controller.updateTrack(track, "Imagine", "John Lennon", "Rock", 1971, -1));
     }
 }

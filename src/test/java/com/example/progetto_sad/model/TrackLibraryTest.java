@@ -1,0 +1,68 @@
+package com.example.progetto_sad.model;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class TrackLibraryTest {
+
+    private TrackLibrary library;
+
+    @BeforeEach
+    void setUp() {
+        library = new TrackLibrary();
+    }
+
+    @Test
+    void emptyLibraryHasNoTracks() {
+        assertTrue(library.getTracks().isEmpty());
+    }
+
+    @Test
+    void addTrackMakesItAvailable() {
+        Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
+
+        library.addTrack(track);
+
+        assertEquals(1, library.getTracks().size());
+        assertEquals(track, library.getTracks().get(0));
+    }
+
+    @Test
+    void addNullTrackIsRejected() {
+        assertThrows(IllegalArgumentException.class, () -> library.addTrack(null));
+    }
+
+    @Test
+    void libraryCanStoreMultipleTracks() {
+        Track first = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
+        Track second = new Track("Yesterday", "The Beatles", 125, "Pop", 1965);
+
+        library.addTrack(first);
+        library.addTrack(second);
+
+        assertEquals(2, library.getTracks().size());
+    }
+
+    @Test
+    void removeTrackRemovesItFromLibrary() {
+        Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
+        library.addTrack(track);
+
+        library.removeTrack(track);
+
+        assertTrue(library.getTracks().isEmpty());
+    }
+
+    @Test
+    void getTracksReturnsUnmodifiableCopy() {
+        Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
+        library.addTrack(track);
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> library.getTracks().add(new Track("Altro", "Autore", 0, "Pop", 2000)));
+    }
+}

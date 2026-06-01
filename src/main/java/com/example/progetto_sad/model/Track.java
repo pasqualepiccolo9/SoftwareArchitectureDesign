@@ -55,6 +55,10 @@ public class Track {
         return duration;
     }
 
+    public void setDuration(int duration) {
+        this.duration = duration;
+    }
+
     public String getGenre() {
         return genre;
     }

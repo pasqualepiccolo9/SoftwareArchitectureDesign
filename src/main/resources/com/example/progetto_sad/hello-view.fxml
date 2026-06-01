@@ -23,7 +23,7 @@
             <TextField fx:id="authorField" promptText="Autore"/>
             <TextField fx:id="genreField" promptText="Genere"/>
             <TextField fx:id="yearField" promptText="Anno"/>
-            <TextField fx:id="durationField" promptText="Durata (sec)"/>
+            <TextField fx:id="durationField" promptText="Durata (sec)" editable="false"/>
             <Button text="Salva" onAction="#onSaveClick"/>
             <Label fx:id="errorLabel" style="-fx-text-fill: red;"/>
         </VBox>

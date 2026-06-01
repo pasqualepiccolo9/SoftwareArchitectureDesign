@@ -86,23 +86,24 @@ class TrackControllerTest {
     // US2
     @Test
     void updateTrackChangesExistingTrack() {
-        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH);
+        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH, DURATION);
         Track track = controller.getTracks().get(0);
 
-        controller.updateTrack(track, "Imagine (Remastered)", "John Lennon", "Rock", 1975, 300);
+        controller.updateTrack(track, "Imagine (Remastered)", "John Lennon", "Rock", 1975);
 
         assertEquals("Imagine (Remastered)", track.getTitle());
         assertEquals(1975, track.getYear());
-        assertEquals(300, track.getDuration());
+        // la durata NON cambia: e' immutabile, estratta dal file
+        assertEquals(DURATION, track.getDuration());
     }
 
     @Test
     void updateTrackWithInvalidDataDoesNotChangeTrack() {
-        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH);
+        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH, DURATION);
         Track track = controller.getTracks().get(0);
 
         assertThrows(IllegalArgumentException.class,
-                () -> controller.updateTrack(track, "", "John Lennon", "Rock", 1971, 240));
+                () -> controller.updateTrack(track, "", "John Lennon", "Rock", 1971));
 
         assertEquals("Imagine", track.getTitle());
     }
@@ -110,7 +111,7 @@ class TrackControllerTest {
     @Test
     void updateNullTrackThrows() {
         assertThrows(IllegalArgumentException.class,
-                () -> controller.updateTrack(null, "Titolo", "Autore", "Rock", 1971, 240));
+                () -> controller.updateTrack(null, "Titolo", "Autore", "Rock", 1971));
     }
 
     @Test
@@ -118,15 +119,7 @@ class TrackControllerTest {
         Track notStored = new Track("Altro", "Autore", 0, "Pop", 2000);
 
         assertThrows(IllegalArgumentException.class,
-                () -> controller.updateTrack(notStored, "Titolo", "Autore", "Rock", 1971, 240));
+                () -> controller.updateTrack(notStored, "Titolo", "Autore", "Rock", 1971));
     }
 
-    @Test
-    void updateTrackWithNegativeDurationThrows() {
-        controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH);
-        Track track = controller.getTracks().get(0);
-
-        assertThrows(IllegalArgumentException.class,
-                () -> controller.updateTrack(track, "Imagine", "John Lennon", "Rock", 1971, -1));
-    }
 }

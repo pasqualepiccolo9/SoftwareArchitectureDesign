@@ -111,8 +111,4 @@ class TrackFactoryTest {
                 () -> TrackFactory.validateMetadata("  ", "John", "Rock", 1971));
     }
 
-    @Test
-    void validateDurationRejectsNegativeValue() {
-        assertThrows(IllegalArgumentException.class, () -> TrackFactory.validateDuration(-5));
-    }
 }

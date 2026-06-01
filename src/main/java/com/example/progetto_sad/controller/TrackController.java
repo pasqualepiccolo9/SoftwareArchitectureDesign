@@ -32,8 +32,8 @@ public class TrackController {
         library.addTrack(track);
     }
 
-    // US2 - modifica dati traccia
-    public void updateTrack(Track t, String title, String author, String genre, int year, int duration) {
+    // US2 - modifica dati traccia (durata esclusa: e' immutabile, estratta dal file)
+    public void updateTrack(Track t, String title, String author, String genre, int year) {
         if (t == null) {
             throw new IllegalArgumentException("Nessuna traccia selezionata");
         }
@@ -41,12 +41,10 @@ public class TrackController {
             throw new IllegalArgumentException("Traccia non presente in libreria");
         }
         TrackFactory.validateMetadata(title, author, genre, year);
-        TrackFactory.validateDuration(duration);
         t.setTitle(title.trim());
         t.setAuthor(author.trim());
         t.setGenre(genre.trim());
         t.setYear(year);
-        t.setDuration(duration);
         library.trackUpdated();
     }
 

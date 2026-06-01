@@ -56,22 +56,20 @@ public class HelloController {
 
     @FXML
     private void onSaveClick() {
-        // US2 - salva modifiche dal form FXML
+        // US2 - salva modifiche dal form FXML (la durata e' sola lettura, non si modifica)
         try {
             Track selected = trackListView.getSelectionModel().getSelectedItem();
             int year = Integer.parseInt(yearField.getText().trim());
-            int duration = Integer.parseInt(durationField.getText().trim());
             trackController.updateTrack(
                     selected,
                     titleField.getText(),
                     authorField.getText(),
                     genreField.getText(),
-                    year,
-                    duration
+                    year
             );
             errorLabel.setText("");
         } catch (NumberFormatException e) {
-            errorLabel.setText("Anno o durata non validi");
+            errorLabel.setText("Anno non valido");
         } catch (IllegalArgumentException e) {
             errorLabel.setText(e.getMessage());
         }

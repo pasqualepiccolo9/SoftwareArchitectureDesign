@@ -1,0 +1,23 @@
+/* US2/US3 - Stile specifico della schermata "Modifica traccia".
+   Riusa add-track-view.css per backdrop/card/campi/pulsanti; qui solo errore e pulsante elimina. */
+
+.field-error {
+    -fx-text-fill: #f06a6a;
+    -fx-font-size: 12px;
+}
+
+/* Pulsante distruttivo (Elimina traccia) */
+.danger-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #b3433f;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-text-fill: #f0807c;
+    -fx-font-size: 14px;
+    -fx-padding: 10 18 10 18;
+    -fx-cursor: hand;
+}
+
+.danger-button:hover {
+    -fx-background-color: #3a2422;
+}

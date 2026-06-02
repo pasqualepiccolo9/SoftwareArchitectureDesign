@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.collections.FXCollections?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import java.lang.String?>
+
+<!-- US2/US3 - Schermata "Modifica traccia": form precompilato + salva/elimina, stile uniforme con "Aggiungi traccia". -->
+<StackPane styleClass="backdrop"
+           stylesheets="@add-track-view.css, @modifica-track-view.css"
+           xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="com.example.progetto_sad.controller.ModificaTrackController">
+
+    <HBox alignment="CENTER" spacing="20">
+        <padding>
+            <Insets top="24" right="24" bottom="24" left="24"/>
+        </padding>
+
+        <VBox fx:id="editCard" styleClass="dialog-card" spacing="16" maxWidth="460" maxHeight="-Infinity">
+            <padding>
+                <Insets top="24" right="28" bottom="24" left="28"/>
+            </padding>
+
+            <Label text="Modifica traccia" styleClass="dialog-title"/>
+
+            <!-- Titolo (obbligatorio) -->
+            <VBox spacing="6">
+                <HBox spacing="3">
+                    <Label text="Titolo" styleClass="field-label"/>
+                    <Label text="*" styleClass="required-mark"/>
+                </HBox>
+                <TextField fx:id="titleField" promptText="Titolo" styleClass="text-input"/>
+            </VBox>
+
+            <!-- Autore (obbligatorio) -->
+            <VBox spacing="6">
+                <HBox spacing="3">
+                    <Label text="Autore" styleClass="field-label"/>
+                    <Label text="*" styleClass="required-mark"/>
+                </HBox>
+                <TextField fx:id="authorField" promptText="Autore" styleClass="text-input"/>
+            </VBox>
+
+            <!-- Genere + Anno -->
+            <HBox spacing="16">
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label text="Genere" styleClass="field-label"/>
+                    <ComboBox fx:id="genreCombo" promptText="Seleziona genere"
+                              styleClass="combo-input" maxWidth="Infinity">
+                        <items>
+                            <FXCollections fx:factory="observableArrayList">
+                                <String fx:value="Pop"/>
+                                <String fx:value="Rock"/>
+                                <String fx:value="Hip-Hop"/>
+                                <String fx:value="Jazz"/>
+                                <String fx:value="Classica"/>
+                                <String fx:value="Elettronica"/>
+                                <String fx:value="R&amp;B"/>
+                                <String fx:value="Metal"/>
+                                <String fx:value="Indie"/>
+                                <String fx:value="Colonna sonora"/>
+                                <String fx:value="Altro"/>
+                            </FXCollections>
+                        </items>
+                    </ComboBox>
+                </VBox>
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label text="Anno" styleClass="field-label"/>
+                    <TextField fx:id="yearField" promptText="Anno" styleClass="text-input"/>
+                </VBox>
+            </HBox>
+
+            <!-- Durata (sola lettura) -->
+            <VBox spacing="6">
+                <Label text="Durata (sola lettura)" styleClass="field-label"/>
+                <TextField fx:id="durationField" promptText="Durata (sec)" editable="false" styleClass="text-input"/>
+            </VBox>
+
+            <Label fx:id="errorLabel" styleClass="field-error"/>
+
+            <Separator styleClass="divider"/>
+
+            <!-- Footer: Elimina (sinistra) / Salva (destra) -->
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Button fx:id="deleteButton" text="Elimina traccia" styleClass="danger-button" onAction="#onDeleteClick"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button fx:id="saveButton" text="Salva modifiche" styleClass="primary-button" onAction="#onSaveClick"/>
+            </HBox>
+        </VBox>
+    </HBox>
+</StackPane>

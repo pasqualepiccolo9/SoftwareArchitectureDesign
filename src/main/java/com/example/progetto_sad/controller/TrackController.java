@@ -1,6 +1,8 @@
 package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.factory.TrackFactory;
+import com.example.progetto_sad.model.Playlist;
+import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 
@@ -9,9 +11,20 @@ import java.util.List;
 public class TrackController {
 
     private final TrackLibrary library;
+    private final PlaylistManager playlistManager;
 
     public TrackController(TrackLibrary library) {
+        this(library, null);
+    }
+
+    /**
+     * @param library         libreria principale delle tracce
+     * @param playlistManager gestore delle playlist; se presente, l'eliminazione di una
+     *                        traccia la rimuove anche da tutte le playlist che la contengono
+     */
+    public TrackController(TrackLibrary library, PlaylistManager playlistManager) {
         this.library = library;
+        this.playlistManager = playlistManager;
     }
 
     /**
@@ -59,7 +72,8 @@ public class TrackController {
     }
 
     /**
-     * US3 - Elimina una traccia dalla libreria.
+     * US3 - Elimina una traccia dalla libreria e, per garantire l'integrita' dello stato,
+     * la rimuove anche da tutte le playlist in cui era presente (evita le "tracce fantasma").
      *
      * @param t la traccia da eliminare
      * @throws IllegalArgumentException se nessuna traccia e' selezionata (null)
@@ -69,5 +83,20 @@ public class TrackController {
             throw new IllegalArgumentException("Nessuna traccia selezionata");
         }
         library.removeTrack(t);
+        removeFromAllPlaylists(t);
+    }
+
+    // US3 - rimuove la traccia da ogni playlist che la contiene (cascade), per evitare
+    // tracce fantasma. Si controlla contains() prima perche' Playlist.removeTrack lancia
+    // un'eccezione se la traccia e' assente o la playlist e' vuota.
+    private void removeFromAllPlaylists(Track t) {
+        if (playlistManager == null) {
+            return;
+        }
+        for (Playlist p : playlistManager.getPlaylists()) {
+            if (p.getTracks().contains(t)) {
+                p.removeTrack(t);
+            }
+        }
     }
 }

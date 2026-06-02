@@ -1,8 +1,10 @@
+/* LAYOUT PRINCIPALE */
 .root-container {
     -fx-background-color: #141417;
     -fx-padding: 20;
 }
 
+/* CARD PLAYLIST */
 .card {
     -fx-background-color: #2a2b2f;
     -fx-background-radius: 12;
@@ -10,6 +12,7 @@
     -fx-spacing: 16;
 }
 
+/* HEADER PLAYLIST */
 .playlist-icon {
     -fx-text-fill: #c2c2c7;
     -fx-font-size: 26px;
@@ -34,6 +37,7 @@
     -fx-font-size: 13px;
 }
 
+/* PULSANTE AGGIUNTA TRACCIA */
 .add-track-btn {
     -fx-background-color: transparent;
     -fx-text-fill: #c2c2c7;
@@ -54,13 +58,14 @@
     -fx-cursor: hand;
 }
 
+/* SEPARATORE */
 .divider .line {
     -fx-border-style: solid;
     -fx-border-color: #3a3b41;
     -fx-border-width: 0.5;
 }
 
-/* ScrollPane */
+/* SCROOLPANE LISTA TRACCE */
 .track-scroll {
     -fx-background-color: transparent;
     -fx-background: transparent;
@@ -88,7 +93,7 @@
     -fx-pref-height: 0;
 }
 
-/* Track rows */
+/* RIGHE DELLE TRACCE */
 .track-row {
     -fx-background-color: #1d1e22;
     -fx-border-color: transparent transparent #3a3b41 transparent;
@@ -107,6 +112,7 @@
     -fx-cursor: hand;
 }
 
+/* TESTI E METADATI TRACCIA */
 .track-title {
     -fx-text-fill: #f5f5f7;
     -fx-font-size: 14px;
@@ -125,6 +131,7 @@
     -fx-alignment: CENTER_RIGHT;
 }
 
+/* PULSANTE RIMOZIONE TRACCIA */
 .remove-btn {
     -fx-background-color: transparent;
     -fx-text-fill: #c2c2c7;
@@ -138,6 +145,7 @@
     -fx-text-fill: #e05252;
 }
 
+/* EMPTY-LABEL */
 .empty-label {
     -fx-text-fill: #c2c2c7;
     -fx-font-size: 14px;
@@ -145,6 +153,7 @@
     -fx-alignment: CENTER;
 }
 
+/* PULSANTE INDIETRO */
 .back-btn {
     -fx-background-color: transparent;
     -fx-text-fill: #c2c2c7;

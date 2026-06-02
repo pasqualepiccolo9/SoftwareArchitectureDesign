@@ -20,6 +20,11 @@ import javafx.scene.control.ButtonType;
 
 import java.util.List;
 
+/**
+ * View responsabile della visualizzazione del contenuto di una playlist.
+ * Mostra le tracce associate, aggiorna la UI quando il Model cambia
+ * e gestisce le azioni dell'utente sulla playlist selezionata.
+ */
 public class PlaylistView implements Observer {
 
     @FXML private Label playlistNameLabel;
@@ -35,10 +40,24 @@ public class PlaylistView implements Observer {
     private HBox selectedRow;
     private List<Track> availableTracks = List.of();
 
+    /**
+     * Imposta l'elenco delle tracce disponibili che possono essere aggiunte
+     * alla playlist visualizzata.
+     *
+     * @param tracks la lista delle tracce disponibili
+     */
     public void setAvailableTracks(List<Track> tracks) {
         this.availableTracks = tracks != null ? tracks : List.of();
     }
 
+    /**
+     * Inizializza la vista con la playlist da mostrare e il relativo controller.
+     * La vista viene registrata come Observer della playlist e aggiorna
+     * immediatamente il contenuto visualizzato.
+     *
+     * @param playlist la playlist da visualizzare
+     * @param controller il controller usato per gestire le operazioni sulla playlist
+     */
     public void init(Playlist playlist, PlaylistController controller) {
         this.playlist = playlist;
         this.controller = controller;
@@ -51,21 +70,37 @@ public class PlaylistView implements Observer {
         refresh();
     }
 
+    /**
+     * Aggiorna la vista quando la playlist osservata cambia.
+     * L'aggiornamento viene eseguito sul JavaFX Application Thread.
+     */
     @Override
     public void update() {
         Platform.runLater(this::refresh);
     }
 
+    /**
+     * Imposta l'azione da eseguire quando l'utente richiede di tornare
+     * alla schermata precedente.
+     *
+     * @param onBackAction l'azione da eseguire alla pressione del pulsante indietro
+     */
     public void setOnBackAction(Runnable onBackAction) {
         this.onBackAction = onBackAction;
     }
 
+    /**
+     * Forza l'aggiornamento della vista e mostra lo stato corrente della playlist.
+     */
     public void display() {
         refresh();
     }
 
     private void refresh() {
-        if (controller == null || playlistNameLabel == null) return;
+        if (controller == null || playlistNameLabel == null || summaryLabel == null
+                || trackListVBox == null || emptyLabel == null) {
+            return;
+        }
 
         if (addTrackBtn != null) {
             boolean canAdd = playlist != null && !availableTracks.isEmpty();
@@ -192,6 +227,7 @@ public class PlaylistView implements Observer {
             }
         });
     }
+
     @FXML
     private void handleBack() {
         if (onBackAction != null) {

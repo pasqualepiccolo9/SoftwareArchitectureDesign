@@ -1,3 +1,4 @@
+/* LAYOUT PRINCIPALE */
 .dialog-root {
     -fx-background-color: #141417;
     -fx-padding: 20;
@@ -9,7 +10,7 @@
     -fx-padding: 24;
 }
 
-/* ── Header ── */
+/* HEADER */
 .dialog-title {
     -fx-text-fill: #f5f5f7;
     -fx-font-size: 20px;
@@ -33,7 +34,7 @@
     -fx-text-fill: #f5f5f7;
 }
 
-/* ── Filtro ── */
+/* FILTRO */
 .filter-bar {
     -fx-background-color: #1d1e22;
     -fx-background-radius: 8;
@@ -53,7 +54,7 @@
     -fx-font-size: 13px;
 }
 
-/* ── Righe tracce ── */
+/* RIGHE TRACCE */
 .track-row {
     -fx-background-color: #1d1e22;
     -fx-border-color: transparent transparent #3a3b41 transparent;
@@ -98,7 +99,7 @@
     -fx-background-radius: 10;
 }
 
-/* ── ScrollPane ── */
+/* SCROLLPANE */
 .dialog-scroll {
     -fx-background-color: transparent;
     -fx-background: transparent;
@@ -125,7 +126,7 @@
     -fx-pref-height: 0;
 }
 
-/* ── Footer ── */
+/* FOOTER */
 .dialog-footer {
     -fx-padding: 8 0 0 0;
     -fx-border-color: #3a3b41 transparent transparent transparent;

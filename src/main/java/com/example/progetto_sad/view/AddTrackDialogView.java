@@ -15,8 +15,22 @@ import javafx.stage.Window;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * View responsabile della finestra di dialogo per l'aggiunta di tracce
+ * a una playlist. Mostra le tracce disponibili, permette di filtrare
+ * l'elenco e aggiunge alla playlist solo le tracce selezionate.
+ */
 public class AddTrackDialogView {
 
+    /**
+     * Rappresenta una riga della finestra di dialogo associando una traccia
+     * al relativo checkbox, al nodo grafico e allo stato di presenza nella playlist.
+     *
+     * @param track la traccia rappresentata dalla riga
+     * @param cb il checkbox usato per selezionare la traccia
+     * @param row il contenitore grafico della riga
+     * @param alreadyPresent indica se la traccia è già presente nella playlist
+     */
     private record RowEntry(Track track, CheckBox cb, HBox row, boolean alreadyPresent) {}
 
     private Stage stage;
@@ -31,11 +45,20 @@ public class AddTrackDialogView {
     private Label selectedCountLabel;
     private Button addButton;
 
+    /**
+     * Inizializza la finestra di dialogo con le tracce disponibili,
+     * la playlist di destinazione, il controller e la finestra proprietaria.
+     *
+     * @param availableTracks le tracce che possono essere mostrate nella finestra
+     * @param playlist la playlist a cui aggiungere le tracce selezionate
+     * @param controller il controller usato per aggiornare la playlist
+     * @param owner la finestra proprietaria della finestra di dialogo
+     */
     public void init(List<Track> availableTracks, Playlist playlist,
                      PlaylistController controller, Window owner) {
         this.playlist = playlist;
         this.controller = controller;
-        this.allTracks = new ArrayList<>(availableTracks);
+        this.allTracks = availableTracks != null ? new ArrayList<>(availableTracks) : new ArrayList<>();
 
         stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
@@ -53,49 +76,57 @@ public class AddTrackDialogView {
         stage.setScene(scene);
     }
 
+    /**
+     * Mostra la finestra di dialogo in modalità bloccante fino alla sua chiusura.
+     */
     public void show() {
-        stage.showAndWait();
+        if (stage != null) {
+            stage.showAndWait();
+        }
     }
 
     // ── costruzione righe ────────────────────────────────────────────────────
 
     private void buildRowEntries() {
         List<Track> inPlaylist = controller.getPlaylistTracks(playlist);
-        for (Track t : allTracks) {
-            boolean already = inPlaylist.contains(t);
+        for (Track track : allTracks) {
+            boolean alreadyPresent = inPlaylist.contains(track);
             CheckBox cb = new CheckBox();
-            cb.setDisable(already);                   // disabilitata se già presente
-            if (!already) {
+            cb.setDisable(alreadyPresent);                   // disabilitata se già presente
+            if (!alreadyPresent) {
                 cb.selectedProperty().addListener((obs, oldV, newV) -> {
-                    if (newV) selected.add(t);
-                    else      selected.remove(t);
+                    if (newV) {
+                        selected.add(track);
+                    } else {
+                        selected.remove(track);
+                    }
                     updateFooter();
                 });
             }
-            rowEntries.add(new RowEntry(t, cb, buildRow(t, cb, already), already));
+            rowEntries.add(new RowEntry(track, cb, buildRow(track, cb, alreadyPresent), alreadyPresent));
         }
     }
 
-    private HBox buildRow(Track t, CheckBox cb, boolean already) {
-        Label titleLabel = new Label(t.getTitle());
+    private HBox buildRow(Track track, CheckBox cb, boolean alreadyPresent) {
+        Label titleLabel = new Label(track.getTitle());
         titleLabel.getStyleClass().add("row-title");
 
-        Label metaLabel = new Label("· " + t.getAuthor());
+        Label metaLabel = new Label("· " + track.getAuthor());
         metaLabel.getStyleClass().add("row-meta");
 
         HBox info = new HBox(6, titleLabel, metaLabel);
         info.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(info, Priority.ALWAYS);
 
-        Label durationLabel = new Label(formatDuration(t.getDuration()));
+        Label durationLabel = new Label(formatDuration(track.getDuration()));
         durationLabel.getStyleClass().add("row-duration");
 
         HBox row = new HBox(12, cb, info, durationLabel);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(10, 12, 10, 12));
-        row.getStyleClass().add(already ? "track-row-disabled" : "track-row");
+        row.getStyleClass().add(alreadyPresent ? "track-row-disabled" : "track-row");
 
-        if (already) {
+        if (alreadyPresent) {
             Label badge = new Label("già presente");
             badge.getStyleClass().add("already-badge");
             row.getChildren().add(badge);             // badge solo se già presente
@@ -161,8 +192,8 @@ public class AddTrackDialogView {
 
     private ScrollPane buildTrackScroll() {
         trackListBox = new VBox(0);
-        for (RowEntry e : rowEntries) {
-            trackListBox.getChildren().add(e.row());
+        for (RowEntry entry : rowEntries) {
+            trackListBox.getChildren().add(entry.row());
         }
 
         ScrollPane scroll = new ScrollPane(trackListBox);
@@ -196,12 +227,12 @@ public class AddTrackDialogView {
 
     private void applyFilter(String filter) {
         trackListBox.getChildren().clear();
-        for (RowEntry e : rowEntries) {
+        for (RowEntry entry : rowEntries) {
             if (filter.isBlank()
-                    || e.track().getTitle().toLowerCase().contains(filter)   // filtra su titolo
-                    || e.track().getAuthor().toLowerCase().contains(filter)) // filtra su autore
+                    || entry.track().getTitle().toLowerCase().contains(filter)   // filtra su titolo
+                    || entry.track().getAuthor().toLowerCase().contains(filter)) // filtra su autore
             {
-                trackListBox.getChildren().add(e.row());
+                trackListBox.getChildren().add(entry.row());
             }
         }
     }
@@ -213,8 +244,8 @@ public class AddTrackDialogView {
     }
 
     private void addSelected() {
-        for (Track t : new ArrayList<>(selected)) {
-            controller.addTrackToPlaylist(t, playlist); // unico punto di aggiunta
+        for (Track track : new ArrayList<>(selected)) {
+            controller.addTrackToPlaylist(track, playlist); // unico punto di aggiunta
         }
         stage.close();
     }

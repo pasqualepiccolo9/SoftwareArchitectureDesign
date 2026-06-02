@@ -1,16 +1,18 @@
-/* US1 - Stile della view "Aggiungi traccia" (tema scuro, coerente col mockup). */
+/* STILE DELLA VIEW "AGGIUNGI TRACCIA" */
 
+/* LAYOUT PRINCIPALE */
 .backdrop {
     -fx-background-color: #141417;
 }
 
-/* Card centrale del dialog */
+/* CARD DEL DIALOG */
 .dialog-card {
     -fx-background-color: #2a2b2f;
     -fx-background-radius: 16;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 40, 0.2, 0, 16);
 }
 
+/* TITOLO E TESTI INFORMATIVI */
 .dialog-title {
     -fx-text-fill: #f5f5f7;
     -fx-font-size: 20px;
@@ -33,7 +35,7 @@
     -fx-font-size: 12px;
 }
 
-/* Campi di testo e combo */
+/* CAMPI DI INPUT */
 .text-input,
 .combo-input {
     -fx-background-color: #1d1e22;
@@ -52,7 +54,7 @@
     -fx-border-color: #6f7cff;
 }
 
-/* ComboBox: testo selezionato + freccia */
+/* COMBOBOX: TESTO SELEZIONATO + FRECCIA */
 .combo-input .list-cell {
     -fx-background-color: transparent;
     -fx-text-fill: #f2f2f4;
@@ -81,7 +83,7 @@
     -fx-background-color: #34353b;
 }
 
-/* Pulsante secondario (Sfoglia) */
+/* PULSANTE secondario (Sfoglia) */
 .secondary-button {
     -fx-background-color: #34353b;
     -fx-background-radius: 8;
@@ -95,7 +97,7 @@
     -fx-background-color: #3e3f46;
 }
 
-/* Pulsante "ghost" (Annulla) */
+/* PULSANTE "ghost" (Annulla) */
 .ghost-button {
     -fx-background-color: transparent;
     -fx-border-color: #45464d;
@@ -111,7 +113,7 @@
     -fx-background-color: #2f3035;
 }
 
-/* Pulsante primario (Salva traccia) */
+/* PULSANTE primario (Salva traccia) */
 .primary-button {
     -fx-background-color: #f4f4ee;
     -fx-background-radius: 8;
@@ -126,7 +128,7 @@
     -fx-background-color: #ffffff;
 }
 
-/* Pulsante di chiusura (X) */
+/* PULSANTE di chiusura (X) */
 .close-button {
     -fx-background-color: transparent;
     -fx-padding: 5;
@@ -138,6 +140,7 @@
     -fx-background-radius: 6;
 }
 
+/* ICONE */
 .close-icon {
     -fx-fill: transparent;
     -fx-stroke: #b8b8bd;
@@ -153,7 +156,7 @@
     -fx-stroke-line-join: round;
 }
 
-/* Separatore */
+/* SEPARATORE */
 .divider {
     -fx-padding: 4 0 4 0;
 }

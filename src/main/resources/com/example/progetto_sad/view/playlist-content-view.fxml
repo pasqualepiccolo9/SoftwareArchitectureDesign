@@ -34,12 +34,12 @@
 
         <Separator styleClass="divider"/>
 
-        <!-- TRACK LIST -->
+        <!-- LISTA TRACCE -->
         <ScrollPane styleClass="track-scroll" fitToWidth="true" VBox.vgrow="ALWAYS">
             <VBox fx:id="trackListVBox"/>
         </ScrollPane>
 
-        <!-- EMPTY STATE -->
+        <!-- STATO PLAYLIST VUOTA -->
         <Label fx:id="emptyLabel"
                text="Questa playlist è vuota"
                styleClass="empty-label"

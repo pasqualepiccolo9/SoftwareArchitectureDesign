@@ -14,7 +14,7 @@
 <?import javafx.scene.shape.SVGPath?>
 <?import java.lang.String?>
 
-<!-- US1 - View per l'inserimento di una nuova traccia ("Aggiungi traccia"). -->
+<!-- US1 - VIEW PER INSERIMENTO DI UNA NUOVA TRACCIA ('Aggiungi Traccia')-->
 <StackPane styleClass="backdrop"
            stylesheets="@add-track-view.css"
            xmlns="http://javafx.com/javafx"
@@ -27,7 +27,7 @@
             <Insets top="24" right="28" bottom="24" left="28"/>
         </padding>
 
-        <!-- Header: titolo + pulsante di chiusura -->
+        <!-- HEADER: TITOLO + PULSANTE DI CHIUSURA -->
         <HBox alignment="CENTER_LEFT">
             <Label text="Aggiungi traccia" styleClass="dialog-title"/>
             <Region HBox.hgrow="ALWAYS"/>
@@ -38,7 +38,7 @@
             </Button>
         </HBox>
 
-        <!-- File audio (obbligatorio) -->
+        <!-- SELEZIONE FILE AUDIO -->
         <VBox spacing="6">
             <HBox spacing="3">
                 <Label text="File audio" styleClass="field-label"/>
@@ -58,7 +58,7 @@
             <Label fx:id="durationHint" text="La durata viene letta automaticamente dal file" styleClass="field-hint"/>
         </VBox>
 
-        <!-- Titolo (obbligatorio) -->
+        <!--TITOLO TRACCIA -->
         <VBox spacing="6">
             <HBox spacing="3">
                 <Label text="Titolo" styleClass="field-label"/>
@@ -67,7 +67,7 @@
             <TextField fx:id="titleField" promptText="Inserisci il titolo" styleClass="text-input"/>
         </VBox>
 
-        <!-- Autore (obbligatorio) -->
+        <!-- AUTORE TRACCIA -->
         <VBox spacing="6">
             <HBox spacing="3">
                 <Label text="Autore" styleClass="field-label"/>
@@ -76,7 +76,7 @@
             <TextField fx:id="authorField" promptText="Inserisci l'autore" styleClass="text-input"/>
         </VBox>
 
-        <!-- Genere + Anno -->
+        <!-- GENERE + ANNO -->
         <HBox spacing="16">
             <VBox spacing="6" HBox.hgrow="ALWAYS">
                 <Label text="Genere" styleClass="field-label"/>
@@ -107,7 +107,7 @@
 
         <Separator styleClass="divider"/>
 
-        <!-- Footer: Annulla / Salva -->
+        <!-- FOOTER: ANNULLA / SALVA -->
         <HBox spacing="12" alignment="CENTER_RIGHT">
             <Button fx:id="cancelButton" text="Annulla" styleClass="ghost-button" onAction="#onCancel"/>
             <Button fx:id="saveButton" text="Salva traccia" styleClass="primary-button" onAction="#onSave"/>

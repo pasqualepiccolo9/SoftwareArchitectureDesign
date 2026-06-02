@@ -83,7 +83,7 @@ class TrackControllerTest {
         assertEquals(1, controller.getTracks().size());
     }
 
-    // US2
+    // US2 - modifica corretta dei metadati (durata invariata)
     @Test
     void updateTrackChangesExistingTrack() {
         controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH, DURATION);
@@ -97,6 +97,7 @@ class TrackControllerTest {
         assertEquals(DURATION, track.getDuration());
     }
 
+    // US2 - dati non validi: la traccia non deve cambiare
     @Test
     void updateTrackWithInvalidDataDoesNotChangeTrack() {
         controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH, DURATION);
@@ -108,12 +109,14 @@ class TrackControllerTest {
         assertEquals("Imagine", track.getTitle());
     }
 
+    // US2 - caso limite: nessuna traccia selezionata (null)
     @Test
     void updateNullTrackThrows() {
         assertThrows(IllegalArgumentException.class,
                 () -> controller.updateTrack(null, "Titolo", "Autore", "Rock", 1971));
     }
 
+    // US2 - caso limite: traccia non presente in libreria
     @Test
     void updateTrackNotInLibraryThrows() {
         Track notStored = new Track("Altro", "Autore", 0, "Pop", 2000);

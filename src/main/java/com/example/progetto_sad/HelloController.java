@@ -9,6 +9,13 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 
+/**
+ * US2/US4 - Controller JavaFX della schermata libreria tracce (hello-view).
+ *
+ * Mostra l'elenco delle tracce e il form di modifica. Delega la logica a
+ * {@link TrackController}; l'aggiornamento automatico della lista e' gestito
+ * da {@link LibraryView}, registrata come Observer sulla libreria.
+ */
 public class HelloController {
 
     @FXML
@@ -30,6 +37,10 @@ public class HelloController {
     private TrackController trackController;
     private LibraryView libraryView;
 
+    /**
+     * Inizializza libreria, controller applicativo e vista elenco tracce (US4),
+     * e il listener che precompila il form alla selezione (US2).
+     */
     @FXML
     private void initialize() {
         library = new TrackLibrary();
@@ -54,9 +65,9 @@ public class HelloController {
         });
     }
 
+    // US2 - salva modifiche dal form (la durata e' sola lettura, non si modifica)
     @FXML
     private void onSaveClick() {
-        // US2 - salva modifiche dal form FXML (la durata e' sola lettura, non si modifica)
         try {
             Track selected = trackListView.getSelectionModel().getSelectedItem();
             int year = Integer.parseInt(yearField.getText().trim());

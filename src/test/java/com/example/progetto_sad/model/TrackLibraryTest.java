@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+// US4 - test per la gestione della collezione tracce (TrackLibrary)
 class TrackLibraryTest {
 
     private TrackLibrary library;
@@ -16,11 +17,13 @@ class TrackLibraryTest {
         library = new TrackLibrary();
     }
 
+    // US4 - libreria appena creata e' vuota
     @Test
     void emptyLibraryHasNoTracks() {
         assertTrue(library.getTracks().isEmpty());
     }
 
+    // US4 - aggiunta traccia
     @Test
     void addTrackMakesItAvailable() {
         Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
@@ -31,11 +34,13 @@ class TrackLibraryTest {
         assertEquals(track, library.getTracks().get(0));
     }
 
+    // US4 - caso limite: traccia null rifiutata
     @Test
     void addNullTrackIsRejected() {
         assertThrows(IllegalArgumentException.class, () -> library.addTrack(null));
     }
 
+    // US4 - piu' tracce nella stessa libreria
     @Test
     void libraryCanStoreMultipleTracks() {
         Track first = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
@@ -47,6 +52,7 @@ class TrackLibraryTest {
         assertEquals(2, library.getTracks().size());
     }
 
+    // US4 - rimozione traccia
     @Test
     void removeTrackRemovesItFromLibrary() {
         Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
@@ -57,6 +63,7 @@ class TrackLibraryTest {
         assertTrue(library.getTracks().isEmpty());
     }
 
+    // US4 - getTracks restituisce una copia non modificabile dall'esterno
     @Test
     void getTracksReturnsUnmodifiableCopy() {
         Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);

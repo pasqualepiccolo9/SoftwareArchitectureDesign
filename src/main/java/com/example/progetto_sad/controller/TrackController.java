@@ -6,10 +6,18 @@ import com.example.progetto_sad.model.TrackLibrary;
 
 import java.util.List;
 
+/**
+ * Controller applicativo per la gestione delle tracce nella libreria.
+ * Delega validazione e creazione a {@link TrackFactory}; notifica la UI
+ * tramite {@link TrackLibrary} (pattern Observer).
+ */
 public class TrackController {
 
     private final TrackLibrary library;
 
+    /**
+     * @param library libreria in cui vengono aggiunte, modificate ed eliminate le tracce
+     */
     public TrackController(TrackLibrary library) {
         this.library = library;
     }
@@ -32,7 +40,18 @@ public class TrackController {
         library.addTrack(track);
     }
 
-    // US2 - modifica dati traccia (durata esclusa: e' immutabile, estratta dal file)
+    /**
+     * US2 - Aggiorna titolo, autore, genere e anno di una traccia gia' in libreria.
+     * La durata non viene modificata (immutabile, estratta dal file alla creazione).
+     * Dopo la modifica notifica gli observer tramite {@link TrackLibrary#trackUpdated()}.
+     *
+     * @param t      traccia da aggiornare (deve essere presente in libreria)
+     * @param title  nuovo titolo
+     * @param author nuovo autore
+     * @param genre  nuovo genere
+     * @param year   nuovo anno di pubblicazione
+     * @throws IllegalArgumentException se la traccia e' null, non e' in libreria o i dati non sono validi
+     */
     public void updateTrack(Track t, String title, String author, String genre, int year) {
         if (t == null) {
             throw new IllegalArgumentException("Nessuna traccia selezionata");
@@ -48,7 +67,6 @@ public class TrackController {
         library.trackUpdated();
     }
 
-    // US4 - elenco tracce della libreria
     /**
      * US4 - Restituisce l'elenco (in sola lettura) delle tracce in libreria.
      *

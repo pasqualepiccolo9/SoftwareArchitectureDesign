@@ -2,260 +2,93 @@ package com.example.progetto_sad.view;
 
 import com.example.progetto_sad.controller.PlaylistController;
 import com.example.progetto_sad.model.Playlist;
+import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
-import com.example.progetto_sad.observer.Observer;
-import javafx.application.Platform;
-import javafx.fxml.FXML;
+import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
 import javafx.scene.Parent;
-import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
-import javafx.stage.Window;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.util.List;
 
 /**
- * View responsabile della visualizzazione del contenuto di una playlist.
- * Mostra le tracce associate, aggiorna la UI quando il Model cambia
- * e gestisce le azioni dell'utente sulla playlist selezionata.
+ * US8 - View della schermata "contenuto playlist".
+ *
+ * Carica {@code PlaylistView.fxml} e vi collega il {@link PlaylistController}
+ * (che ne e' il controller FXML). Espone {@link #load} per ottenere il nodo radice
+ * da inserire in una scena (navigazione) e un avvio standalone ({@link App}) con dati
+ * d'esempio per provarla isolata, sullo stile di {@code AddTrackPreview}.
  */
-public class PlaylistView implements Observer {
+public class PlaylistView {
 
-    @FXML private Label playlistNameLabel;
-    @FXML private Label summaryLabel;
-    @FXML private VBox trackListVBox;
-    @FXML private Label emptyLabel;
-    @FXML private Button addTrackBtn;
-
-    private Runnable onBackAction;
-
-    private Playlist playlist;
-    private PlaylistController controller;
-    private HBox selectedRow;
-    private List<Track> availableTracks = List.of();
-
-    public static Parent load(
-            Playlist playlist,
-            PlaylistController controller,
-            List<Track> availableTracks,
-            Runnable onBackAction
-    ) {
+    /**
+     * Carica la vista del contenuto playlist e restituisce il nodo radice pronto da
+     * inserire in una scena. Inietta il controller fornito (come controller FXML) e lo
+     * inizializza con la playlist, le tracce disponibili e l'azione "indietro".
+     *
+     * @param playlist        la playlist da visualizzare
+     * @param controller      il controller della schermata (anche controller FXML)
+     * @param availableTracks tracce selezionabili per l'aggiunta alla playlist
+     * @param onBackAction    azione eseguita alla pressione di "← Indietro"
+     * @return il nodo radice della vista
+     * @throws IllegalStateException se l'FXML non puo' essere caricato
+     */
+    public static Parent load(Playlist playlist, PlaylistController controller,
+                              List<Track> availableTracks, Runnable onBackAction) {
         try {
-            FXMLLoader loader = new FXMLLoader(
-                    PlaylistView.class.getResource("/com/example/progetto_sad/view/playlist-view.fxml")
-            );
+            FXMLLoader loader = new FXMLLoader(PlaylistView.class.getResource("PlaylistView.fxml"));
+            loader.setControllerFactory(type -> controller);
             Parent root = loader.load();
-            PlaylistView view = loader.getController();
-            view.setAvailableTracks(availableTracks);
-            view.setOnBackAction(onBackAction);
-            view.init(playlist, controller);
+            controller.setAvailableTracks(availableTracks);
+            controller.setOnBackAction(onBackAction);
+            controller.init(playlist);
             return root;
         } catch (IOException e) {
-            throw new IllegalStateException("Impossibile caricare playlist-view.fxml", e);
+            throw new IllegalStateException("Impossibile caricare PlaylistView.fxml", e);
         }
     }
 
+    public static void main(String[] args) {
+        Application.launch(App.class, args);
+    }
+
     /**
-     * Imposta l'elenco delle tracce disponibili che possono essere aggiunte
-     * alla playlist visualizzata.
+     * Avvio standalone della schermata "contenuto playlist" con dati d'esempio.
      *
-     * @param tracks la lista delle tracce disponibili
+     * La classe esterna NON estende Application (avvio affidabile da module-path e
+     * classpath); l'app JavaFX e' questa classe annidata.
      */
-    public void setAvailableTracks(List<Track> tracks) {
-        this.availableTracks = tracks != null ? tracks : List.of();
-    }
+    public static class App extends Application {
 
-    /**
-     * Inizializza la vista con la playlist da mostrare e il relativo controller.
-     * La vista viene registrata come Observer della playlist e aggiorna
-     * immediatamente il contenuto visualizzato.
-     *
-     * @param playlist la playlist da visualizzare
-     * @param controller il controller usato per gestire le operazioni sulla playlist
-     */
-    public void init(Playlist playlist, PlaylistController controller) {
-        this.playlist = playlist;
-        this.controller = controller;
-        if (playlist != null) {
-            playlist.attach(this);
-        }
-        if (addTrackBtn != null) {
-            addTrackBtn.setOnAction(e -> openAddTrackDialog());
-        }
-        refresh();
-    }
+        @Override
+        public void start(Stage stage) {
+            PlaylistManager manager = new PlaylistManager();
+            PlaylistController controller = new PlaylistController(manager);
 
-    /**
-     * Aggiorna la vista quando la playlist osservata cambia.
-     * L'aggiornamento viene eseguito sul JavaFX Application Thread.
-     */
-    @Override
-    public void update() {
-        Platform.runLater(this::refresh);
-    }
+            Playlist playlist = manager.createPlaylist("Chill Vibes");
+            Track t1 = new Track("Midnight Drive", "Luna Ray", 224, "Synthwave", 2021);
+            Track t2 = new Track("Coffee Break", "Soft Beats", 197, "Lo-fi", 2020);
+            Track t3 = new Track("Ocean Lights", "Blue Note", 243, "Ambient", 2022);
+            Track t4 = new Track("Late Night Walk", "Urban Echo", 159, "Indie", 2019);
+            playlist.addTrack(t1);
+            playlist.addTrack(t2);
+            playlist.addTrack(t3);
+            playlist.addTrack(t4);
 
-    /**
-     * Imposta l'azione da eseguire quando l'utente richiede di tornare
-     * alla schermata precedente.
-     *
-     * @param onBackAction l'azione da eseguire alla pressione del pulsante indietro
-     */
-    public void setOnBackAction(Runnable onBackAction) {
-        this.onBackAction = onBackAction;
-    }
+            List<Track> availableTracks = List.of(
+                    t1, t2, t3, t4,
+                    new Track("Golden Hour", "Maya Sol", 211, "Pop", 2023),
+                    new Track("Rainy Sunday", "LoFi Room", 186, "Lo-fi", 2022),
+                    new Track("City Lights", "Neon Wave", 205, "Synthwave", 2020),
+                    new Track("Blue Horizon", "Ocean Drift", 240, "Ambient", 2021)
+            );
 
-    /**
-     * Forza l'aggiornamento della vista e mostra lo stato corrente della playlist.
-     */
-    public void display() {
-        refresh();
-    }
-
-    private void refresh() {
-        if (controller == null || playlistNameLabel == null || summaryLabel == null
-                || trackListVBox == null || emptyLabel == null) {
-            return;
-        }
-
-        if (addTrackBtn != null) {
-            boolean canAdd = playlist != null && !availableTracks.isEmpty();
-            addTrackBtn.setDisable(!canAdd);
-        }
-
-        if (playlist == null) {
-            playlistNameLabel.setText("—");
-            summaryLabel.setText("");
-            trackListVBox.getChildren().clear();
-            showEmpty(true);
-            return;
-        }
-
-        playlistNameLabel.setText(playlist.getName());
-
-        List<Track> tracks = controller.getPlaylistTracks(playlist);
-        int totalSeconds = tracks.stream().mapToInt(Track::getDuration).sum();
-        summaryLabel.setText(tracks.size() + " tracce · " + formatDuration(totalSeconds) + " totali");
-
-        trackListVBox.getChildren().clear();
-        selectedRow = null;
-
-        if (controller.isPlaylistEmpty(playlist)) {
-            showEmpty(true);
-            return;
-        }
-
-        showEmpty(false);
-        for (Track t : tracks) {
-            trackListVBox.getChildren().add(buildTrackRow(t));
-        }
-    }
-
-    private HBox buildTrackRow(Track t) {
-        Label icon = new Label("♪");
-        icon.getStyleClass().add("track-meta");
-        icon.setMinWidth(20);
-
-        Label titleLabel = new Label(t.getTitle());
-        titleLabel.getStyleClass().add("track-title");
-
-        Label metaLabel = new Label(t.getAuthor() + " · " + t.getGenre() + " · " + t.getYear());
-        metaLabel.getStyleClass().add("track-meta");
-
-        VBox info = new VBox(2, titleLabel, metaLabel);
-        HBox.setHgrow(info, Priority.ALWAYS);
-
-        Label durationLabel = new Label(formatDuration(t.getDuration()));
-        durationLabel.getStyleClass().add("track-duration");
-
-        Button removeBtn = new Button("✕");
-        removeBtn.getStyleClass().add("remove-btn");
-        removeBtn.setOnAction(e -> confirmAndRemoveTrack(t));
-        removeBtn.addEventFilter(MouseEvent.MOUSE_CLICKED, MouseEvent::consume);
-
-        HBox row = new HBox(12, icon, info, durationLabel, removeBtn);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(10, 12, 10, 12));
-        row.getStyleClass().add("track-row");
-
-        row.setOnMouseClicked(e -> selectRow(row));
-
-        return row;
-    }
-
-    private void selectRow(HBox row) {
-        if (selectedRow != null) {
-            selectedRow.getStyleClass().remove("track-row-selected");
-            if (!selectedRow.getStyleClass().contains("track-row")) {
-                selectedRow.getStyleClass().add("track-row");
-            }
-        }
-        row.getStyleClass().remove("track-row");
-        row.getStyleClass().add("track-row-selected");
-        selectedRow = row;
-    }
-
-    private void showEmpty(boolean empty) {
-        emptyLabel.setVisible(empty);
-        emptyLabel.setManaged(empty);
-        trackListVBox.setVisible(!empty);
-        trackListVBox.setManaged(!empty);
-    }
-
-    private void openAddTrackDialog() {
-        if (playlist == null || controller == null || availableTracks.isEmpty()
-                || addTrackBtn == null || addTrackBtn.getScene() == null) {
-            return;
-        }
-        Window owner = addTrackBtn.getScene().getWindow();
-        AddTrackDialogView dialog = new AddTrackDialogView();
-        dialog.init(availableTracks, playlist, controller, owner);
-        dialog.show();
-    }
-
-    private String formatDuration(int totalSeconds) {
-        int minutes = totalSeconds / 60;
-        int seconds = totalSeconds % 60;
-        return String.format("%d:%02d", minutes, seconds);
-    }
-
-    private void confirmAndRemoveTrack(Track track) {
-        if (track == null || playlist == null || controller == null) {
-            return;
-        }
-
-        ButtonType cancelButton = new ButtonType("Annulla");
-        ButtonType removeButton = new ButtonType("Rimuovi");
-
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Conferma rimozione");
-        alert.setHeaderText("Rimuovere la traccia dalla playlist?");
-        alert.setContentText(
-                "Vuoi davvero rimuovere \"" + track.getTitle() + "\" dalla playlist \""
-                        + playlist.getName() + "\"?"
-        );
-
-        alert.getButtonTypes().setAll(cancelButton, removeButton);
-
-        alert.showAndWait().ifPresent(response -> {
-            if (response == removeButton) {
-                controller.removeTrackFromPlaylist(track, playlist);
-            }
-        });
-    }
-
-    @FXML
-    private void handleBack() {
-        if (onBackAction != null) {
-            onBackAction.run();
+            Parent root = PlaylistView.load(playlist, controller, availableTracks, stage::close);
+            stage.setTitle("US8 - Visualizzazione contenuto playlist");
+            stage.setScene(new Scene(root, 800, 600));
+            stage.show();
         }
     }
 }

@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.progetto_sad.view.PlaylistView"
+      fx:controller="com.example.progetto_sad.controller.PlaylistController"
       stylesheets="@playlist-view.css"
       styleClass="root-container"
       fillWidth="true">

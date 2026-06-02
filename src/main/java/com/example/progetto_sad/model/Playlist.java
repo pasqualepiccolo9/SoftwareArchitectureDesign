@@ -61,6 +61,7 @@ public class Playlist implements Subject {
             throw new IllegalArgumentException("La traccia è già presente in questa playlist.");
         }
         tracks.add(t);
+        t.addPlaylist(this); // US3 - mantiene sincronizzata la lista playlist della traccia
         notifyObservers();
     }
     
@@ -78,6 +79,7 @@ public class Playlist implements Subject {
             throw new IllegalArgumentException("La traccia selezionata non è presente nella playlist.");
         }
         tracks.remove(t);
+        t.removePlaylist(this); // US3 - mantiene sincronizzata la lista playlist della traccia
         notifyObservers();
     }
 

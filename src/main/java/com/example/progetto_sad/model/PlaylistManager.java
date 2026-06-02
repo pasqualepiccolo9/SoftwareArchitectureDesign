@@ -33,6 +33,11 @@ public class PlaylistManager {
         if (p == null || !playlists.contains(p)) {
             throw new IllegalArgumentException("Impossibile rimuovere: la playlist specificata non esiste.");
         }
+        // US3 - sincronizzazione inversa: ogni traccia non deve piu' riferire questa
+        // playlist che sta per essere eliminata (evita riferimenti a playlist fantasma).
+        for (Track t : p.getTracks()) {
+            t.removePlaylist(p);
+        }
         playlists.remove(p);
     }
     

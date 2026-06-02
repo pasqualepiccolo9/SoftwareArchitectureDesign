@@ -1,5 +1,9 @@
 package com.example.progetto_sad.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * US1 - Modello di una traccia musicale.
  *
@@ -18,6 +22,12 @@ public class Track {
     private final int duration; // durata in secondi, sola lettura (US1/US4)
     private String genre;
     private int year;
+
+    // US3 - playlist in cui questa traccia e' inserita. Serve a rimuoverla da tutte
+    // le sue playlist quando viene eliminata (rimozione in cascata), senza interrogare
+    // un gestore esterno. La lista e' mantenuta sincronizzata da Playlist.addTrack /
+    // Playlist.removeTrack e da PlaylistManager.removePlaylist.
+    private final List<Playlist> playlists = new ArrayList<>();
 
     /**
      * Crea una traccia con i dati forniti.
@@ -70,6 +80,43 @@ public class Track {
 
     public void setYear(int year) {
         this.year = year;
+    }
+
+    /**
+     * US3 - Registra che questa traccia e' stata inserita nella playlist indicata.
+     * Va invocato solo da {@link Playlist#addTrack(Track)} per mantenere sincronizzato
+     * il legame bidirezionale traccia-playlist; non inserisce duplicati.
+     *
+     * @param playlist la playlist in cui la traccia e' stata inserita
+     * @throws IllegalArgumentException se la playlist e' null
+     */
+    void addPlaylist(Playlist playlist) {
+        if (playlist == null) {
+            throw new IllegalArgumentException("La playlist non puo' essere null");
+        }
+        if (!playlists.contains(playlist)) {
+            playlists.add(playlist);
+        }
+    }
+
+    /**
+     * US3 - Registra che questa traccia non e' piu' presente nella playlist indicata.
+     * Va invocato solo da {@link Playlist#removeTrack(Track)} o da
+     * {@link PlaylistManager#removePlaylist(Playlist)} per mantenere sincronizzato il legame.
+     *
+     * @param playlist la playlist da cui la traccia e' stata rimossa
+     */
+    void removePlaylist(Playlist playlist) {
+        playlists.remove(playlist);
+    }
+
+    /**
+     * US3 - Restituisce le playlist in cui questa traccia compare.
+     *
+     * @return copia non modificabile della lista delle playlist
+     */
+    public List<Playlist> getPlaylists() {
+        return Collections.unmodifiableList(new ArrayList<>(playlists));
     }
 
     /**

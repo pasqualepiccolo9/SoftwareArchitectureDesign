@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.progetto_sad.view.PlaylistView"
+      stylesheets="@playlist-content-view.css"
+      styleClass="root-container"
+      fillWidth="true">
+
+    <VBox styleClass="card" VBox.vgrow="ALWAYS" maxHeight="Infinity">
+
+        <!-- HEADER -->
+        <HBox alignment="CENTER_LEFT" spacing="16">
+            <Button text="← Indietro"
+                    styleClass="back-btn"
+                    onAction="#handleBack" />
+            <Label text="♫" styleClass="playlist-icon"/>
+            <VBox spacing="4" HBox.hgrow="ALWAYS">
+                <HBox alignment="CENTER_LEFT" spacing="10">
+                    <Label fx:id="playlistNameLabel" text="—" styleClass="playlist-name"/>
+                    <Label text="In riproduzione" styleClass="badge"/>
+                </HBox>
+                <Label fx:id="summaryLabel" text="" styleClass="summary-label"/>
+            </VBox>
+            <Button fx:id="addTrackBtn" text="+ Aggiungi traccia" styleClass="add-track-btn"/>
+        </HBox>
+
+        <Separator styleClass="divider"/>
+
+        <!-- LISTA TRACCE -->
+        <ScrollPane styleClass="track-scroll" fitToWidth="true" VBox.vgrow="ALWAYS">
+            <VBox fx:id="trackListVBox"/>
+        </ScrollPane>
+
+        <!-- STATO PLAYLIST VUOTA -->
+        <Label fx:id="emptyLabel"
+               text="Questa playlist è vuota"
+               styleClass="empty-label"
+               maxWidth="Infinity"
+               visible="false"
+               managed="false"
+               VBox.vgrow="ALWAYS"/>
+
+    </VBox>
+</VBox>

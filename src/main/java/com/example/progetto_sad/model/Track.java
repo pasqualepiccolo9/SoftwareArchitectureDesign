@@ -9,6 +9,7 @@ package com.example.progetto_sad.model;
  * La durata e' espressa in secondi ed e' in sola lettura (campo final):
  * viene estratta automaticamente dal file audio al momento della creazione
  * (vedi TrackFactory) e non puo' essere modificata dall'utente.
+ * Titolo, autore, genere e anno possono essere aggiornati in modifica (US2).
  */
 public class Track {
 

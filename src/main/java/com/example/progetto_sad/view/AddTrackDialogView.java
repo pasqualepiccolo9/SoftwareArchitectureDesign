@@ -1,0 +1,256 @@
+package com.example.progetto_sad.view;
+
+import com.example.progetto_sad.controller.PlaylistController;
+import com.example.progetto_sad.model.Playlist;
+import com.example.progetto_sad.model.Track;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * View responsabile della finestra di dialogo per l'aggiunta di tracce
+ * a una playlist. Mostra le tracce disponibili, permette di filtrare
+ * l'elenco e aggiunge alla playlist solo le tracce selezionate.
+ */
+public class AddTrackDialogView {
+
+    /**
+     * Rappresenta una riga della finestra di dialogo associando una traccia
+     * al relativo checkbox, al nodo grafico e allo stato di presenza nella playlist.
+     *
+     * @param track la traccia rappresentata dalla riga
+     * @param cb il checkbox usato per selezionare la traccia
+     * @param row il contenitore grafico della riga
+     * @param alreadyPresent indica se la traccia è già presente nella playlist
+     */
+    private record RowEntry(Track track, CheckBox cb, HBox row, boolean alreadyPresent) {}
+
+    private Stage stage;
+    private Playlist playlist;
+    private PlaylistController controller;
+    private List<Track> allTracks;
+
+    private final List<Track> selected = new ArrayList<>();
+    private final List<RowEntry> rowEntries = new ArrayList<>();
+
+    private VBox trackListBox;
+    private Label selectedCountLabel;
+    private Button addButton;
+
+    /**
+     * Inizializza la finestra di dialogo con le tracce disponibili,
+     * la playlist di destinazione, il controller e la finestra proprietaria.
+     *
+     * @param availableTracks le tracce che possono essere mostrate nella finestra
+     * @param playlist la playlist a cui aggiungere le tracce selezionate
+     * @param controller il controller usato per aggiornare la playlist
+     * @param owner la finestra proprietaria della finestra di dialogo
+     */
+    public void init(List<Track> availableTracks, Playlist playlist,
+                     PlaylistController controller, Window owner) {
+        this.playlist = playlist;
+        this.controller = controller;
+        this.allTracks = availableTracks != null ? new ArrayList<>(availableTracks) : new ArrayList<>();
+
+        stage = new Stage();
+        stage.initModality(Modality.APPLICATION_MODAL);
+        stage.initOwner(owner);
+        stage.setResizable(false);
+
+        buildRowEntries();
+
+        Scene scene = new Scene(buildRoot(), 580, 540);
+        var cssUrl = getClass().getResource(
+                "/com/example/progetto_sad/view/add-track-dialog.css");
+        if (cssUrl != null) {
+            scene.getStylesheets().add(cssUrl.toExternalForm());
+        }
+        stage.setScene(scene);
+    }
+
+    /**
+     * Mostra la finestra di dialogo in modalità bloccante fino alla sua chiusura.
+     */
+    public void show() {
+        if (stage != null) {
+            stage.showAndWait();
+        }
+    }
+
+    // ── costruzione righe ────────────────────────────────────────────────────
+
+    private void buildRowEntries() {
+        List<Track> inPlaylist = controller.getPlaylistTracks(playlist);
+        for (Track track : allTracks) {
+            boolean alreadyPresent = inPlaylist.contains(track);
+            CheckBox cb = new CheckBox();
+            cb.setDisable(alreadyPresent);                   // disabilitata se già presente
+            if (!alreadyPresent) {
+                cb.selectedProperty().addListener((obs, oldV, newV) -> {
+                    if (newV) {
+                        selected.add(track);
+                    } else {
+                        selected.remove(track);
+                    }
+                    updateFooter();
+                });
+            }
+            rowEntries.add(new RowEntry(track, cb, buildRow(track, cb, alreadyPresent), alreadyPresent));
+        }
+    }
+
+    private HBox buildRow(Track track, CheckBox cb, boolean alreadyPresent) {
+        Label titleLabel = new Label(track.getTitle());
+        titleLabel.getStyleClass().add("row-title");
+
+        Label metaLabel = new Label("· " + track.getAuthor());
+        metaLabel.getStyleClass().add("row-meta");
+
+        HBox info = new HBox(6, titleLabel, metaLabel);
+        info.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Label durationLabel = new Label(formatDuration(track.getDuration()));
+        durationLabel.getStyleClass().add("row-duration");
+
+        HBox row = new HBox(12, cb, info, durationLabel);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(10, 12, 10, 12));
+        row.getStyleClass().add(alreadyPresent ? "track-row-disabled" : "track-row");
+
+        if (alreadyPresent) {
+            Label badge = new Label("già presente");
+            badge.getStyleClass().add("already-badge");
+            row.getChildren().add(badge);             // badge solo se già presente
+        }
+
+        return row;
+    }
+
+    // ── layout ───────────────────────────────────────────────────────────────
+
+    private VBox buildRoot() {
+        VBox card = new VBox(16);
+        card.getStyleClass().add("dialog-card");
+        VBox.setVgrow(card, Priority.ALWAYS);
+        card.getChildren().addAll(
+                buildHeader(),
+                buildFilterBar(),
+                buildTrackScroll(),
+                buildFooter()
+        );
+
+        VBox root = new VBox(card);
+        root.getStyleClass().add("dialog-root");
+        return root;
+    }
+
+    private HBox buildHeader() {
+        Label prefix = new Label("Aggiungi traccia a ");
+        prefix.getStyleClass().add("dialog-title");
+
+        Label nameLabel = new Label(playlist.getName());
+        nameLabel.getStyleClass().addAll("dialog-title", "playlist-name-highlight");
+
+        HBox titleBox = new HBox(0, prefix, nameLabel);
+        titleBox.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(titleBox, Priority.ALWAYS);
+
+        Button closeBtn = new Button("✕");
+        closeBtn.getStyleClass().add("dialog-close-btn");
+        closeBtn.setOnAction(e -> stage.close());     // X → chiude senza modifiche
+
+        HBox header = new HBox(titleBox, closeBtn);
+        header.setAlignment(Pos.CENTER_LEFT);
+        return header;
+    }
+
+    private HBox buildFilterBar() {
+        Label searchIcon = new Label("🔍");
+        searchIcon.getStyleClass().add("search-icon");
+
+        TextField filterField = new TextField();
+        filterField.setPromptText("Filtra tracce...");
+        filterField.getStyleClass().add("filter-field");
+        HBox.setHgrow(filterField, Priority.ALWAYS);
+        filterField.textProperty().addListener(
+                (obs, old, val) -> applyFilter(val.toLowerCase()));
+
+        HBox bar = new HBox(8, searchIcon, filterField);
+        bar.setAlignment(Pos.CENTER_LEFT);
+        bar.getStyleClass().add("filter-bar");
+        return bar;
+    }
+
+    private ScrollPane buildTrackScroll() {
+        trackListBox = new VBox(0);
+        for (RowEntry entry : rowEntries) {
+            trackListBox.getChildren().add(entry.row());
+        }
+
+        ScrollPane scroll = new ScrollPane(trackListBox);
+        scroll.setFitToWidth(true);
+        scroll.getStyleClass().add("dialog-scroll");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        return scroll;
+    }
+
+    private HBox buildFooter() {
+        selectedCountLabel = new Label("0 selezionate");
+        selectedCountLabel.getStyleClass().add("selected-count");
+        HBox.setHgrow(selectedCountLabel, Priority.ALWAYS);
+
+        Button cancelBtn = new Button("Annulla");
+        cancelBtn.getStyleClass().add("cancel-btn");
+        cancelBtn.setOnAction(e -> stage.close());    // Annulla → chiude senza modifiche
+
+        addButton = new Button("Aggiungi");
+        addButton.getStyleClass().add("add-btn");
+        addButton.setDisable(true);                   // disabilitato finché selezione = 0
+        addButton.setOnAction(e -> addSelected());
+
+        HBox footer = new HBox(12, selectedCountLabel, cancelBtn, addButton);
+        footer.setAlignment(Pos.CENTER_LEFT);
+        footer.getStyleClass().add("dialog-footer");
+        return footer;
+    }
+
+    // ── logica ───────────────────────────────────────────────────────────────
+
+    private void applyFilter(String filter) {
+        trackListBox.getChildren().clear();
+        for (RowEntry entry : rowEntries) {
+            if (filter.isBlank()
+                    || entry.track().getTitle().toLowerCase().contains(filter)   // filtra su titolo
+                    || entry.track().getAuthor().toLowerCase().contains(filter)) // filtra su autore
+            {
+                trackListBox.getChildren().add(entry.row());
+            }
+        }
+    }
+
+    private void updateFooter() {
+        int count = selected.size();
+        selectedCountLabel.setText(count + " selezionate");
+        addButton.setDisable(count == 0);             // Aggiungi abilitato solo se count > 0
+    }
+
+    private void addSelected() {
+        for (Track track : new ArrayList<>(selected)) {
+            controller.addTrackToPlaylist(track, playlist); // unico punto di aggiunta
+        }
+        stage.close();
+    }
+
+    private String formatDuration(int totalSeconds) {
+        return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
+    }
+}

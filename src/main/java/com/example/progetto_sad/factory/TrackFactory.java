@@ -39,6 +39,11 @@ public class TrackFactory {
         return new Track(title.trim(), author.trim(), durationSeconds, genre.trim(), year);
     }
 
+    /**
+     * Valida titolo, autore, genere e anno (US1 in creazione, US2 in modifica).
+     *
+     * @throws IllegalArgumentException se un campo obbligatorio e' vuoto o l'anno e' fuori intervallo
+     */
     public static void validateMetadata(String title, String author, String genre, int year) {
         if (isBlank(title)) {
             throw new IllegalArgumentException("Il titolo e' obbligatorio");

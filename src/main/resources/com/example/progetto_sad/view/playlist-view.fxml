@@ -10,7 +10,7 @@
 
 <VBox xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.example.progetto_sad.view.PlaylistView"
-      stylesheets="@playlist-content-view.css"
+      stylesheets="@playlist-view.css"
       styleClass="root-container"
       fillWidth="true">
 

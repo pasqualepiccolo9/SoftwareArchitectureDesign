@@ -6,7 +6,9 @@ import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.observer.Observer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
+import javafx.scene.Parent;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -18,6 +20,7 @@ import javafx.stage.Window;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
+import java.io.IOException;
 import java.util.List;
 
 /**
@@ -39,6 +42,27 @@ public class PlaylistView implements Observer {
     private PlaylistController controller;
     private HBox selectedRow;
     private List<Track> availableTracks = List.of();
+
+    public static Parent load(
+            Playlist playlist,
+            PlaylistController controller,
+            List<Track> availableTracks,
+            Runnable onBackAction
+    ) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    PlaylistView.class.getResource("/com/example/progetto_sad/view/playlist-view.fxml")
+            );
+            Parent root = loader.load();
+            PlaylistView view = loader.getController();
+            view.setAvailableTracks(availableTracks);
+            view.setOnBackAction(onBackAction);
+            view.init(playlist, controller);
+            return root;
+        } catch (IOException e) {
+            throw new IllegalStateException("Impossibile caricare playlist-view.fxml", e);
+        }
+    }
 
     /**
      * Imposta l'elenco delle tracce disponibili che possono essere aggiunte

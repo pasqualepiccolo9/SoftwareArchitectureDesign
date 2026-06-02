@@ -12,11 +12,11 @@ IntelliJ va bene lo stesso, io uso VS Code.
 
 Ho lavorato sulla UI JavaFX gia impostata nel progetto:
 
-- `hello-view.fxml` — layout con ListView e form di modifica
-- `HelloController.java` — controller FXML, selezione traccia e salvataggio
-- `LibraryView.java` — aggiorna la ListView quando cambia `TrackLibrary`
+- `view/modifica-track-view.fxml` + `controller/ModificaTrackController.java` — schermata "Modifica traccia" (form precompilato, salva/elimina)
+- `view/ModificaTrackView.java` — launcher per provare la schermata di modifica da sola
+- `LibraryView.java` — aggiorna la ListView quando cambia `TrackLibrary` (per la futura schermata libreria)
 
-L'app parte da `HelloApplication.java` che carica il file FXML.
+`HelloApplication.java` e' il punto d'accesso dell'app: per ora apre la schermata template JavaFX ("Hello"); in futuro carichera' la schermata principale.
 Per avviarla serve il plugin Maven JavaFX (`javafx:run`), come in IntelliJ.
 
 ## Primo avvio VS Code
@@ -38,7 +38,7 @@ $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 .\mvnw.cmd javafx:run
 ```
 
-`javafx:run` apre la finestra con la lista tracce e il form a destra.
+`javafx:run` apre la schermata template (`HelloApplication`). Per provare la schermata di modifica esegui `ModificaTrackView`.
 
 Solo compilazione:
 

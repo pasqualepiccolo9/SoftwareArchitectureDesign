@@ -11,10 +11,17 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Verifica il comportamento del controller nella visualizzazione
+ * del contenuto di una playlist e nell'aggiornamento tramite Observer.
+ */
 public class PlaylistContentTest {
 
     private PlaylistController controller;
 
+    /**
+     * Inizializza un nuovo controller prima di ogni test.
+     */
     @BeforeEach
     void setUp() {
         controller = new PlaylistController(new PlaylistManager());
@@ -42,59 +49,59 @@ public class PlaylistContentTest {
 
     @Test
     void testGetTracksOneTrack() {
-        Playlist p = new Playlist("Pop");
-        Track t = new Track("Song", "Artist", 200, "Pop", 2023);
-        p.addTrack(t);
-        List<Track> result = controller.getPlaylistTracks(p);
+        Playlist playlist = new Playlist("Pop");
+        Track track = new Track("Song", "Artist", 200, "Pop", 2023);
+        playlist.addTrack(track);
+        List<Track> result = controller.getPlaylistTracks(playlist);
         assertEquals(1, result.size());
-        assertTrue(result.contains(t));
+        assertTrue(result.contains(track));
     }
 
     @Test
     void testGetTracksMultipleTracks() {
-        Playlist p = new Playlist("Mix");
+        Playlist playlist = new Playlist("Mix");
         Track t1 = new Track("A", "Artist1", 180, "Pop", 2020);
         Track t2 = new Track("B", "Artist2", 240, "Rock", 2021);
         Track t3 = new Track("C", "Artist3", 300, "Jazz", 2022);
-        p.addTrack(t1);
-        p.addTrack(t2);
-        p.addTrack(t3);
-        List<Track> result = controller.getPlaylistTracks(p);
+        playlist.addTrack(t1);
+        playlist.addTrack(t2);
+        playlist.addTrack(t3);
+        List<Track> result = controller.getPlaylistTracks(playlist);
         assertEquals(3, result.size());
         assertEquals(List.of(t1, t2, t3), result);
     }
 
     @Test
     void testObserverNotifiedAfterAddTrack() {
-        Playlist p = new Playlist("Indie");
+        Playlist playlist = new Playlist("Indie");
         int[] count = {0};
         Observer obs = () -> count[0]++;
-        p.attach(obs);
-        controller.addTrackToPlaylist(new Track("Song", "Artist", 200, "Indie", 2024), p);
+        playlist.attach(obs);
+        controller.addTrackToPlaylist(new Track("Song", "Artist", 200, "Indie", 2024), playlist);
         assertEquals(1, count[0]);
     }
 
     @Test
     void testObserverNotifiedAfterRemoveTrack() {
-        Playlist p = new Playlist("Indie");
-        Track t = new Track("Song", "Artist", 200, "Indie", 2024);
-        p.addTrack(t);
+        Playlist playlist = new Playlist("Indie");
+        Track track = new Track("Song", "Artist", 200, "Indie", 2024);
+        playlist.addTrack(track);
         int[] count = {0};
         Observer obs = () -> count[0]++;
-        p.attach(obs);
-        controller.removeTrackFromPlaylist(t, p);
+        playlist.attach(obs);
+        controller.removeTrackFromPlaylist(track, playlist);
         assertEquals(1, count[0]);
     }
 
     @Test
     void testListUpdatedAfterRemove() {
-        Playlist p = new Playlist("Soul");
+        Playlist playlist = new Playlist("Soul");
         Track t1 = new Track("First", "Artist", 180, "Soul", 2020);
         Track t2 = new Track("Second", "Artist", 200, "Soul", 2021);
-        p.addTrack(t1);
-        p.addTrack(t2);
-        controller.removeTrackFromPlaylist(t1, p);
-        List<Track> result = controller.getPlaylistTracks(p);
+        playlist.addTrack(t1);
+        playlist.addTrack(t2);
+        controller.removeTrackFromPlaylist(t1, playlist);
+        List<Track> result = controller.getPlaylistTracks(playlist);
         assertEquals(1, result.size());
         assertTrue(result.contains(t2));
         assertFalse(result.contains(t1));

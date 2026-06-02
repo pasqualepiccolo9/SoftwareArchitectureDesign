@@ -14,7 +14,7 @@ Ho lavorato sulla UI JavaFX gia impostata nel progetto:
 
 - `view/modifica-track-view.fxml` + `controller/ModificaTrackController.java` — schermata "Modifica traccia" (form precompilato, salva/elimina)
 - `view/ModificaTrackView.java` — launcher per provare la schermata di modifica da sola
-- `LibraryView.java` — aggiorna la ListView quando cambia `TrackLibrary` (per la futura schermata libreria)
+- `view/LibraryView.java` + `view/LibraryView.fxml` + `controller/LibraryController.java` — schermata principale (home "Libreria tracce"): tabella tracce con "x" per eliminare, sidebar playlist, + Aggiungi, + Nuova playlist (player placeholder)
 
 `HelloApplication.java` e' il punto d'accesso dell'app: per ora apre la schermata template JavaFX ("Hello"); in futuro carichera' la schermata principale.
 Per avviarla serve il plugin Maven JavaFX (`javafx:run`), come in IntelliJ.

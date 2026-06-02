@@ -2,22 +2,17 @@ package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.Track;
 import javafx.fxml.FXML;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 
-import java.util.Optional;
-
 /**
- * US2/US3 - Controller JavaFX della schermata "Modifica traccia".
+ * US2 - Controller JavaFX della schermata "Modifica traccia".
  *
  * Riceve la traccia da modificare e il {@link TrackController}; al caricamento
- * precompila i campi con i dati della traccia. Su "Salva" delega la modifica e su
- * "Elimina" (previa conferma) delega l'eliminazione al controller applicativo.
- * Non gestisce alcuna lista: la schermata viene aperta a partire da una traccia
- * gia' selezionata altrove.
+ * precompila i campi con i dati della traccia. Su "Salva" delega la modifica al
+ * controller applicativo. L'eliminazione NON avviene piu' qui: si fa dalla riga
+ * della traccia nella schermata Libreria (US3).
  */
 public class ModificaTrackController {
 
@@ -69,27 +64,5 @@ public class ModificaTrackController {
         } catch (IllegalArgumentException e) {
             errorLabel.setText(e.getMessage());
         }
-    }
-
-    // US3 - elimina la traccia in modifica, previa conferma dell'utente
-    @FXML
-    private void onDeleteClick() {
-        if (track == null) {
-            return;
-        }
-        if (confirmDeletion(track)) {
-            trackController.deleteTrack(track);
-            errorLabel.setText("");
-        }
-    }
-
-    // US3 - pop-up di conferma "Sei sicuro?" prima di eliminare
-    private boolean confirmDeletion(Track t) {
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Conferma eliminazione");
-        alert.setHeaderText("Eliminare la traccia \"" + t.getTitle() + "\"?");
-        alert.setContentText("L'operazione non puo' essere annullata.");
-        Optional<ButtonType> result = alert.showAndWait();
-        return result.isPresent() && result.get() == ButtonType.OK;
     }
 }

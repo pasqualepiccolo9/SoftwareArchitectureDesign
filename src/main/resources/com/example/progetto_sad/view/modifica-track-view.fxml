@@ -8,7 +8,6 @@
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import java.lang.String?>
@@ -89,10 +88,8 @@
 
             <Separator styleClass="divider"/>
 
-            <!-- Footer: Elimina (sinistra) / Salva (destra) -->
-            <HBox spacing="12" alignment="CENTER_LEFT">
-                <Button fx:id="deleteButton" text="Elimina traccia" styleClass="danger-button" onAction="#onDeleteClick"/>
-                <Region HBox.hgrow="ALWAYS"/>
+            <!-- Footer: solo Salva (l'eliminazione si fa dalla riga in schermata Libreria, US3) -->
+            <HBox spacing="12" alignment="CENTER_RIGHT">
                 <Button fx:id="saveButton" text="Salva modifiche" styleClass="primary-button" onAction="#onSaveClick"/>
             </HBox>
         </VBox>

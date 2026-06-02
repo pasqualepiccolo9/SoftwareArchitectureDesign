@@ -5,6 +5,7 @@
 package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.Playlist;
+import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -18,52 +19,95 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author miche
  */
+/**
+ * Classe di test per verificare la logica di PlaylistController.
+ * Assicura che il controller comunichi correttamente con il manager e gestisca
+ * in sicurezza le interazioni con le playlist.
+ */
 public class PlaylistControllerTest {
     
-    public PlaylistControllerTest() {
-    }
+    private PlaylistManager manager;
+    private PlaylistController controller;
     
-   @Test
-    void testAggiuntaTracciaValida() {
-        Playlist p = new Playlist("Pop");
-        Track t = new Track("Title", "Author", 180, "Pop", 2026);
-        p.addTrack(t);
-        assertTrue(p.getTracks().contains(t));
+   /**
+     * Metodo di setup eseguito prima di ogni test.
+     * Inizializza un nuovo gestore e un nuovo controller per avere un ambiente pulito.
+     */
+    @BeforeEach
+    void setUp() {
+        manager = new PlaylistManager();
+        controller = new PlaylistController(manager);
     }
 
+    /**
+     * Testa la corretta creazione di una playlist tramite il controller.
+     * Verifica che la richiesta venga passata al gestore e salvata.
+     */
     @Test
-    void testAggiuntaTracciaDuplicataONulla() {
-        Playlist p = new Playlist("Pop");
-        Track t = new Track("Title", "Author", 180, "Pop", 2026);
-        p.addTrack(t);
+    void testCreatePlaylistViaController() {
+        controller.createPlaylist("Indie Rock");
         
-        // T6.3: Verifica blocco duplicati
-        assertThrows(IllegalArgumentException.class, () -> p.addTrack(t));
-        // T6.3: Verifica blocco selezione non valida
-        assertThrows(IllegalArgumentException.class, () -> p.addTrack(null));
-    }
-    
-    @Test
-    void testRimozioneTracciaValida() {
-        Playlist p = new Playlist("Jazz");
-        Track t = new Track("Title", "Author", 240,"Jazz", 2026);
-        p.addTrack(t);
-        p.removeTrack(t);
-        assertTrue(p.getTracks().isEmpty());
+        assertEquals(1, manager.getPlaylists().size());
+        assertEquals("Indie Rock", manager.getPlaylists().get(0).getName());
     }
 
+    /**
+     * Testa la corretta rimozione di una playlist tramite il controller.
+     */
     @Test
-    void testRimozionePlaylistVuotaOAssente() {
-        Playlist p = new Playlist("Jazz");
-        Track t = new Track("Title", "Author",240, "Jazz", 2026);
+    void testRemovePlaylistViaController() {
+        // Creazione preventiva diretta per il test
+        Playlist p = manager.createPlaylist("Chill Vibes");
+        assertEquals(1, manager.getPlaylists().size());
         
-        // T7.3: Errore playlist vuota
-        assertThrows(IllegalStateException.class, () -> p.removeTrack(t));
+        // Rimozione tramite controller
+        controller.removePlaylist(p);
         
-        p.addTrack(t);
-        Track t2 = new Track("Other", "Author",200, "Jazz", 2026);
+        assertEquals(0, manager.getPlaylists().size());
+    }
+
+    /**
+     * Testa la gestione in sicurezza della rimozione quando viene
+     * passato un parametro nullo (simulando nessun elemento selezionato nella UI).
+     */
+    @Test
+    void testRemoveNullPlaylist() {
+        Playlist p = manager.createPlaylist("Synthwave");
         
-        // T7.3: Errore traccia assente
-        assertThrows(IllegalArgumentException.class, () -> p.removeTrack(t2));
+        // Il controller dovrebbe ignorare la chiamata senza lanciare eccezioni o crashare
+        assertDoesNotThrow(() -> {
+            controller.removePlaylist(null);
+        });
+        
+        assertEquals(1, manager.getPlaylists().size());
+    }
+
+    /**
+     * Testa il recupero della lista di tracce (US8) per popolare la vista.
+     */
+    @Test
+    void testGetPlaylistTracksViaController() {
+        Playlist p = manager.createPlaylist("Workout");
+        Track t1 = new Track("Stronger", "Kanye West", 312, "Rap", 2007);
+        p.addTrack(t1);
+        
+        List<Track> tracks = controller.getPlaylistTracks(p);
+        
+        assertNotNull(tracks);
+        assertEquals(1, tracks.size());
+        assertEquals("Stronger", tracks.get(0).getTitle());
+    }
+
+    /**
+     * Testa il recupero delle tracce quando la playlist fornita è nulla.
+     * Verifica che restituisca null o gestisca il caso senza eccezioni non previste.
+     */
+    @Test
+    void testGetTracksFromNullPlaylist() {
+        List<Track> tracks = controller.getPlaylistTracks(null);
+        
+        assertNotNull(tracks);
+        assertTrue(tracks.isEmpty());
     }
 }
+

@@ -79,7 +79,10 @@
         <!-- GENERE + ANNO -->
         <HBox spacing="16">
             <VBox spacing="6" HBox.hgrow="ALWAYS">
-                <Label text="Genere" styleClass="field-label"/>
+                <HBox spacing="3">
+                    <Label text="Genere" styleClass="field-label"/>
+                    <Label text="*" styleClass="required-mark"/>
+                </HBox>
                 <ComboBox fx:id="genreCombo" promptText="Seleziona genere"
                           styleClass="combo-input" maxWidth="Infinity">
                     <items>
@@ -100,7 +103,10 @@
                 </ComboBox>
             </VBox>
             <VBox spacing="6" HBox.hgrow="ALWAYS">
-                <Label text="Anno" styleClass="field-label"/>
+                <HBox spacing="3">
+                    <Label text="Anno" styleClass="field-label"/>
+                    <Label text="*" styleClass="required-mark"/>
+                </HBox>
                 <TextField fx:id="yearField" promptText="2024" styleClass="text-input"/>
             </VBox>
         </HBox>

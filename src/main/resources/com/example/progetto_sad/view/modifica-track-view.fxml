@@ -82,8 +82,9 @@
 
             <Separator styleClass="divider"/>
 
-            <!-- Footer: solo Salva (l'eliminazione si fa dalla riga in schermata Libreria, US3) -->
+            <!-- Footer: Annulla (scarta le modifiche) / Salva -->
             <HBox spacing="12" alignment="CENTER_RIGHT">
+                <Button fx:id="cancelButton" text="Annulla" styleClass="ghost-button" onAction="#onCancelClick"/>
                 <Button fx:id="saveButton" text="Salva modifiche" styleClass="primary-button" onAction="#onSaveClick"/>
             </HBox>
         </VBox>

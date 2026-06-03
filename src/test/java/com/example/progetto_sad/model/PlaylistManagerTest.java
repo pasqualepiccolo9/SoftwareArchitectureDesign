@@ -101,4 +101,48 @@ public class PlaylistManagerTest {
             manager.removePlaylist(null);
         });
     }
+
+    /**
+     * US3 - Testa che la rimozione di una playlist la tolga anche dalla lista
+     * delle playlist di tutte le tracce che conteneva (sincronizzazione inversa).
+     */
+    @Test
+    void testRemovePlaylistDetachesItFromTracks() {
+        Playlist p = manager.createPlaylist("Rock");
+        Track track = new Track("Bohemian Rhapsody", "Queen", 354, "Rock", 1975);
+        p.addTrack(track);
+
+        manager.removePlaylist(p);
+
+        assertFalse(track.getPlaylists().contains(p));
+    }
+
+    /**
+     * US5 - Testa che non si possa creare una playlist con un nome gia' esistente.
+     */
+    @Test
+    void testDuplicatePlaylistNameThrows() {
+        manager.createPlaylist("Rock");
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            manager.createPlaylist("Rock");
+        });
+
+        assertEquals(1, manager.getPlaylists().size());
+    }
+
+    /**
+     * US5 - Testa che il controllo sui nomi duplicati ignori spazi iniziali/finali
+     * e differenze tra maiuscole e minuscole.
+     */
+    @Test
+    void testDuplicatePlaylistNameIgnoresCaseAndSpaces() {
+        manager.createPlaylist("Rock");
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            manager.createPlaylist("  rock  ");
+        });
+
+        assertEquals(1, manager.getPlaylists().size());
+    }
 }

@@ -109,7 +109,43 @@ public class PlaylistTest {
         
         assertThrows(IllegalArgumentException.class, () -> {
             playlist.removeTrack(dummyTrack2);}); // Tento di rimuovere la traccia 2
-        
+
+    }
+
+    /**
+     * US3 - Testa che aggiungere una traccia alla playlist registri la playlist
+     * anche nella lista delle playlist della traccia (legame bidirezionale).
+     */
+    @Test
+    void testAddTrackUpdatesTrackPlaylists() {
+        playlist.addTrack(dummyTrack1);
+
+        assertTrue(dummyTrack1.getPlaylists().contains(playlist));
+    }
+
+    /**
+     * US3 - Testa che rimuovere una traccia dalla playlist la tolga anche dalla
+     * lista delle playlist della traccia.
+     */
+    @Test
+    void testRemoveTrackUpdatesTrackPlaylists() {
+        playlist.addTrack(dummyTrack1);
+
+        playlist.removeTrack(dummyTrack1);
+
+        assertFalse(dummyTrack1.getPlaylists().contains(playlist));
+    }
+
+    /**
+     * US3 - Testa che la lista delle playlist restituita dalla traccia sia una
+     * copia non modificabile.
+     */
+    @Test
+    void testTrackPlaylistsIsUnmodifiable() {
+        playlist.addTrack(dummyTrack1);
+
+        assertThrows(UnsupportedOperationException.class,
+                () -> dummyTrack1.getPlaylists().add(new Playlist("Test")));
     }
 }
 

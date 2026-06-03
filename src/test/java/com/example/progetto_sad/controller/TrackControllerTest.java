@@ -1,5 +1,6 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,6 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -81,6 +83,34 @@ class TrackControllerTest {
 
         assertDoesNotThrow(() -> controller.deleteTrack(notStored));
         assertEquals(1, controller.getTracks().size());
+    }
+
+    // US3 - cascade: eliminando una traccia presente in piu' playlist, viene rimossa da tutte
+    @Test
+    void deleteTrackRemovesItFromAllContainingPlaylists() {
+        Track track = new Track("Imagine", "John Lennon", DURATION, "Rock", 1971);
+        library.addTrack(track);
+        Playlist preferiti = new Playlist("Preferiti");
+        Playlist rock = new Playlist("Rock");
+        preferiti.addTrack(track);
+        rock.addTrack(track);
+
+        controller.deleteTrack(track);
+
+        assertTrue(controller.getTracks().isEmpty());
+        assertFalse(preferiti.getTracks().contains(track));
+        assertFalse(rock.getTracks().contains(track));
+        assertTrue(track.getPlaylists().isEmpty());
+    }
+
+    // US3 - cascade: una traccia non presente in alcuna playlist viene tolta solo dalla libreria
+    @Test
+    void deleteTrackNotInAnyPlaylistOnlyRemovesFromLibrary() {
+        Track track = new Track("Imagine", "John Lennon", DURATION, "Rock", 1971);
+        library.addTrack(track);
+
+        assertDoesNotThrow(() -> controller.deleteTrack(track));
+        assertTrue(controller.getTracks().isEmpty());
     }
 
     // US2 - modifica corretta dei metadati (durata invariata)

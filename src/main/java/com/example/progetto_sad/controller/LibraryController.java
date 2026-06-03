@@ -29,7 +29,6 @@ import java.io.IOException;
 
 /**
  * US3/US4 - Controller della schermata principale (home / "Libreria tracce").
- *
  * Controller FXML della vista {@code LibraryView.fxml}: mostra l'elenco delle tracce
  * della libreria (US4), permette di eliminarle dalla riga con la "x" (US3, con
  * rimozione in cascata dalle playlist), di aprire il form "Aggiungi traccia" (US1),
@@ -237,7 +236,10 @@ public class LibraryController implements Observer {
         PlaylistController playlistController = new PlaylistController(playlistManager);
         Parent playlistRoot = PlaylistView.load(
                 playlist, playlistController, trackController.getTracks(),
-                () -> scene.setRoot(libraryRoot));
+                () -> {
+                    scene.setRoot(libraryRoot);
+                    refreshPlaylists(); // US5 - sidebar aggiornata al ritorno (es. dopo eliminazione playlist)
+                });
         scene.setRoot(playlistRoot);
     }
 

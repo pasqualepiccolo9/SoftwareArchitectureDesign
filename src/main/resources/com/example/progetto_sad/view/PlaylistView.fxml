@@ -30,6 +30,7 @@
                 <Label fx:id="summaryLabel" text="" styleClass="summary-label"/>
             </VBox>
             <Button fx:id="addTrackBtn" text="+ Aggiungi traccia" styleClass="add-track-btn"/>
+            <Button text="🗑 Elimina playlist" styleClass="delete-playlist-btn" onAction="#onDeletePlaylist"/>
         </HBox>
 
         <Separator styleClass="divider"/>

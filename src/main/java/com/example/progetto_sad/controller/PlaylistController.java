@@ -322,4 +322,25 @@ public class PlaylistController implements Observer {
             onBackAction.run();
         }
     }
+
+    // US5 - elimina l'intera playlist visualizzata (previa conferma) e torna alla schermata
+    // precedente; le tracce restano in libreria, viene rimossa solo la playlist.
+    @FXML
+    private void onDeletePlaylist() {
+        if (currentPlaylist == null) {
+            return;
+        }
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Conferma eliminazione playlist");
+        alert.setHeaderText("Eliminare la playlist \"" + currentPlaylist.getName() + "\"?");
+        alert.setContentText("Le tracce restano nella libreria; viene rimossa solo la playlist.");
+        alert.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                removePlaylist(currentPlaylist);
+                if (onBackAction != null) {
+                    onBackAction.run();
+                }
+            }
+        });
+    }
 }

@@ -23,8 +23,6 @@ import java.io.File;
  */
 public class AddTrackController {
 
-    private static final String DURATION_HINT_DEFAULT = "La durata viene letta automaticamente dal file";
-
     private final TrackController trackController;
 
     @FXML
@@ -94,7 +92,8 @@ public class AddTrackController {
             showInfo("Traccia aggiunta",
                     safeTitle(title) + " e' stata aggiunta alla libreria. Tracce totali: "
                             + trackController.getTracks().size());
-            clearForm();
+            // US1 - dopo la conferma si torna alla schermata precedente chiudendo il form.
+            closeWindow();
         } catch (IllegalArgumentException ex) {
             showError(ex.getMessage());
         }
@@ -125,18 +124,6 @@ public class AddTrackController {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("L'anno deve essere un numero valido");
         }
-    }
-
-    private void clearForm() {
-        titleField.clear();
-        authorField.clear();
-        yearField.clear();
-        genreCombo.getSelectionModel().clearSelection();
-        genreCombo.setValue(null);
-        audioFileField.clear();
-        durationHint.setText(DURATION_HINT_DEFAULT);
-        selectedAudioFile = null;
-        selectedDurationSeconds = 0;
     }
 
     private static String formatDuration(int totalSeconds) {

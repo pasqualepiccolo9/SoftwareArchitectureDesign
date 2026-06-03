@@ -14,14 +14,36 @@ public class PlaylistManager {
     
     /**
      * Crea una nuova playlist, la registra nel sistema e la restituisce.
-     * * @param name Il nome della playlist da creare.
+     * Il nome deve essere univoco: il confronto ignora gli spazi iniziali/finali e
+     * le differenze tra maiuscole e minuscole.
+     *
+     * @param name Il nome della playlist da creare.
      * @return L'oggetto Playlist appena creato.
-     * @throws IllegalArgumentException se il nome fornito non supera la validazione.
+     * @throws IllegalArgumentException se il nome e' vuoto o gia' esistente.
      */
     public Playlist createPlaylist(String name) {
+        // US5 - il nome deve essere univoco
+        if (existsByName(name)) {
+            throw new IllegalArgumentException("Esiste gia' una playlist con questo nome");
+        }
         Playlist playlist = new Playlist(name);
         playlists.add(playlist);
         return playlist;
+    }
+
+    // US5 - verifica se esiste gia' una playlist con lo stesso nome (ignorando spazi
+    // iniziali/finali e differenze tra maiuscole/minuscole)
+    private boolean existsByName(String name) {
+        if (name == null) {
+            return false;
+        }
+        String target = name.trim();
+        for (Playlist p : playlists) {
+            if (p.getName().trim().equalsIgnoreCase(target)) {
+                return true;
+            }
+        }
+        return false;
     }
     
     /**

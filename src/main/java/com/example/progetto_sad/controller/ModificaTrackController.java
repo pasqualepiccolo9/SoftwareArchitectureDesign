@@ -2,9 +2,12 @@ package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.Track;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.stage.Stage;
+import javafx.stage.Window;
 
 /**
  * US2 - Controller JavaFX della schermata "Modifica traccia".
@@ -28,8 +31,6 @@ public class ModificaTrackController {
     @FXML
     private TextField yearField;
     @FXML
-    private TextField durationField;
-    @FXML
     private Label errorLabel;
 
     /**
@@ -48,7 +49,6 @@ public class ModificaTrackController {
         authorField.setText(track.getAuthor());
         genreCombo.setValue(track.getGenre());
         yearField.setText(String.valueOf(track.getYear()));
-        durationField.setText(String.valueOf(track.getDuration()));
     }
 
     // US2 - salva le modifiche (la durata e' sola lettura, non si modifica)
@@ -59,10 +59,34 @@ public class ModificaTrackController {
             trackController.updateTrack(track, titleField.getText(), authorField.getText(),
                     genreCombo.getValue(), year);
             errorLabel.setText("");
+            // US2 - conferma e ritorno alla schermata precedente (coerente col form "Aggiungi").
+            showSavedConfirmation();
+            closeWindow();
         } catch (NumberFormatException e) {
             errorLabel.setText("Anno non valido");
         } catch (IllegalArgumentException e) {
             errorLabel.setText(e.getMessage());
         }
+    }
+
+    // US2 - conferma di avvenuto salvataggio
+    private void showSavedConfirmation() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.initOwner(currentWindow());
+        alert.setTitle("Modifica salvata");
+        alert.setHeaderText(null);
+        alert.setContentText("Le modifiche a \"" + track.getTitle() + "\" sono state salvate.");
+        alert.showAndWait();
+    }
+
+    // US2 - chiude la finestra di modifica, tornando alla schermata precedente
+    private void closeWindow() {
+        if (currentWindow() instanceof Stage stage) {
+            stage.close();
+        }
+    }
+
+    private Window currentWindow() {
+        return titleField.getScene().getWindow();
     }
 }

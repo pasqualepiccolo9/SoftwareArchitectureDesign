@@ -6,6 +6,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -47,6 +48,30 @@ public class AddTrackController {
      */
     public AddTrackController(TrackController trackController) {
         this.trackController = trackController;
+    }
+
+    // US1 - limiti di input: Titolo/Autore max 20 caratteri, Anno solo 4 cifre.
+    @FXML
+    private void initialize() {
+        limitLength(titleField, 20);
+        limitLength(authorField, 20);
+        limitDigits(yearField, 4);
+    }
+
+    // US1 - limita il campo a un numero massimo di caratteri (un valore piu' lungo gia'
+    // presente resta accorciabile, ma non si possono aggiungere caratteri oltre il limite)
+    private void limitLength(TextField field, int maxLength) {
+        field.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            return (newText.length() <= maxLength || newText.length() < change.getControlText().length())
+                    ? change : null;
+        }));
+    }
+
+    // US1 - limita il campo a sole cifre, fino a maxDigits
+    private void limitDigits(TextField field, int maxDigits) {
+        field.setTextFormatter(new TextFormatter<>(change ->
+                change.getControlNewText().matches("\\d{0," + maxDigits + "}") ? change : null));
     }
 
     /**

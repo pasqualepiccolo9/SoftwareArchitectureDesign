@@ -17,6 +17,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -47,6 +49,7 @@ public class LibraryController implements Observer {
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
+    @FXML private TextField searchField;
 
     /**
      * @param library         libreria delle tracce mostrata nella tabella
@@ -63,6 +66,9 @@ public class LibraryController implements Observer {
     @FXML
     private void initialize() {
         library.attach(this);
+        if (searchField != null) {
+            limitLength(searchField, 20); // US5 CA4 - limite caratteri
+        }
         refreshTracks();
         refreshPlaylists();
     }
@@ -195,6 +201,7 @@ public class LibraryController implements Observer {
     @FXML
     private void onNewPlaylist() {
         TextInputDialog dialog = new TextInputDialog();
+        limitLength(dialog.getEditor(), 20); // US5 CA4 - limite caratteri sul nome
         dialog.initOwner(currentWindow());
         dialog.setTitle("Nuova playlist");
         dialog.setHeaderText("Crea una nuova playlist");
@@ -261,5 +268,14 @@ public class LibraryController implements Observer {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    // US5 CA4 - limita il campo a un numero massimo di caratteri
+    private void limitLength(TextField field, int maxLength) {
+        field.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            return (newText.length() <= maxLength || newText.length() < change.getControlText().length())
+                    ? change : null;
+        }));
     }
 }

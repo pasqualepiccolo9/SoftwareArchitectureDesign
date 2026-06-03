@@ -180,6 +180,9 @@ public class AddTrackDialogView {
         TextField filterField = new TextField();
         filterField.setPromptText("Filtra tracce...");
         filterField.getStyleClass().add("filter-field");
+        // US5 CA4 - limite caratteri sul campo filtro
+        filterField.setTextFormatter(new TextFormatter<>(change ->
+                change.getControlNewText().length() <= 20 ? change : null));
         HBox.setHgrow(filterField, Priority.ALWAYS);
         filterField.textProperty().addListener(
                 (obs, old, val) -> applyFilter(val.toLowerCase()));

@@ -40,6 +40,7 @@ import java.io.IOException;
 public class LibraryController implements Observer {
 
     private static final String ADD_TRACK_FXML = "/com/example/progetto_sad/view/add-track-view.fxml";
+    private static final String MODIFICA_TRACK_FXML = "/com/example/progetto_sad/view/modifica-track-view.fxml";
 
     private final TrackLibrary library;
     private final TrackController trackController;
@@ -100,6 +101,7 @@ public class LibraryController implements Observer {
                 cell(t.getGenre(), 120),
                 cell(String.valueOf(t.getYear()), 70),
                 cell(formatDuration(t.getDuration()), 80),
+                buildEditButton(t),
                 buildDeleteButton(t)
         );
         row.setAlignment(Pos.CENTER_LEFT);
@@ -125,6 +127,16 @@ public class LibraryController implements Observer {
         return delete;
     }
 
+    private Button buildEditButton(Track t) {
+        Button edit = new Button("✎");
+        edit.getStyleClass().add("edit-btn");
+        edit.setMinWidth(50);
+        edit.setPrefWidth(50);
+        edit.setScaleX(-1); // US2 - specchia il glifo: punta verso sinistra, gomma verso destra
+        edit.setOnAction(e -> openEditTrack(t));
+        return edit;
+    }
+
     /* ===== US3 - eliminazione traccia dalla riga ===== */
 
     private void onDeleteTrack(Track t) {
@@ -138,6 +150,25 @@ public class LibraryController implements Observer {
                 trackController.deleteTrack(t); // la libreria notifica l'Observer -> refresh automatico
             }
         });
+    }
+
+    /* ===== US2 - apertura schermata "Modifica traccia" ===== */
+
+    private void openEditTrack(Track t) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(MODIFICA_TRACK_FXML));
+            loader.setControllerFactory(type -> new ModificaTrackController(trackController, t));
+            Parent form = loader.load();
+
+            Stage dialog = new Stage();
+            dialog.initModality(Modality.APPLICATION_MODAL);
+            dialog.initOwner(currentWindow());
+            dialog.setTitle("Modifica traccia");
+            dialog.setScene(new Scene(form, 560, 620));
+            dialog.showAndWait(); // al salvataggio la modifica notifica -> refreshTracks() automatico
+        } catch (IOException e) {
+            showError("Impossibile aprire la schermata di modifica: " + e.getMessage());
+        }
     }
 
     /* ===== US1 - apertura form "Aggiungi traccia" ===== */

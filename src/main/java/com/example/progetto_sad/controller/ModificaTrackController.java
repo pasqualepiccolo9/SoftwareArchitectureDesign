@@ -36,7 +36,7 @@ public class ModificaTrackController {
 
     /**
      * @param trackController controller applicativo per modifica/eliminazione
-     * @param track           traccia da modificare (gia' presente in libreria)
+     * @param track           traccia da modificare (già presente in libreria)
      */
     public ModificaTrackController(TrackController trackController, Track track) {
         this.trackController = trackController;
@@ -50,13 +50,13 @@ public class ModificaTrackController {
         authorField.setText(track.getAuthor());
         genreCombo.setValue(track.getGenre());
         yearField.setText(String.valueOf(track.getYear()));
-        // US1/US2 - limiti di input (dopo il precompile, cosi' i valori esistenti non vengono bloccati)
+        // US1/US2 - limiti di input (dopo il precompile, così i valori esistenti non vengono bloccati)
         limitLength(titleField, 20);
         limitLength(authorField, 20);
         limitDigits(yearField, 4);
     }
 
-    // US2 - limita il campo a un numero massimo di caratteri (un valore piu' lungo gia'
+    // US2 - limita il campo a un numero massimo di caratteri (un valore più lungo già
     // presente resta accorciabile, ma non si possono aggiungere caratteri oltre il limite)
     private void limitLength(TextField field, int maxLength) {
         field.setTextFormatter(new TextFormatter<>(change -> {
@@ -72,7 +72,7 @@ public class ModificaTrackController {
                 change.getControlNewText().matches("\\d{0," + maxDigits + "}") ? change : null));
     }
 
-    // US2 - salva le modifiche (la durata e' sola lettura, non si modifica)
+    // US2 - salva le modifiche (la durata è sola lettura, non si modifica)
     @FXML
     private void onSaveClick() {
         try {

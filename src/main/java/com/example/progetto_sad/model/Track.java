@@ -83,7 +83,7 @@ public class Track {
     }
 
     /**
-     * US3 - Registra che questa traccia e' stata inserita nella playlist indicata.
+     * US3 - Registra che questa traccia è stata inserita nella playlist indicata.
      * Va invocato solo da {@link Playlist#addTrack(Track)} per mantenere sincronizzato
      * il legame bidirezionale traccia-playlist; non inserisce duplicati.
      *

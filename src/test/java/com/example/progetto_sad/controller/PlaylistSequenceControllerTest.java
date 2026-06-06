@@ -10,6 +10,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // US10 - inizializzazione della sequenza dalla playlist avviata
@@ -86,5 +87,59 @@ class PlaylistSequenceControllerTest {
         assertDoesNotThrow(() -> controller.startPlaylist(null));
         assertNotNull(controller.getSequence());
         assertTrue(controller.isSequenceFinished());
+    }
+
+    // US10 - avanzamento: dopo onTrackFinished() la traccia corrente diventa la seconda
+    @Test
+    void onTrackFinishedAdvancesToSecondTrack() {
+        controller.startPlaylist(playlist);
+
+        controller.onTrackFinished();
+
+        assertEquals(track2, controller.getCurrentTrack());
+    }
+
+    // US10 - avanzamento: chiamate consecutive avanzano nell'ordine corretto della playlist
+    @Test
+    void onTrackFinishedAdvancesThroughAllTracksInOrder() {
+        controller.startPlaylist(playlist);
+
+        assertEquals(track1, controller.getCurrentTrack());
+        controller.onTrackFinished();
+        assertEquals(track2, controller.getCurrentTrack());
+        controller.onTrackFinished();
+        assertEquals(track3, controller.getCurrentTrack());
+    }
+
+    // US10 - avanzamento: dopo l'ultima traccia la sequenza risulta terminata e senza traccia corrente
+    @Test
+    void onTrackFinishedOnLastTrackFinishesSequence() {
+        controller.startPlaylist(playlist);
+
+        controller.onTrackFinished();
+        controller.onTrackFinished();
+        controller.onTrackFinished();
+
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    }
+
+    // US10 - caso limite: onTrackFinished() prima di startPlaylist() non genera crash
+    @Test
+    void onTrackFinishedWithoutActiveSequenceDoesNotCrash() {
+        assertDoesNotThrow(() -> controller.onTrackFinished());
+    }
+
+    // US10 - avanzamento: getTracks() mantiene l'ordine originale anche dopo l'avanzamento
+    @Test
+    void onTrackFinishedDoesNotAlterTrackOrder() {
+        controller.startPlaylist(playlist);
+
+        controller.onTrackFinished();
+
+        List<Track> tracks = controller.getSequence().getTracks();
+        assertEquals(track1, tracks.get(0));
+        assertEquals(track2, tracks.get(1));
+        assertEquals(track3, tracks.get(2));
     }
 }

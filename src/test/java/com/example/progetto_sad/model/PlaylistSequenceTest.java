@@ -1,0 +1,146 @@
+package com.example.progetto_sad.model;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+// US10 - test per la logica interna della sequenza di riproduzione (PlaylistSequence)
+class PlaylistSequenceTest {
+
+    private Playlist playlist;
+    private Track track1;
+    private Track track2;
+    private Track track3;
+
+    @BeforeEach
+    void setUp() {
+        playlist = new Playlist("Test Playlist");
+        track1 = new Track("Song A", "Artist A", 180, "Pop", 2020);
+        track2 = new Track("Song B", "Artist B", 200, "Rock", 2021);
+        track3 = new Track("Song C", "Artist C", 240, "Jazz", 2022);
+        playlist.addTrack(track1);
+        playlist.addTrack(track2);
+        playlist.addTrack(track3);
+    }
+
+    // US10 - sequenza da playlist non vuota: isEmpty() deve restituire false
+    @Test
+    void nonEmptyPlaylistSequenceIsNotEmpty() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        assertFalse(sequence.isEmpty());
+    }
+
+    // US10 - sequenza appena creata: isFinished() deve restituire false
+    @Test
+    void nonEmptyPlaylistSequenceIsNotFinishedAtStart() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        assertFalse(sequence.isFinished());
+    }
+
+    // US10 - la prima traccia della playlist e' quella corrente all'avvio
+    @Test
+    void firstTrackIsCurrentAtStart() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        assertEquals(track1, sequence.getCurrentTrack());
+    }
+
+    // US10 - getTracks() restituisce le tracce nello stesso ordine della playlist
+    @Test
+    void getTracksReturnsTracksInPlaylistOrder() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        List<Track> tracks = sequence.getTracks();
+        assertEquals(track1, tracks.get(0));
+        assertEquals(track2, tracks.get(1));
+        assertEquals(track3, tracks.get(2));
+    }
+
+    // US10 - advance() sposta la traccia corrente alla successiva nell'ordine
+    @Test
+    void advanceMakesNextTrackCurrent() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        sequence.advance();
+
+        assertEquals(track2, sequence.getCurrentTrack());
+    }
+
+    // US10 - dopo l'avanzamento oltre l'ultima traccia, isFinished() restituisce true
+    @Test
+    void isFinishedAfterLastTrack() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        sequence.advance();
+        sequence.advance();
+        sequence.advance();
+
+        assertTrue(sequence.isFinished());
+    }
+
+    // US10 - dopo la fine della sequenza, getCurrentTrack() restituisce null
+    @Test
+    void getCurrentTrackReturnsNullWhenFinished() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        sequence.advance();
+        sequence.advance();
+        sequence.advance();
+
+        assertNull(sequence.getCurrentTrack());
+    }
+
+    // US10 - caso limite: playlist vuota genera una sequenza vuota e gia' terminata
+    @Test
+    void emptyPlaylistCreatesEmptyAndFinishedSequence() {
+        Playlist empty = new Playlist("Empty");
+
+        PlaylistSequence sequence = PlaylistSequence.from(empty);
+
+        assertTrue(sequence.isEmpty());
+        assertTrue(sequence.isFinished());
+    }
+
+    // US10 - caso limite: playlist null gestita senza crash, sequenza risulta vuota
+    @Test
+    void nullPlaylistHandledWithoutCrash() {
+        assertDoesNotThrow(() -> PlaylistSequence.from(null));
+        PlaylistSequence sequence = PlaylistSequence.from(null);
+        assertTrue(sequence.isEmpty());
+        assertTrue(sequence.isFinished());
+    }
+
+    // US10 - caso limite: playlist con una sola traccia termina dopo una sola advance()
+    @Test
+    void singleTrackPlaylistFinishesAfterOneAdvance() {
+        Playlist single = new Playlist("Single");
+        single.addTrack(track1);
+        PlaylistSequence sequence = PlaylistSequence.from(single);
+
+        sequence.advance();
+
+        assertTrue(sequence.isFinished());
+        assertNull(sequence.getCurrentTrack());
+    }
+
+    // US10 - caso limite: advance() su sequenza gia' terminata non genera crash e mantiene lo stato
+    @Test
+    void advanceOnFinishedSequenceDoesNotCrash() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        sequence.advance();
+        sequence.advance();
+        sequence.advance();
+
+        assertDoesNotThrow(() -> sequence.advance());
+        assertTrue(sequence.isFinished());
+    }
+}

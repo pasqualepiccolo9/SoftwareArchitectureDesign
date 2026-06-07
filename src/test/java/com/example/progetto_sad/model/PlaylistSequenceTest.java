@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 // US10 - test per la logica interna della sequenza di riproduzione (PlaylistSequence)
@@ -142,5 +143,78 @@ class PlaylistSequenceTest {
 
         assertDoesNotThrow(() -> sequence.advance());
         assertTrue(sequence.isFinished());
+    }
+
+    // US16-T - getNextTracks() restituisce i brani successivi in ordine, escludendo quello corrente
+    @Test
+    void getNextTracksReturnsFollowingTracksInOrderWithoutCurrentTrack() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        List<Track> nextTracks = sequence.getNextTracks();
+
+        assertEquals(List.of(track2, track3), nextTracks);
+        assertFalse(nextTracks.contains(track1));
+    }
+
+    // US16-T - una sequenza vuota non espone brani successivi
+    @Test
+    void getNextTracksReturnsEmptyListForEmptySequence() {
+        PlaylistSequence sequence = PlaylistSequence.empty();
+
+        assertTrue(sequence.getNextTracks().isEmpty());
+    }
+
+    // US16-T - una sequenza terminata non espone brani successivi
+    @Test
+    void getNextTracksReturnsEmptyListForFinishedSequence() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        sequence.advance();
+        sequence.advance();
+        sequence.advance();
+
+        assertTrue(sequence.getNextTracks().isEmpty());
+    }
+
+    // US16-T - una sequenza con una sola traccia non ha brani successivi
+    @Test
+    void getNextTracksReturnsEmptyListForSingleTrackSequence() {
+        Playlist single = new Playlist("Single");
+        single.addTrack(track1);
+        PlaylistSequence sequence = PlaylistSequence.from(single);
+
+        assertTrue(sequence.getNextTracks().isEmpty());
+    }
+
+    // US16-T - quando la traccia corrente e' l'ultima non ci sono brani successivi
+    @Test
+    void getNextTracksReturnsEmptyListWhenCurrentTrackIsLast() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        sequence.advance();
+        sequence.advance();
+
+        assertEquals(track3, sequence.getCurrentTrack());
+        assertTrue(sequence.getNextTracks().isEmpty());
+    }
+
+    // US16-T - la lista esposta non consente di modificare lo stato interno
+    @Test
+    void getNextTracksReturnsUnmodifiableListWithoutChangingSequence() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        List<Track> nextTracks = sequence.getNextTracks();
+
+        assertThrows(UnsupportedOperationException.class, () -> nextTracks.add(track1));
+        assertEquals(List.of(track2, track3), sequence.getNextTracks());
+        assertEquals(track1, sequence.getCurrentTrack());
+    }
+
+    // US16-T - dopo advance() i brani successivi riflettono la nuova traccia corrente
+    @Test
+    void getNextTracksUpdatesAfterAdvance() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        sequence.advance();
+
+        assertEquals(track2, sequence.getCurrentTrack());
+        assertEquals(List.of(track3), sequence.getNextTracks());
     }
 }

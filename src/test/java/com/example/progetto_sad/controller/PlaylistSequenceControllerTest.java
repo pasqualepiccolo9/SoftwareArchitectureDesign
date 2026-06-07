@@ -142,4 +142,69 @@ class PlaylistSequenceControllerTest {
         assertEquals(track2, tracks.get(1));
         assertEquals(track3, tracks.get(2));
     }
+
+    // US16-T - senza una sequenza attiva non ci sono brani successivi
+    @Test
+    void getNextTracksReturnsEmptyListWithoutActiveSequence() {
+        assertTrue(controller.getNextTracks().isEmpty());
+    }
+
+    // US16-T - dopo l'avvio della playlist i successivi mantengono l'ordine originale
+    @Test
+    void getNextTracksReturnsFollowingTracksInOrderAfterStartPlaylist() {
+        controller.startPlaylist(playlist);
+
+        assertEquals(List.of(track2, track3), controller.getNextTracks());
+    }
+
+    // US16-T - i successivi si aggiornano dopo la fine di ogni traccia
+    @Test
+    void getNextTracksUpdatesAfterTrackFinished() {
+        controller.startPlaylist(playlist);
+
+        controller.onTrackFinished();
+        assertEquals(List.of(track3), controller.getNextTracks());
+
+        controller.onTrackFinished();
+        assertTrue(controller.getNextTracks().isEmpty());
+
+        controller.onTrackFinished();
+        assertTrue(controller.getNextTracks().isEmpty());
+    }
+
+    // US16-T - un brano accodato viene aggiunto in fondo senza alterare l'ordine
+    @Test
+    void addToQueueAppendsTrackMaintainingOrder() {
+        Track queuedTrack = new Track("Queued Song", "Queued Artist", 210, "Soul", 2023);
+        controller.startPlaylist(playlist);
+
+        controller.addToQueue(queuedTrack);
+
+        assertEquals(List.of(track1, track2, track3, queuedTrack),
+                controller.getSequence().getTracks());
+        assertEquals(List.of(track2, track3, queuedTrack), controller.getNextTracks());
+    }
+
+    // US16-T - accodare null non genera crash e non modifica la sequenza
+    @Test
+    void addToQueueWithNullDoesNotCrashOrChangeSequence() {
+        controller.startPlaylist(playlist);
+        List<Track> tracksBeforeAdd = controller.getSequence().getTracks();
+
+        assertDoesNotThrow(() -> controller.addToQueue(null));
+
+        assertEquals(tracksBeforeAdd, controller.getSequence().getTracks());
+        assertEquals(List.of(track2, track3), controller.getNextTracks());
+    }
+
+    // US16-T - senza sequenza attiva l'accodamento crea una sequenza con il brano
+    @Test
+    void addToQueueWithoutActiveSequenceCreatesSequenceWithTrack() {
+        controller.addToQueue(track1);
+
+        assertNotNull(controller.getSequence());
+        assertEquals(List.of(track1), controller.getSequence().getTracks());
+        assertEquals(track1, controller.getCurrentTrack());
+        assertTrue(controller.getNextTracks().isEmpty());
+    }
 }

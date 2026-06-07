@@ -11,8 +11,9 @@ import com.example.progetto_sad.audio.AudioPlayer;
  *
  * Espone il caricamento di una traccia ({@link #load(Track)}) e l'avvio della
  * riproduzione ({@link #play()} / {@link #play(Track)}) tramite un motore audio astratto
- * ({@link AudioPlayer}). Arresto/reset, motore-tempo e gestione della fine brano
- * sono implementati nelle schede US9 successive.
+ * ({@link AudioPlayer}). Il completamento naturale del brano riporta il player
+ * in stato stabile e pubblica un evento per le integrazioni successive.
+ * Arresto/reset manuale e motore-tempo sono implementati nelle schede US9 successive.
  *
  * Pausa e ripresa (stato IN_PAUSA) non fanno parte di questa classe: appartengono
  * alla US11.
@@ -46,6 +47,9 @@ public class Player {
     // da JavaFX (DIP) e consentire i test con un doppio (FakeAudioPlayer).
     private final AudioPlayer audioPlayer;
 
+    // US9 - evento di fine traccia per integrare in futuro la coda senza conoscerla qui.
+    private Runnable onEndOfTrack;
+
     /**
      * US9 - Crea un player a riposo (nessuna traccia, tempo a 0, stato
      * {@link PlayerState#FERMO}) collegato al motore audio fornito.
@@ -64,6 +68,8 @@ public class Player {
         this.currentTrack = null;
         this.currentTime = 0;
         this.state = PlayerState.FERMO;
+        this.onEndOfTrack = null;
+        this.audioPlayer.setOnEndOfTrack(this::handleEndOfTrack);
     }
 
     /**
@@ -106,6 +112,18 @@ public class Player {
     }
 
     /**
+     * US9 - Registra l'azione da eseguire quando la traccia termina naturalmente.
+     *
+     * Serve come punto di integrazione per la coda nelle card successive, senza
+     * introdurre logica di coda dentro il Player.
+     *
+     * @param onEndOfTrack callback di fine traccia; se null, non viene eseguita alcuna azione
+     */
+    public void setOnEndOfTrack(Runnable onEndOfTrack) {
+        this.onEndOfTrack = onEndOfTrack;
+    }
+
+    /**
      * US9 - Avvia la riproduzione della traccia attualmente caricata.
      *
      * Delega l'avvio al motore audio (Adapter) e porta il player nello stato
@@ -121,6 +139,14 @@ public class Player {
         audioPlayer.load(currentTrack.getFilePath());
         audioPlayer.play();
         this.state = PlayerState.IN_RIPRODUZIONE;
+    }
+
+    private void handleEndOfTrack() {
+        this.currentTime = 0;
+        this.state = PlayerState.FERMO;
+        if (onEndOfTrack != null) {
+            onEndOfTrack.run();
+        }
     }
 
     /**

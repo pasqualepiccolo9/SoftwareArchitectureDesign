@@ -17,6 +17,9 @@ public class JavaFxAudioPlayer implements AudioPlayer {
     // US9 - player JavaFX corrente; ricreato a ogni caricamento di un nuovo file
     private MediaPlayer mediaPlayer;
 
+    // US9 - callback di fine traccia propagata dal MediaPlayer verso il dominio
+    private Runnable onEndOfTrack;
+
     /**
      * US9 - Crea un {@link Media} dal file indicato e prepara un nuovo
      * {@link MediaPlayer}. L'eventuale player precedente viene rilasciato per
@@ -35,6 +38,7 @@ public class JavaFxAudioPlayer implements AudioPlayer {
         }
         Media media = new Media(new File(filePath).toURI().toString());
         this.mediaPlayer = new MediaPlayer(media);
+        this.mediaPlayer.setOnEndOfMedia(this::notifyEndOfTrack);
     }
 
     /**
@@ -48,5 +52,21 @@ public class JavaFxAudioPlayer implements AudioPlayer {
             throw new IllegalStateException("Nessun file audio caricato: invocare prima load()");
         }
         mediaPlayer.play();
+    }
+
+    /**
+     * US9 - Registra il callback da invocare quando JavaFX segnala la fine naturale del brano.
+     *
+     * @param onEndOfTrack callback di fine traccia; se null, non viene eseguita alcuna azione
+     */
+    @Override
+    public void setOnEndOfTrack(Runnable onEndOfTrack) {
+        this.onEndOfTrack = onEndOfTrack;
+    }
+
+    private void notifyEndOfTrack() {
+        if (onEndOfTrack != null) {
+            onEndOfTrack.run();
+        }
     }
 }

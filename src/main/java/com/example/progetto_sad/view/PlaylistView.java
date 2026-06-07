@@ -68,10 +68,10 @@ public class PlaylistView {
             PlaylistController controller = new PlaylistController(manager);
 
             Playlist playlist = manager.createPlaylist("Chill Vibes");
-            Track t1 = new Track("Midnight Drive", "Luna Ray", 224, "Synthwave", 2021);
-            Track t2 = new Track("Coffee Break", "Soft Beats", 197, "Lo-fi", 2020);
-            Track t3 = new Track("Ocean Lights", "Blue Note", 243, "Ambient", 2022);
-            Track t4 = new Track("Late Night Walk", "Urban Echo", 159, "Indie", 2019);
+            Track t1 = new Track("Midnight Drive", "Luna Ray", "Synthwave", 2021, null, 224);
+            Track t2 = new Track("Coffee Break", "Soft Beats", "Lo-fi", 2020, null, 197);
+            Track t3 = new Track("Ocean Lights", "Blue Note", "Ambient", 2022, null, 243);
+            Track t4 = new Track("Late Night Walk", "Urban Echo", "Indie", 2019, null, 159);
             playlist.addTrack(t1);
             playlist.addTrack(t2);
             playlist.addTrack(t3);
@@ -79,10 +79,10 @@ public class PlaylistView {
 
             List<Track> availableTracks = List.of(
                     t1, t2, t3, t4,
-                    new Track("Golden Hour", "Maya Sol", 211, "Pop", 2023),
-                    new Track("Rainy Sunday", "LoFi Room", 186, "Lo-fi", 2022),
-                    new Track("City Lights", "Neon Wave", 205, "Synthwave", 2020),
-                    new Track("Blue Horizon", "Ocean Drift", 240, "Ambient", 2021)
+                    new Track("Golden Hour", "Maya Sol", "Pop", 2023, null, 211),
+                    new Track("Rainy Sunday", "LoFi Room", "Lo-fi", 2022, null, 186),
+                    new Track("City Lights", "Neon Wave", "Synthwave", 2020, null, 205),
+                    new Track("Blue Horizon", "Ocean Drift", "Ambient", 2021, null, 240)
             );
 
             Parent root = PlaylistView.load(playlist, controller, availableTracks, stage::close);

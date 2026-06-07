@@ -79,7 +79,7 @@ class TrackControllerTest {
     @Test
     void deleteTrackNotInLibraryLeavesLibraryUnchanged() {
         controller.createTrack("Imagine", "John Lennon", "Rock", 1971, VALID_PATH, DURATION);
-        Track notStored = new Track("Altro", "Autore", 0, "Pop", 2000);
+        Track notStored = new Track("Altro", "Autore", "Pop", 2000, null, 0);
 
         assertDoesNotThrow(() -> controller.deleteTrack(notStored));
         assertEquals(1, controller.getTracks().size());
@@ -88,7 +88,7 @@ class TrackControllerTest {
     // US3 - cascade: eliminando una traccia presente in piu' playlist, viene rimossa da tutte
     @Test
     void deleteTrackRemovesItFromAllContainingPlaylists() {
-        Track track = new Track("Imagine", "John Lennon", DURATION, "Rock", 1971);
+        Track track = new Track("Imagine", "John Lennon", "Rock", 1971, null, DURATION);
         library.addTrack(track);
         Playlist preferiti = new Playlist("Preferiti");
         Playlist rock = new Playlist("Rock");
@@ -106,7 +106,7 @@ class TrackControllerTest {
     // US3 - cascade: una traccia non presente in alcuna playlist viene tolta solo dalla libreria
     @Test
     void deleteTrackNotInAnyPlaylistOnlyRemovesFromLibrary() {
-        Track track = new Track("Imagine", "John Lennon", DURATION, "Rock", 1971);
+        Track track = new Track("Imagine", "John Lennon", "Rock", 1971, null, DURATION);
         library.addTrack(track);
 
         assertDoesNotThrow(() -> controller.deleteTrack(track));
@@ -149,7 +149,7 @@ class TrackControllerTest {
     // US2 - caso limite: traccia non presente in libreria
     @Test
     void updateTrackNotInLibraryThrows() {
-        Track notStored = new Track("Altro", "Autore", 0, "Pop", 2000);
+        Track notStored = new Track("Altro", "Autore", "Pop", 2000, null, 0);
 
         assertThrows(IllegalArgumentException.class,
                 () -> controller.updateTrack(notStored, "Titolo", "Autore", "Rock", 1971));

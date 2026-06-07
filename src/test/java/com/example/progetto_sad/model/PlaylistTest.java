@@ -33,8 +33,8 @@ public class PlaylistTest {
     @BeforeEach
     void setUp() {
         playlist = new Playlist("My Favorites");
-        dummyTrack1 = new Track("Bohemian Rhapsody", "Queen", 354, "Rock", 1975);
-        dummyTrack2 = new Track("Shape of You", "Ed Sheeran", 233, "Pop", 2017);
+        dummyTrack1 = new Track("Bohemian Rhapsody", "Queen", "Rock", 1975, null, 354);
+        dummyTrack2 = new Track("Shape of You", "Ed Sheeran", "Pop", 2017, null, 233);
     }
     
     /**

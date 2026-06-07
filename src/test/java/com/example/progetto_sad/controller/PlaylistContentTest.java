@@ -50,7 +50,7 @@ public class PlaylistContentTest {
     @Test
     void testGetTracksOneTrack() {
         Playlist playlist = new Playlist("Pop");
-        Track track = new Track("Song", "Artist", 200, "Pop", 2023);
+        Track track = new Track("Song", "Artist", "Pop", 2023, null, 200);
         playlist.addTrack(track);
         List<Track> result = controller.getPlaylistTracks(playlist);
         assertEquals(1, result.size());
@@ -60,9 +60,9 @@ public class PlaylistContentTest {
     @Test
     void testGetTracksMultipleTracks() {
         Playlist playlist = new Playlist("Mix");
-        Track t1 = new Track("A", "Artist1", 180, "Pop", 2020);
-        Track t2 = new Track("B", "Artist2", 240, "Rock", 2021);
-        Track t3 = new Track("C", "Artist3", 300, "Jazz", 2022);
+        Track t1 = new Track("A", "Artist1", "Pop", 2020, null, 180);
+        Track t2 = new Track("B", "Artist2", "Rock", 2021, null, 240);
+        Track t3 = new Track("C", "Artist3", "Jazz", 2022, null, 300);
         playlist.addTrack(t1);
         playlist.addTrack(t2);
         playlist.addTrack(t3);
@@ -77,14 +77,14 @@ public class PlaylistContentTest {
         int[] count = {0};
         Observer obs = () -> count[0]++;
         playlist.attach(obs);
-        controller.addTrackToPlaylist(new Track("Song", "Artist", 200, "Indie", 2024), playlist);
+        controller.addTrackToPlaylist(new Track("Song", "Artist", "Indie", 2024, null, 200), playlist);
         assertEquals(1, count[0]);
     }
 
     @Test
     void testObserverNotifiedAfterRemoveTrack() {
         Playlist playlist = new Playlist("Indie");
-        Track track = new Track("Song", "Artist", 200, "Indie", 2024);
+        Track track = new Track("Song", "Artist", "Indie", 2024, null, 200);
         playlist.addTrack(track);
         int[] count = {0};
         Observer obs = () -> count[0]++;
@@ -96,8 +96,8 @@ public class PlaylistContentTest {
     @Test
     void testListUpdatedAfterRemove() {
         Playlist playlist = new Playlist("Soul");
-        Track t1 = new Track("First", "Artist", 180, "Soul", 2020);
-        Track t2 = new Track("Second", "Artist", 200, "Soul", 2021);
+        Track t1 = new Track("First", "Artist", "Soul", 2020, null, 180);
+        Track t2 = new Track("Second", "Artist", "Soul", 2021, null, 200);
         playlist.addTrack(t1);
         playlist.addTrack(t2);
         controller.removeTrackFromPlaylist(t1, playlist);

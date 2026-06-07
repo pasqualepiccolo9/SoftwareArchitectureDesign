@@ -36,7 +36,7 @@ public class TrackFactory {
         if (isBlank(filePath)) {
             throw new IllegalArgumentException("Il file audio e' obbligatorio");
         }
-        return new Track(title.trim(), author.trim(), durationSeconds, genre.trim(), year);
+        return new Track(title.trim(), author.trim(), genre.trim(), year, filePath.trim(), durationSeconds);
     }
 
     /**

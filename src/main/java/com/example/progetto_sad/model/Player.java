@@ -1,5 +1,7 @@
 package com.example.progetto_sad.model;
 
+import com.example.progetto_sad.audio.AudioPlayer;
+
 /**
  * US9 - Modello del player per la riproduzione di una singola traccia.
  *
@@ -7,9 +9,10 @@ package com.example.progetto_sad.model;
  * correntemente caricata, il tempo trascorso (in secondi) e lo stato di
  * riproduzione.
  *
- * In questa fase la classe rappresenta solo la struttura dati: il caricamento
- * della traccia, l'avvio, l'arresto/reset, il motore-tempo e la gestione della
- * fine brano sono implementati nelle schede US9 successive.
+ * Espone il caricamento di una traccia ({@link #load(Track)}) e l'avvio della
+ * riproduzione ({@link #play()} / {@link #play(Track)}) tramite un motore audio astratto
+ * ({@link AudioPlayer}). Arresto/reset, motore-tempo e gestione della fine brano
+ * sono implementati nelle schede US9 successive.
  *
  * Pausa e ripresa (stato IN_PAUSA) non fanno parte di questa classe: appartengono
  * alla US11.
@@ -39,11 +42,25 @@ public class Player {
     // US9 - stato corrente del player
     private PlayerState state;
 
+    // US9 - motore audio (Adapter): astrazione iniettata per disaccoppiare il model
+    // da JavaFX (DIP) e consentire i test con un doppio (FakeAudioPlayer).
+    private final AudioPlayer audioPlayer;
+
     /**
-     * US9 - Crea un player a riposo: nessuna traccia caricata, tempo a 0 e
-     * stato {@link PlayerState#FERMO}.
+     * US9 - Crea un player a riposo (nessuna traccia, tempo a 0, stato
+     * {@link PlayerState#FERMO}) collegato al motore audio fornito.
+     *
+     * Il motore e' iniettato come astrazione {@link AudioPlayer} (DIP): il model
+     * non dipende da JavaFX e nei test si puo' usare un doppio.
+     *
+     * @param audioPlayer il motore audio da usare per la riproduzione
+     * @throws IllegalArgumentException se audioPlayer e' null
      */
-    public Player() {
+    public Player(AudioPlayer audioPlayer) {
+        if (audioPlayer == null) {
+            throw new IllegalArgumentException("Il motore audio non puo' essere null");
+        }
+        this.audioPlayer = audioPlayer;
         this.currentTrack = null;
         this.currentTime = 0;
         this.state = PlayerState.FERMO;
@@ -70,6 +87,40 @@ public class Player {
         this.currentTrack = track;
         this.currentTime = 0;
         this.state = PlayerState.FERMO;
+    }
+
+    /**
+     * US9 - Carica e avvia la traccia selezionata dall'utente.
+     *
+     * Riusa il flusso gia' definito da {@link #load(Track)} e {@link #play()}:
+     * il caricamento porta il tempo a 00:00 e prepara la traccia, poi l'avvio
+     * delega al motore audio. La ripresa da pausa resta fuori scope (US11).
+     *
+     * @param track la traccia selezionata da riprodurre
+     * @throws IllegalArgumentException se la traccia e' null
+     * @throws IllegalStateException se il motore audio non riesce ad avviare la riproduzione
+     */
+    public void play(Track track) {
+        load(track);
+        play();
+    }
+
+    /**
+     * US9 - Avvia la riproduzione della traccia attualmente caricata.
+     *
+     * Delega l'avvio al motore audio (Adapter) e porta il player nello stato
+     * {@link PlayerState#IN_RIPRODUZIONE}. Avvia un nuovo brano dall'inizio: la
+     * ripresa da pausa non e' gestita qui (US11).
+     *
+     * @throws IllegalStateException se non e' caricata alcuna traccia
+     */
+    public void play() {
+        if (currentTrack == null) {
+            throw new IllegalStateException("Nessuna traccia caricata da riprodurre");
+        }
+        audioPlayer.load(currentTrack.getFilePath());
+        audioPlayer.play();
+        this.state = PlayerState.IN_RIPRODUZIONE;
     }
 
     /**

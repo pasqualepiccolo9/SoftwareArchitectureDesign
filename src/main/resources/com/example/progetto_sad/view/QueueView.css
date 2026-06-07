@@ -1,0 +1,202 @@
+/* ===== LAYOUT PRINCIPALE ===== */
+.queue-root {
+    -fx-background-color: #141417;
+}
+
+/* ===== HEADER ===== */
+.queue-header {
+    -fx-background-color: #0f0f12;
+    -fx-border-color: transparent transparent #2a2b2f transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.queue-main-title {
+    -fx-text-fill: #f5f5f7;
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+}
+
+.queue-count-label {
+    -fx-text-fill: #6c6c72;
+    -fx-font-size: 13px;
+}
+
+/* ===== PULSANTI AZIONE ===== */
+.queue-action-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #f5f5f7;
+    -fx-border-color: #3a3b41;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 14 6 14;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+}
+
+.queue-action-btn:hover {
+    -fx-border-color: #6c6c72;
+    -fx-background-color: #1d1e22;
+}
+
+/* + Playlist: visibile ma non operativo in questa card */
+.queue-action-btn-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6c6c72;
+    -fx-border-color: #3a3b41;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 6 14 6 14;
+    -fx-font-size: 13px;
+    -fx-opacity: 0.5;
+}
+
+/* ===== SEPARATORE ===== */
+.divider .line {
+    -fx-border-style: solid;
+    -fx-border-color: #3a3b41;
+    -fx-border-width: 0.5;
+}
+
+/* ===== SCROLLPANE ===== */
+.queue-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+}
+
+.queue-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.queue-scroll > .scroll-bar:vertical {
+    -fx-background-color: transparent;
+    -fx-pref-width: 8;
+}
+
+.queue-scroll > .scroll-bar:vertical > .thumb {
+    -fx-background-color: #3a3b41;
+    -fx-background-radius: 4;
+}
+
+.queue-scroll > .scroll-bar:vertical > .increment-button,
+.queue-scroll > .scroll-bar:vertical > .decrement-button {
+    -fx-background-color: transparent;
+    -fx-pref-height: 0;
+}
+
+/* ===== CONTENUTO ===== */
+.queue-content {
+    -fx-background-color: transparent;
+}
+
+/* ===== ETICHETTE SEZIONE ===== */
+.section-label {
+    -fx-text-fill: #6c6c72;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 10 0 4 0;
+}
+
+/* ===== BRANO CORRENTE ===== */
+.current-track-row {
+    -fx-background-color: #1e3a5f;
+    -fx-background-radius: 8;
+    -fx-border-color: #2a5f9f;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+}
+
+.play-indicator {
+    -fx-text-fill: #4a9eff;
+    -fx-font-size: 14px;
+    -fx-min-width: 20;
+}
+
+.current-track-title {
+    -fx-text-fill: #f5f5f7;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+}
+
+/* ===== RIGHE TRACCE SUCCESSIVE ===== */
+.track-row {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #2a2b2f transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cursor: hand;
+}
+
+.track-row:hover {
+    -fx-background-color: #1d1e22;
+}
+
+.track-number {
+    -fx-text-fill: #6c6c72;
+    -fx-font-size: 13px;
+    -fx-min-width: 24;
+    -fx-alignment: CENTER;
+}
+
+.track-title {
+    -fx-text-fill: #f5f5f7;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.track-meta {
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 12px;
+}
+
+.track-duration {
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 13px;
+    -fx-min-width: 44;
+    -fx-alignment: CENTER_RIGHT;
+}
+
+/* ===== PULSANTE RIMOZIONE (predisposto, non operativo in questa card) ===== */
+.remove-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 13px;
+    -fx-padding: 2 6 2 6;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.remove-btn:hover {
+    -fx-text-fill: #e05252;
+}
+
+/* ===== STATO VUOTO ===== */
+.empty-state {
+    -fx-spacing: 8;
+    -fx-padding: 80 0 80 0;
+    -fx-alignment: CENTER;
+}
+
+.empty-title {
+    -fx-text-fill: #f5f5f7;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.empty-subtitle {
+    -fx-text-fill: #6c6c72;
+    -fx-font-size: 13px;
+}
+
+/* ===== PULSANTE INDIETRO ===== */
+.back-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 13px;
+    -fx-cursor: hand;
+    -fx-border-color: transparent;
+}
+
+.back-btn:hover {
+    -fx-text-fill: #f5f5f7;
+}

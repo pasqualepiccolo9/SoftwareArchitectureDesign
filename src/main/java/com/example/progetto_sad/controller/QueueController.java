@@ -1,5 +1,6 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.model.Track;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -10,16 +11,25 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.util.List;
+
 /**
- * US16 - Controller della schermata "Coda di riproduzione".
+ * US16 - Controller FXML della schermata "Coda di riproduzione".
  *
- * Per questo task gestisce solo la presentazione del layout FXML (nomi, righe, stati).
- * Il collegamento alla sequenza condivisa e il pattern Observer verranno aggiunti
- * nel task successivo [US16-UI] "Collegare il controller del pannello Coda alla sequenza condivisa".
+ * Gestisce i nodi @FXML e il rendering della vista: stato vuoto, brano corrente,
+ * elenco brani successivi e contatore. Non contiene logica di dominio.
+ *
+ * Puo' operare in due modalita':
+ * - standalone/demo: i metodi pubblici di presentazione ({@link #setCurrentTrack},
+ *   {@link #addNextTrack}, ecc.) vengono chiamati direttamente da {@code QueueView.App};
+ * - reale: {@link #setSequenceController} riceve il {@link PlaylistSequenceController}
+ *   condiviso e {@link #refresh()} legge i dati da esso per aggiornare la UI.
+ *   Il wiring verra' completato nel task INT.
  */
 public class QueueController {
 
     private Runnable onBackAction;
+    private PlaylistSequenceController seqController;
 
     @FXML private Label trackCountLabel;
     @FXML private VBox emptyStateVBox;
@@ -104,6 +114,53 @@ public class QueueController {
             return;
         }
         nextTracksVBox.getChildren().add(buildNextTrackRow(index, title, author, duration));
+    }
+
+    /**
+     * Inietta il controller della sequenza condivisa. Deve essere chiamato prima di
+     * {@link #refresh()} nella modalita' reale. Se {@code controller} e' null,
+     * {@link #refresh()} non ha effetto (la modalita' standalone rimane invariata).
+     *
+     * @param controller il controller della sequenza di riproduzione condivisa
+     */
+    public void setSequenceController(PlaylistSequenceController controller) {
+        this.seqController = controller;
+    }
+
+    /**
+     * Aggiorna la UI leggendo i dati dalla sequenza condivisa impostata con
+     * {@link #setSequenceController}. Se nessuna sequenza e' impostata, non ha effetto.
+     * Mostra lo stato vuoto se la sequenza e' null, vuota o terminata;
+     * altrimenti popola la sezione "In riproduzione" e la lista "Successivi".
+     */
+    public void refresh() {
+        if (seqController == null) {
+            return;
+        }
+        Track current = seqController.getCurrentTrack();
+        if (current == null) {
+            // sequenza assente, vuota o terminata
+            showEmpty(true);
+            return;
+        }
+        List<Track> next = seqController.getNextTracks();
+        int totale = 1 + next.size();
+
+        showEmpty(false);
+        setTrackCount(totale);
+        setCurrentTrack(current.getTitle(), current.getAuthor(), formatDuration(current.getDuration()));
+
+        if (nextTracksVBox != null) {
+            nextTracksVBox.getChildren().clear();
+        }
+        for (int i = 0; i < next.size(); i++) {
+            Track t = next.get(i);
+            addNextTrack(i + 1, t.getTitle(), t.getAuthor(), formatDuration(t.getDuration()));
+        }
+    }
+
+    private String formatDuration(int totalSeconds) {
+        return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
     }
 
     private HBox buildNextTrackRow(int index, String title, String author, String duration) {

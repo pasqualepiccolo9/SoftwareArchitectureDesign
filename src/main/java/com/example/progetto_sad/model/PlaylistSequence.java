@@ -107,6 +107,23 @@ public class PlaylistSequence {
     }
 
     /**
+     * Restituisce i brani che seguono la traccia corrente nell'ordine della sequenza.
+     * Se la sequenza e' vuota, terminata o non ha successivi, restituisce una lista vuota.
+     *
+     * @return copia non modificabile delle tracce successive a quella corrente
+     */
+    public List<Track> getNextTracks() {
+        if (isFinished()) {
+            return Collections.emptyList();
+        }
+        int nextIndex = currentIndex + 1;
+        if (nextIndex >= tracks.size()) {
+            return Collections.emptyList();
+        }
+        return Collections.unmodifiableList(new ArrayList<>(tracks.subList(nextIndex, tracks.size())));
+    }
+
+    /**
      * Aggiunge un brano alla fine della sequenza senza alterare la posizione corrente
      * né interrompere la riproduzione in corso. Se la sequenza era terminata, il brano
      * aggiunto diventa il prossimo da riprodurre.

@@ -4,6 +4,8 @@ import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
 
+import java.util.List;
+
 /**
  * US10 - Controller applicativo per la gestione della sequenza di riproduzione.
  *
@@ -85,6 +87,19 @@ PlaylistSequenceController {
      */
     public boolean isSequenceFinished() {
         return sequence != null && sequence.isFinished();
+    }
+
+    /**
+     * Restituisce i brani che seguono la traccia corrente nella sequenza attiva.
+     * Se nessuna sequenza e' attiva o non ci sono successivi, restituisce una lista vuota.
+     *
+     * @return copia non modificabile delle tracce successive a quella corrente
+     */
+    public List<Track> getNextTracks() {
+        if (sequence == null) {
+            return List.of();
+        }
+        return sequence.getNextTracks();
     }
 
     /**

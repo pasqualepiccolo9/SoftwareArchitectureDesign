@@ -6,6 +6,7 @@ import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.view.PlaylistView;
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -26,6 +27,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import javafx.util.Duration;
 
 import java.io.IOException;
 
@@ -46,6 +48,7 @@ public class LibraryController implements Observer {
     private final TrackLibrary library;
     private final TrackController trackController;
     private final PlaylistManager playlistManager;
+    private final PlaylistSequenceController seqController; // US14
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
@@ -55,12 +58,15 @@ public class LibraryController implements Observer {
      * @param library         libreria delle tracce mostrata nella tabella
      * @param trackController controller applicativo per creare/eliminare tracce
      * @param playlistManager gestore delle playlist (sidebar e navigazione)
+     * @param seqController   controller della sequenza di riproduzione condivisa (US14)
      */
     public LibraryController(TrackLibrary library, TrackController trackController,
-                             PlaylistManager playlistManager) {
+                             PlaylistManager playlistManager,
+                             PlaylistSequenceController seqController) {
         this.library = library;
         this.trackController = trackController;
         this.playlistManager = playlistManager;
+        this.seqController = seqController;
     }
 
     @FXML
@@ -106,6 +112,7 @@ public class LibraryController implements Observer {
                 cell(t.getGenre(), 120),
                 cell(String.valueOf(t.getYear()), 70),
                 cell(formatDuration(t.getDuration()), 80),
+                buildQueueButton(t),
                 buildEditButton(t),
                 buildDeleteButton(t)
         );
@@ -113,6 +120,30 @@ public class LibraryController implements Observer {
         row.setPadding(new Insets(12, 16, 12, 16));
         row.getStyleClass().add("track-row");
         return row;
+    }
+
+    // US14 - bottone "Aggiungi alla Coda": aggiunge la traccia alla sequenza di riproduzione condivisa.
+    // Il feedback visivo (testo temporaneo "✓ Aggiunto") non blocca l'UI ed e' gestito
+    // tramite PauseTransition per rispettare il thread JavaFX.
+    private Button buildQueueButton(Track t) {
+        Button btn = new Button("Aggiungi alla Coda");
+        btn.getStyleClass().add("queue-btn");
+        btn.setOnAction(e -> {
+            if (seqController == null) {
+                showError("Sequenza di riproduzione non disponibile.");
+                return;
+            }
+            seqController.addToQueue(t);
+            btn.setText("✓ Aggiunto");
+            btn.setDisable(true);
+            PauseTransition pausa = new PauseTransition(Duration.seconds(1.5));
+            pausa.setOnFinished(ev -> {
+                btn.setText("Aggiungi alla Coda");
+                btn.setDisable(false);
+            });
+            pausa.play();
+        });
+        return btn;
     }
 
     private Label cell(String text, double width) {

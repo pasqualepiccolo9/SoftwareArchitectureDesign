@@ -1,6 +1,7 @@
 package com.example.progetto_sad.view;
 
 import com.example.progetto_sad.controller.LibraryController;
+import com.example.progetto_sad.controller.PlaylistSequenceController;
 import com.example.progetto_sad.controller.TrackController;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
@@ -31,14 +32,17 @@ public class LibraryView {
      * @param library         libreria delle tracce
      * @param trackController controller applicativo per creare/eliminare tracce
      * @param playlistManager gestore delle playlist (sidebar e navigazione)
+     * @param seqController   controller della sequenza di riproduzione condivisa (US14)
      * @return il nodo radice della home
      * @throws IllegalStateException se l'FXML non puo' essere caricato
      */
     public static Parent load(TrackLibrary library, TrackController trackController,
-                              PlaylistManager playlistManager) {
+                              PlaylistManager playlistManager,
+                              PlaylistSequenceController seqController) {
         try {
             FXMLLoader loader = new FXMLLoader(LibraryView.class.getResource("LibraryView.fxml"));
-            loader.setControllerFactory(type -> new LibraryController(library, trackController, playlistManager));
+            loader.setControllerFactory(type ->
+                    new LibraryController(library, trackController, playlistManager, seqController));
             return loader.load();
         } catch (IOException e) {
             throw new IllegalStateException("Impossibile caricare LibraryView.fxml", e);
@@ -62,10 +66,13 @@ public class LibraryView {
             TrackLibrary library = new TrackLibrary();
             TrackController trackController = new TrackController(library);
             PlaylistManager playlistManager = new PlaylistManager();
+            // istanza standalone per la demo: nel task INT verra' sostituita
+            // dall'istanza condivisa creata nel flusso principale dell'applicazione.
+            PlaylistSequenceController seqController = new PlaylistSequenceController();
 
             seedSampleData(library, playlistManager);
 
-            Parent root = LibraryView.load(library, trackController, playlistManager);
+            Parent root = LibraryView.load(library, trackController, playlistManager, seqController);
             stage.setTitle("Playlist Manager - Libreria");
             stage.setScene(new Scene(root, 1150, 760));
             stage.show();

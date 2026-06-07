@@ -40,9 +40,20 @@ public class PlaylistSequence {
      */
     public static PlaylistSequence from(Playlist playlist) {
         if (playlist == null) {
-            return new PlaylistSequence(null);
+            return empty();
         }
         return new PlaylistSequence(playlist.getTracks());
+    }
+
+    /**
+     * Crea una sequenza vuota, senza brani, pronta per ricevere tracce tramite
+     * {@link #addTrack(Track)}. La sequenza risulta terminata finche' non viene
+     * aggiunto almeno un brano.
+     *
+     * @return una nuova sequenza vuota
+     */
+    public static PlaylistSequence empty() {
+        return new PlaylistSequence(List.of());
     }
 
     /**
@@ -93,5 +104,20 @@ public class PlaylistSequence {
         if (!isFinished()) {
             currentIndex++;
         }
+    }
+
+    /**
+     * Aggiunge un brano alla fine della sequenza senza alterare la posizione corrente
+     * né interrompere la riproduzione in corso. Se la sequenza era terminata, il brano
+     * aggiunto diventa il prossimo da riprodurre.
+     * Se {@code track} e' null, la chiamata non ha effetto.
+     *
+     * @param track il brano da accodare
+     */
+    public void addTrack(Track track) {
+        if (track == null) {
+            return;
+        }
+        tracks.add(track);
     }
 }

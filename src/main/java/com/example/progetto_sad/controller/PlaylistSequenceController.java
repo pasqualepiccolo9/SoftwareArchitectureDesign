@@ -86,4 +86,22 @@ PlaylistSequenceController {
     public boolean isSequenceFinished() {
         return sequence != null && sequence.isFinished();
     }
+
+    /**
+     * Aggiunge un singolo brano alla fine della sequenza di riproduzione senza
+     * interrompere la traccia corrente. Se nessuna sequenza e' attiva, ne crea una
+     * vuota e vi inserisce il brano come primo elemento. Se {@code track} e' null,
+     * la chiamata non ha effetto.
+     *
+     * @param track il brano da accodare
+     */
+    public void addToQueue(Track track) {
+        if (track == null) {
+            return;
+        }
+        if (sequence == null) {
+            sequence = PlaylistSequence.empty();
+        }
+        sequence.addTrack(track);
+    }
 }

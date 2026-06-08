@@ -2,6 +2,11 @@ package com.example.progetto_sad.model;
 
 import com.example.progetto_sad.audio.AudioPlayer;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
 /**
  * US9 - Modello del player per la riproduzione di una singola traccia.
  *
@@ -14,8 +19,10 @@ import com.example.progetto_sad.audio.AudioPlayer;
  * ({@link AudioPlayer}). Il completamento naturale del brano riporta il player
  * in stato stabile e pubblica un evento per le integrazioni successive. Se
  * viene avviata una nuova traccia mentre un'altra e' in riproduzione, il motore
- * audio rilascia quella precedente prima di partire col nuovo file.
- * Arresto/reset manuale e motore-tempo sono implementati nelle schede US9 successive.
+ * audio rilascia quella precedente prima di partire col nuovo file. Il tempo
+ * corrente avanza tramite un clock interno durante la riproduzione.
+ * Arresto/reset manuale e gestione completa degli stati non validi sono
+ * implementati nelle schede US9 successive.
  *
  * Pausa e ripresa (stato IN_PAUSA) non fanno parte di questa classe: appartengono
  * alla US11.
@@ -52,6 +59,10 @@ public class Player {
     // US9 - evento di fine traccia per integrare in futuro la coda senza conoscerla qui.
     private Runnable onEndOfTrack;
 
+    // US9 - scheduler del motore-tempo, attivo solo durante la riproduzione.
+    private ScheduledExecutorService clockExecutor;
+    private ScheduledFuture<?> clockTask;
+
     /**
      * US9 - Crea un player a riposo (nessuna traccia, tempo a 0, stato
      * {@link PlayerState#FERMO}) collegato al motore audio fornito.
@@ -71,6 +82,8 @@ public class Player {
         this.currentTime = 0;
         this.state = PlayerState.FERMO;
         this.onEndOfTrack = null;
+        this.clockExecutor = null;
+        this.clockTask = null;
         this.audioPlayer.setOnEndOfTrack(this::handleEndOfTrack);
     }
 
@@ -88,10 +101,11 @@ public class Player {
      * @param track la traccia da caricare
      * @throws IllegalArgumentException se la traccia e' null
      */
-    public void load(Track track) {
+    public synchronized void load(Track track) {
         if (track == null) {
             throw new IllegalArgumentException("La traccia da caricare non puo' essere null");
         }
+        stopClock();
         this.currentTrack = track;
         this.currentTime = 0;
         this.state = PlayerState.FERMO;
@@ -110,7 +124,7 @@ public class Player {
      * @throws IllegalArgumentException se la traccia e' null
      * @throws IllegalStateException se il motore audio non riesce ad avviare la riproduzione
      */
-    public void play(Track track) {
+    public synchronized void play(Track track) {
         load(track);
         play();
     }
@@ -123,7 +137,7 @@ public class Player {
      *
      * @param onEndOfTrack callback di fine traccia; se null, non viene eseguita alcuna azione
      */
-    public void setOnEndOfTrack(Runnable onEndOfTrack) {
+    public synchronized void setOnEndOfTrack(Runnable onEndOfTrack) {
         this.onEndOfTrack = onEndOfTrack;
     }
 
@@ -136,20 +150,66 @@ public class Player {
      *
      * @throws IllegalStateException se non e' caricata alcuna traccia
      */
-    public void play() {
+    public synchronized void play() {
         if (currentTrack == null) {
             throw new IllegalStateException("Nessuna traccia caricata da riprodurre");
         }
         audioPlayer.load(currentTrack.getFilePath());
         audioPlayer.play();
+        this.currentTime = 0;
         this.state = PlayerState.IN_RIPRODUZIONE;
+        startClock();
     }
 
     private void handleEndOfTrack() {
-        this.currentTime = 0;
-        this.state = PlayerState.FERMO;
-        if (onEndOfTrack != null) {
-            onEndOfTrack.run();
+        Runnable callback;
+        synchronized (this) {
+            stopClock();
+            this.currentTime = 0;
+            this.state = PlayerState.FERMO;
+            callback = onEndOfTrack;
+        }
+        if (callback != null) {
+            callback.run();
+        }
+    }
+
+    private synchronized void startClock() {
+        stopClock();
+        clockExecutor = Executors.newSingleThreadScheduledExecutor(runnable -> {
+            Thread thread = new Thread(runnable, "player-clock");
+            thread.setDaemon(true);
+            return thread;
+        });
+        clockTask = clockExecutor.scheduleAtFixedRate(this::advanceTime, 1, 1, TimeUnit.SECONDS);
+    }
+
+    private synchronized void stopClock() {
+        if (clockTask != null) {
+            clockTask.cancel(false);
+            clockTask = null;
+        }
+        if (clockExecutor != null) {
+            clockExecutor.shutdownNow();
+            clockExecutor = null;
+        }
+    }
+
+    private void advanceTime() {
+        boolean trackEnded = false;
+        synchronized (this) {
+            if (state != PlayerState.IN_RIPRODUZIONE) {
+                return;
+            }
+            int duration = getDuration();
+            if (duration <= 0) {
+                return;
+            }
+            currentTime = Math.min(currentTime + 1, duration);
+            trackEnded = currentTime >= duration;
+        }
+        if (trackEnded) {
+            handleEndOfTrack();
         }
     }
 
@@ -158,7 +218,7 @@ public class Player {
      *
      * @return la traccia corrente, oppure {@code null} se nessuna traccia e' caricata
      */
-    public Track getCurrentTrack() {
+    public synchronized Track getCurrentTrack() {
         return currentTrack;
     }
 
@@ -167,7 +227,7 @@ public class Player {
      *
      * @return i secondi trascorsi della traccia corrente
      */
-    public int getCurrentTime() {
+    public synchronized int getCurrentTime() {
         return currentTime;
     }
 
@@ -176,7 +236,7 @@ public class Player {
      *
      * @return lo stato di riproduzione corrente
      */
-    public PlayerState getState() {
+    public synchronized PlayerState getState() {
         return state;
     }
 
@@ -189,7 +249,7 @@ public class Player {
      *
      * @return la durata in secondi della traccia corrente, oppure 0 se nessuna traccia e' caricata
      */
-    public int getDuration() {
+    public synchronized int getDuration() {
         return currentTrack != null ? currentTrack.getDuration() : 0;
     }
 }

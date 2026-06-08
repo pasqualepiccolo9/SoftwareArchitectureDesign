@@ -275,7 +275,10 @@ public class LibraryController implements Observer {
         QueueController queueController = new QueueController();
         queueController.setSequenceController(seqController);
         queueController.setTrackLibrary(library);
-        Parent queueRoot = QueueView.load(queueController, () -> scene.setRoot(libraryRoot));
+        Parent queueRoot = QueueView.load(queueController, () -> {
+            queueController.setSequenceController(null);
+            scene.setRoot(libraryRoot);
+        });
         queueController.refresh();
         scene.setRoot(queueRoot);
     }

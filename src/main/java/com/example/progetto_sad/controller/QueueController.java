@@ -2,7 +2,9 @@ package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
+import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.view.AddTrackDialogView;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -28,7 +30,7 @@ import java.util.List;
  *   condiviso e {@link #refresh()} legge i dati da esso per aggiornare la UI.
  *   Il wiring verra' completato nel task INT.
  */
-public class QueueController {
+public class QueueController implements Observer {
 
     private Runnable onBackAction;
     private PlaylistSequenceController seqController;
@@ -74,7 +76,6 @@ public class QueueController {
                 trackCountLabel.getScene().getWindow()
         );
         dialog.show();
-        refresh();
     }
 
     /**
@@ -138,7 +139,13 @@ public class QueueController {
      * @param controller il controller della sequenza di riproduzione condivisa
      */
     public void setSequenceController(PlaylistSequenceController controller) {
+        if (this.seqController != null) {
+            this.seqController.detach(this);
+        }
         this.seqController = controller;
+        if (this.seqController != null) {
+            this.seqController.attach(this);
+        }
     }
 
     /**
@@ -148,6 +155,18 @@ public class QueueController {
      */
     public void setTrackLibrary(TrackLibrary library) {
         this.trackLibrary = library;
+    }
+
+    /**
+     * Aggiorna la vista quando la sequenza condivisa cambia.
+     */
+    @Override
+    public void update() {
+        if (Platform.isFxApplicationThread()) {
+            refresh();
+        } else {
+            Platform.runLater(this::refresh);
+        }
     }
 
     /**
@@ -217,11 +236,7 @@ public class QueueController {
         if (nextIndex == null || seqController == null) {
             removeBtn.setDisable(true);
         } else {
-            removeBtn.setOnAction(e -> {
-                if (seqController.removeNextTrackAt(nextIndex)) {
-                    refresh();
-                }
-            });
+            removeBtn.setOnAction(e -> seqController.removeNextTrackAt(nextIndex));
         }
 
         HBox row = new HBox(12, numLabel, info, durationLabel, removeBtn);

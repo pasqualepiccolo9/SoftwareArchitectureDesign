@@ -2,6 +2,7 @@ package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.Track;
+import com.example.progetto_sad.observer.Observer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -225,5 +226,112 @@ class PlaylistSequenceControllerTest {
         assertDoesNotThrow(() -> controller.removeNextTrackAt(0));
         assertTrue(controller.getNextTracks().isEmpty());
         assertFalse(controller.removeNextTrackAt(0));
+    }
+
+    @Test
+    void startPlaylistNotifiesObservers() {
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        controller.startPlaylist(playlist);
+
+        assertEquals(1, notifications[0]);
+    }
+
+    @Test
+    void onTrackFinishedNotifiesObserversWhenSequenceAdvances() {
+        controller.startPlaylist(playlist);
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        controller.onTrackFinished();
+
+        assertEquals(1, notifications[0]);
+    }
+
+    @Test
+    void onTrackFinishedDoesNotNotifyWithoutSequenceOrWhenAlreadyFinished() {
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        controller.onTrackFinished();
+        assertEquals(0, notifications[0]);
+
+        Playlist singleTrackPlaylist = new Playlist("Single");
+        singleTrackPlaylist.addTrack(track1);
+        controller.startPlaylist(singleTrackPlaylist);
+        notifications[0] = 0;
+        controller.onTrackFinished();
+        notifications[0] = 0;
+
+        controller.onTrackFinished();
+
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
+    void addToQueueNotifiesObservers() {
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        controller.addToQueue(track1);
+
+        assertEquals(1, notifications[0]);
+    }
+
+    @Test
+    void addToQueueWithNullDoesNotNotifyObservers() {
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        controller.addToQueue(null);
+
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
+    void removeNextTrackAtNotifiesObserversWhenRemovalSucceeds() {
+        controller.startPlaylist(playlist);
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        assertTrue(controller.removeNextTrackAt(0));
+
+        assertEquals(1, notifications[0]);
+    }
+
+    @Test
+    void removeNextTrackAtDoesNotNotifyObserversWithInvalidIndex() {
+        controller.startPlaylist(playlist);
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        assertFalse(controller.removeNextTrackAt(10));
+
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
+    void detachedObserverDoesNotReceiveNotifications() {
+        int[] notifications = {0};
+        Observer observer = () -> notifications[0]++;
+        controller.attach(observer);
+        controller.detach(observer);
+
+        controller.addToQueue(track1);
+
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
+    void attachingSameObserverTwiceDoesNotDuplicateNotifications() {
+        int[] notifications = {0};
+        Observer observer = () -> notifications[0]++;
+        controller.attach(observer);
+        controller.attach(observer);
+
+        controller.addToQueue(track1);
+
+        assertEquals(1, notifications[0]);
     }
 }

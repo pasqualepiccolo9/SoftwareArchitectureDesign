@@ -3,7 +3,10 @@ package com.example.progetto_sad.controller;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
+import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.observer.Subject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -14,15 +17,17 @@ import java.util.List;
  * del sistema. Non contiene logica di UI nè dipendenze JavaFX.
  */
 public class
-PlaylistSequenceController {
+PlaylistSequenceController implements Subject {
 
     private PlaylistSequence sequence;
+    private final List<Observer> observers;
 
     /**
      * Crea il controller senza alcuna sequenza attiva.
      */
     public PlaylistSequenceController() {
         this.sequence = null;
+        this.observers = new ArrayList<>();
     }
 
     /**
@@ -35,6 +40,7 @@ PlaylistSequenceController {
      */
     public void startPlaylist(Playlist playlist) {
         sequence = PlaylistSequence.from(playlist);
+        notifyObservers();
     }
 
     /**
@@ -65,8 +71,9 @@ PlaylistSequenceController {
      * Se la sequenza non è attiva o è gia' terminata, la chiamata non ha effetto.
      */
     public void onTrackFinished() {
-        if (sequence != null) {
+        if (sequence != null && !sequence.isFinished()) {
             sequence.advance();
+            notifyObservers();
         }
     }
 
@@ -118,6 +125,7 @@ PlaylistSequenceController {
             sequence = PlaylistSequence.empty();
         }
         sequence.addTrack(track);
+        notifyObservers();
     }
 
     /**
@@ -131,6 +139,29 @@ PlaylistSequenceController {
         if (sequence == null) {
             return false;
         }
-        return sequence.removeNextTrackAt(nextIndex);
+        boolean removed = sequence.removeNextTrackAt(nextIndex);
+        if (removed) {
+            notifyObservers();
+        }
+        return removed;
+    }
+
+    @Override
+    public void attach(Observer observer) {
+        if (observer != null && !observers.contains(observer)) {
+            observers.add(observer);
+        }
+    }
+
+    @Override
+    public void detach(Observer observer) {
+        observers.remove(observer);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update();
+        }
     }
 }

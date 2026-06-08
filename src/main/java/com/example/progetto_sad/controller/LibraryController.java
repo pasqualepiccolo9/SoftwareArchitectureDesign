@@ -6,6 +6,7 @@ import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.view.PlaylistView;
+import com.example.progetto_sad.view.QueueView;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -261,6 +262,22 @@ public class LibraryController implements Observer {
             item.setOnMouseClicked(e -> openPlaylist(p));
             playlistListVBox.getChildren().add(item);
         }
+    }
+
+    @FXML
+    private void openQueue() {
+        Scene scene = (trackListVBox != null) ? trackListVBox.getScene() : null;
+        if (scene == null) {
+            return;
+        }
+
+        Parent libraryRoot = scene.getRoot();
+        QueueController queueController = new QueueController();
+        queueController.setSequenceController(seqController);
+        queueController.setTrackLibrary(library);
+        Parent queueRoot = QueueView.load(queueController, () -> scene.setRoot(libraryRoot));
+        queueController.refresh();
+        scene.setRoot(queueRoot);
     }
 
     // US8 - naviga al contenuto della playlist scambiando il root della scena;

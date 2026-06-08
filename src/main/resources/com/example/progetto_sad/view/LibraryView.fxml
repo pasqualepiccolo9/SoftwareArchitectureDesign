@@ -32,6 +32,8 @@
             </HBox>
 
             <Label text="Libreria" styleClass="nav-item-selected" maxWidth="Infinity"/>
+            <Button text="Coda di riproduzione" styleClass="new-playlist-btn"
+                    maxWidth="Infinity" onAction="#openQueue"/>
 
             <Label text="PLAYLIST" styleClass="section-label"/>
 

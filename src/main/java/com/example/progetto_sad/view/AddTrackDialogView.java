@@ -14,6 +14,7 @@ import javafx.stage.Window;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * View responsabile della finestra di dialogo per l'aggiunta di tracce
@@ -37,6 +38,8 @@ public class AddTrackDialogView {
     private Playlist playlist;
     private PlaylistController controller;
     private List<Track> allTracks;
+    private Consumer<Track> addAction;
+    private String customTitle;
 
     private final List<Track> selected = new ArrayList<>();
     private final List<RowEntry> rowEntries = new ArrayList<>();
@@ -58,7 +61,33 @@ public class AddTrackDialogView {
                      PlaylistController controller, Window owner) {
         this.playlist = playlist;
         this.controller = controller;
+        this.addAction = track -> controller.addTrackToPlaylist(track, playlist);
+        this.customTitle = null;
+        initDialog(availableTracks, owner);
+    }
+
+    /**
+     * Inizializza il dialog per aggiungere le tracce selezionate tramite un'azione
+     * personalizzata, senza dipendere da una playlist.
+     *
+     * @param availableTracks le tracce mostrate nella finestra
+     * @param title il titolo visualizzato nel dialog
+     * @param addAction l'azione eseguita per ogni traccia selezionata
+     * @param owner la finestra proprietaria della finestra di dialogo
+     */
+    public void initForQueue(List<Track> availableTracks, String title,
+                             Consumer<Track> addAction, Window owner) {
+        this.playlist = null;
+        this.controller = null;
+        this.addAction = addAction;
+        this.customTitle = title;
+        initDialog(availableTracks, owner);
+    }
+
+    private void initDialog(List<Track> availableTracks, Window owner) {
         this.allTracks = availableTracks != null ? new ArrayList<>(availableTracks) : new ArrayList<>();
+        selected.clear();
+        rowEntries.clear();
 
         stage = new Stage();
         stage.initModality(Modality.APPLICATION_MODAL);
@@ -88,7 +117,9 @@ public class AddTrackDialogView {
     // ── costruzione righe ────────────────────────────────────────────────────
 
     private void buildRowEntries() {
-        List<Track> inPlaylist = controller.getPlaylistTracks(playlist);
+        List<Track> inPlaylist = controller != null && playlist != null
+                ? controller.getPlaylistTracks(playlist)
+                : List.of();
         for (Track track : allTracks) {
             boolean alreadyPresent = inPlaylist.contains(track);
             CheckBox cb = new CheckBox();
@@ -154,13 +185,19 @@ public class AddTrackDialogView {
     }
 
     private HBox buildHeader() {
-        Label prefix = new Label("Aggiungi traccia a ");
-        prefix.getStyleClass().add("dialog-title");
+        HBox titleBox;
+        if (customTitle != null) {
+            Label titleLabel = new Label(customTitle);
+            titleLabel.getStyleClass().add("dialog-title");
+            titleBox = new HBox(titleLabel);
+        } else {
+            Label prefix = new Label("Aggiungi traccia a ");
+            prefix.getStyleClass().add("dialog-title");
 
-        Label nameLabel = new Label(playlist.getName());
-        nameLabel.getStyleClass().addAll("dialog-title", "playlist-name-highlight");
-
-        HBox titleBox = new HBox(0, prefix, nameLabel);
+            Label nameLabel = new Label(playlist.getName());
+            nameLabel.getStyleClass().addAll("dialog-title", "playlist-name-highlight");
+            titleBox = new HBox(0, prefix, nameLabel);
+        }
         titleBox.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(titleBox, Priority.ALWAYS);
 
@@ -248,7 +285,9 @@ public class AddTrackDialogView {
 
     private void addSelected() {
         for (Track track : new ArrayList<>(selected)) {
-            controller.addTrackToPlaylist(track, playlist); // unico punto di aggiunta
+            if (addAction != null) {
+                addAction.accept(track);
+            }
         }
         stage.close();
     }

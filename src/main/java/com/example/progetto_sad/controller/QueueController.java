@@ -1,6 +1,8 @@
 package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.Track;
+import com.example.progetto_sad.model.TrackLibrary;
+import com.example.progetto_sad.view.AddTrackDialogView;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -30,6 +32,7 @@ public class QueueController {
 
     private Runnable onBackAction;
     private PlaylistSequenceController seqController;
+    private TrackLibrary trackLibrary;
 
     @FXML private Label trackCountLabel;
     @FXML private VBox emptyStateVBox;
@@ -56,11 +59,22 @@ public class QueueController {
         }
     }
 
-    // [INT] - handler predisposto per il pulsante "+ Brano"; il collegamento al dialog
-    // di aggiunta traccia alla coda verra' implementato nel task di integrazione.
     @FXML
     private void onAddTrack() {
-        // TODO: [INT] collegare al dialog di aggiunta brano alla coda
+        if (trackLibrary == null || seqController == null
+                || trackCountLabel == null || trackCountLabel.getScene() == null) {
+            return;
+        }
+
+        AddTrackDialogView dialog = new AddTrackDialogView();
+        dialog.initForQueue(
+                trackLibrary.getTracks(),
+                "Aggiungi traccia alla coda di riproduzione",
+                seqController::addToQueue,
+                trackCountLabel.getScene().getWindow()
+        );
+        dialog.show();
+        refresh();
     }
 
     /**
@@ -128,6 +142,15 @@ public class QueueController {
     }
 
     /**
+     * Inietta la libreria da cui selezionare le tracce da aggiungere alla coda.
+     *
+     * @param library la libreria condivisa delle tracce
+     */
+    public void setTrackLibrary(TrackLibrary library) {
+        this.trackLibrary = library;
+    }
+
+    /**
      * Aggiorna la UI leggendo i dati dalla sequenza condivisa impostata con
      * {@link #setSequenceController}. Se nessuna sequenza e' impostata, non ha effetto.
      * Mostra lo stato vuoto se la sequenza e' null, vuota o terminata;
@@ -140,6 +163,10 @@ public class QueueController {
         Track current = seqController.getCurrentTrack();
         if (current == null) {
             // sequenza assente, vuota o terminata
+            setTrackCount(0);
+            if (nextTracksVBox != null) {
+                nextTracksVBox.getChildren().clear();
+            }
             showEmpty(true);
             return;
         }

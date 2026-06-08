@@ -129,6 +129,23 @@ PlaylistSequenceController implements Subject {
     }
 
     /**
+     * US15 - Aggiunge tutte le tracce di una playlist alla coda di riproduzione
+     * riutilizzando {@link #addToQueue(Track)} per ciascun brano. La traccia
+     * eventualmente in riproduzione non viene interrotta.
+     * Se {@code playlist} e' null, la chiamata non ha effetto.
+     *
+     * @param playlist la playlist le cui tracce devono essere accodate
+     */
+    public void addPlaylistToQueue(Playlist playlist) {
+        if (playlist == null) {
+            return;
+        }
+        for (Track track : playlist.getTracks()) {
+            addToQueue(track);
+        }
+    }
+
+    /**
      * Rimuove un brano successivo dalla sequenza attiva usando un indice relativo
      * ai soli brani successivi.
      *

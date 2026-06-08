@@ -182,7 +182,8 @@ public class QueueController {
         }
         for (int i = 0; i < next.size(); i++) {
             Track t = next.get(i);
-            addNextTrack(i + 1, t.getTitle(), t.getAuthor(), formatDuration(t.getDuration()));
+            nextTracksVBox.getChildren().add(buildNextTrackRow(
+                    i + 1, t.getTitle(), t.getAuthor(), formatDuration(t.getDuration()), i));
         }
     }
 
@@ -191,6 +192,11 @@ public class QueueController {
     }
 
     private HBox buildNextTrackRow(int index, String title, String author, String duration) {
+        return buildNextTrackRow(index, title, author, duration, null);
+    }
+
+    private HBox buildNextTrackRow(int index, String title, String author,
+                                   String duration, Integer nextIndex) {
         Label numLabel = new Label(String.valueOf(index));
         numLabel.getStyleClass().add("track-number");
 
@@ -206,10 +212,17 @@ public class QueueController {
         Label durationLabel = new Label(duration);
         durationLabel.getStyleClass().add("track-duration");
 
-        // pulsante rimozione predisposto graficamente; disabilitato finche' non collegato alla coda reale
         Button removeBtn = new Button("✕");
         removeBtn.getStyleClass().add("remove-btn");
-        removeBtn.setDisable(true);
+        if (nextIndex == null || seqController == null) {
+            removeBtn.setDisable(true);
+        } else {
+            removeBtn.setOnAction(e -> {
+                if (seqController.removeNextTrackAt(nextIndex)) {
+                    refresh();
+                }
+            });
+        }
 
         HBox row = new HBox(12, numLabel, info, durationLabel, removeBtn);
         row.setAlignment(Pos.CENTER_LEFT);

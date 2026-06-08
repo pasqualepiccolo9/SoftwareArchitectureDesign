@@ -119,4 +119,18 @@ PlaylistSequenceController {
         }
         sequence.addTrack(track);
     }
+
+    /**
+     * Rimuove un brano successivo dalla sequenza attiva usando un indice relativo
+     * ai soli brani successivi.
+     *
+     * @param nextIndex indice zero-based tra i brani successivi
+     * @return {@code true} se il brano e' stato rimosso, {@code false} altrimenti
+     */
+    public boolean removeNextTrackAt(int nextIndex) {
+        if (sequence == null) {
+            return false;
+        }
+        return sequence.removeNextTrackAt(nextIndex);
+    }
 }

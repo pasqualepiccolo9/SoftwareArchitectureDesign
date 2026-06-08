@@ -9,6 +9,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -206,5 +207,23 @@ class PlaylistSequenceControllerTest {
         assertEquals(List.of(track1), controller.getSequence().getTracks());
         assertEquals(track1, controller.getCurrentTrack());
         assertTrue(controller.getNextTracks().isEmpty());
+    }
+
+    @Test
+    void removeNextTrackAtDelegatesToActiveSequence() {
+        controller.startPlaylist(playlist);
+
+        assertTrue(controller.removeNextTrackAt(0));
+
+        assertEquals(track1, controller.getCurrentTrack());
+        assertEquals(List.of(track3), controller.getNextTracks());
+        assertEquals(List.of(track1, track3), controller.getSequence().getTracks());
+    }
+
+    @Test
+    void removeNextTrackAtWithoutActiveSequenceReturnsFalseWithoutCrash() {
+        assertDoesNotThrow(() -> controller.removeNextTrackAt(0));
+        assertTrue(controller.getNextTracks().isEmpty());
+        assertFalse(controller.removeNextTrackAt(0));
     }
 }

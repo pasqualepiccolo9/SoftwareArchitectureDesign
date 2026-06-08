@@ -137,4 +137,24 @@ public class PlaylistSequence {
         }
         tracks.add(track);
     }
+
+    /**
+     * Rimuove un brano successivo a quello corrente usando un indice relativo alla
+     * lista restituita da {@link #getNextTracks()}. La traccia corrente e la sua
+     * posizione non vengono modificate.
+     *
+     * @param nextIndex indice zero-based tra i brani successivi
+     * @return {@code true} se il brano e' stato rimosso, {@code false} altrimenti
+     */
+    public boolean removeNextTrackAt(int nextIndex) {
+        if (isFinished() || nextIndex < 0) {
+            return false;
+        }
+        int absoluteIndex = currentIndex + 1 + nextIndex;
+        if (absoluteIndex < 0 || absoluteIndex >= tracks.size()) {
+            return false;
+        }
+        tracks.remove(absoluteIndex);
+        return true;
+    }
 }

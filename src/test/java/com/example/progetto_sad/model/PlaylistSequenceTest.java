@@ -217,4 +217,60 @@ class PlaylistSequenceTest {
         assertEquals(track2, sequence.getCurrentTrack());
         assertEquals(List.of(track3), sequence.getNextTracks());
     }
+
+    @Test
+    void removeNextTrackAtRemovesFirstNextTrackWithoutChangingCurrent() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+
+        assertTrue(sequence.removeNextTrackAt(0));
+
+        assertEquals(track1, sequence.getCurrentTrack());
+        assertEquals(List.of(track1, track3), sequence.getTracks());
+        assertEquals(List.of(track3), sequence.getNextTracks());
+    }
+
+    @Test
+    void removeNextTrackAtRemovesIntermediateTrackMaintainingOrder() {
+        Track track4 = new Track("Song D", "Artist D", 210, "Soul", 2023);
+        PlaylistSequence sequence = new PlaylistSequence(List.of(track1, track2, track3, track4));
+
+        assertTrue(sequence.removeNextTrackAt(1));
+
+        assertEquals(List.of(track1, track2, track4), sequence.getTracks());
+        assertEquals(List.of(track2, track4), sequence.getNextTracks());
+    }
+
+    @Test
+    void removeNextTrackAtRemovesSelectedDuplicatePosition() {
+        PlaylistSequence sequence = new PlaylistSequence(List.of(track1, track2, track3, track2));
+
+        assertTrue(sequence.removeNextTrackAt(2));
+
+        assertEquals(List.of(track1, track2, track3), sequence.getTracks());
+        assertEquals(List.of(track2, track3), sequence.getNextTracks());
+    }
+
+    @Test
+    void removeNextTrackAtWithInvalidIndexDoesNotChangeSequence() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        List<Track> originalTracks = sequence.getTracks();
+
+        assertFalse(sequence.removeNextTrackAt(-1));
+        assertFalse(sequence.removeNextTrackAt(2));
+
+        assertEquals(originalTracks, sequence.getTracks());
+        assertEquals(track1, sequence.getCurrentTrack());
+    }
+
+    @Test
+    void removeNextTrackAtAfterAdvanceDoesNotChangeCurrentTrack() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        sequence.advance();
+
+        assertTrue(sequence.removeNextTrackAt(0));
+
+        assertEquals(track2, sequence.getCurrentTrack());
+        assertEquals(List.of(track1, track2), sequence.getTracks());
+        assertTrue(sequence.getNextTracks().isEmpty());
+    }
 }

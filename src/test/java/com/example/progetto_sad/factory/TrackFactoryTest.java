@@ -23,6 +23,7 @@ class TrackFactoryTest {
         assertEquals("Rock", t.getGenre());
         assertEquals(1971, t.getYear());
         assertEquals(DURATION, t.getDuration());
+        assertEquals(VALID_PATH, t.getFilePath());
     }
 
     @Test

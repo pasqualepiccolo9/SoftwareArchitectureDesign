@@ -109,7 +109,7 @@ public class PlaylistManagerTest {
     @Test
     void testRemovePlaylistDetachesItFromTracks() {
         Playlist p = manager.createPlaylist("Rock");
-        Track track = new Track("Bohemian Rhapsody", "Queen", 354, "Rock", 1975);
+        Track track = new Track("Bohemian Rhapsody", "Queen", "Rock", 1975, null, 354);
         p.addTrack(track);
 
         manager.removePlaylist(p);

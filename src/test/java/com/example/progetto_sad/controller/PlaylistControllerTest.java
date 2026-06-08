@@ -88,7 +88,7 @@ public class PlaylistControllerTest {
     @Test
     void testGetPlaylistTracksViaController() {
         Playlist p = manager.createPlaylist("Workout");
-        Track t1 = new Track("Stronger", "Kanye West", 312, "Rap", 2007);
+        Track t1 = new Track("Stronger", "Kanye West", "Rap", 2007, null, 312);
         p.addTrack(t1);
         
         List<Track> tracks = controller.getPlaylistTracks(p);

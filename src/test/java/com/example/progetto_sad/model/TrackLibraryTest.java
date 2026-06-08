@@ -26,7 +26,7 @@ class TrackLibraryTest {
     // US4 - aggiunta traccia
     @Test
     void addTrackMakesItAvailable() {
-        Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
+        Track track = new Track("Imagine", "John Lennon", "Rock", 1971, null, 240);
 
         library.addTrack(track);
 
@@ -43,8 +43,8 @@ class TrackLibraryTest {
     // US4 - piu' tracce nella stessa libreria
     @Test
     void libraryCanStoreMultipleTracks() {
-        Track first = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
-        Track second = new Track("Yesterday", "The Beatles", 125, "Pop", 1965);
+        Track first = new Track("Imagine", "John Lennon", "Rock", 1971, null, 240);
+        Track second = new Track("Yesterday", "The Beatles", "Pop", 1965, null, 125);
 
         library.addTrack(first);
         library.addTrack(second);
@@ -55,7 +55,7 @@ class TrackLibraryTest {
     // US4 - rimozione traccia
     @Test
     void removeTrackRemovesItFromLibrary() {
-        Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
+        Track track = new Track("Imagine", "John Lennon", "Rock", 1971, null, 240);
         library.addTrack(track);
 
         library.removeTrack(track);
@@ -66,10 +66,10 @@ class TrackLibraryTest {
     // US4 - getTracks restituisce una copia non modificabile dall'esterno
     @Test
     void getTracksReturnsUnmodifiableCopy() {
-        Track track = new Track("Imagine", "John Lennon", 240, "Rock", 1971);
+        Track track = new Track("Imagine", "John Lennon", "Rock", 1971, null, 240);
         library.addTrack(track);
 
         assertThrows(UnsupportedOperationException.class,
-                () -> library.getTracks().add(new Track("Altro", "Autore", 0, "Pop", 2000)));
+                () -> library.getTracks().add(new Track("Altro", "Autore", "Pop", 2000, null, 0)));
     }
 }

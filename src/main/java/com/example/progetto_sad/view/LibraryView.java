@@ -73,12 +73,12 @@ public class LibraryView {
 
         // Dati d'esempio coerenti col mockup (tracce in libreria + alcune playlist).
         private void seedSampleData(TrackLibrary library, PlaylistManager playlistManager) {
-            library.addTrack(new Track("Midnight Rain", "Taylor Swift", 221, "Pop", 2022));
-            library.addTrack(new Track("Blinding Lights", "The Weeknd", 200, "Synth-pop", 2019));
-            library.addTrack(new Track("Levitating", "Dua Lipa", 203, "Pop", 2020));
-            library.addTrack(new Track("Stay", "The Kid LAROI", 141, "Hip-hop", 2021));
-            library.addTrack(new Track("As It Was", "Harry Styles", 157, "Pop", 2022));
-            library.addTrack(new Track("Heat Waves", "Glass Animals", 239, "Indie", 2020));
+            library.addTrack(new Track("Midnight Rain", "Taylor Swift", "Pop", 2022, null, 221));
+            library.addTrack(new Track("Blinding Lights", "The Weeknd", "Synth-pop", 2019, null, 200));
+            library.addTrack(new Track("Levitating", "Dua Lipa", "Pop", 2020, null, 203));
+            library.addTrack(new Track("Stay", "The Kid LAROI", "Hip-hop", 2021, null, 141));
+            library.addTrack(new Track("As It Was", "Harry Styles", "Pop", 2022, null, 157));
+            library.addTrack(new Track("Heat Waves", "Glass Animals", "Indie", 2020, null, 239));
 
             playlistManager.createPlaylist("Chill Vibes");
             playlistManager.createPlaylist("Workout Mix");

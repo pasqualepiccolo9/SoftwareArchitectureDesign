@@ -1,6 +1,7 @@
 module com.example.progetto_sad {
     requires javafx.controls;
     requires javafx.fxml;
+    requires javafx.media;
     requires jaudiotagger;
     requires java.logging;
 

@@ -32,7 +32,7 @@ public class ModificaTrackView {
             TrackController trackController = new TrackController(library);
 
             // Traccia di esempio da modificare/eliminare nell'anteprima.
-            Track sample = new Track("Midnight Rain", "Taylor Swift", 174, "Pop", 2022);
+            Track sample = new Track("Midnight Rain", "Taylor Swift", "Pop", 2022, null, 174);
             library.addTrack(sample);
 
             // US3 - playlist d'esempio che contengono la traccia: rendono dimostrabile

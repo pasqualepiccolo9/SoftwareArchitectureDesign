@@ -8,7 +8,7 @@ import java.util.List;
  * US1 - Modello di una traccia musicale.
  *
  * Rappresenta un brano della libreria con i suoi dati: titolo, autore,
- * durata, genere e anno di pubblicazione.
+ * durata, genere, anno di pubblicazione e percorso del file audio sorgente.
  *
  * La durata e' espressa in secondi ed e' in sola lettura (campo final):
  * viene estratta automaticamente dal file audio al momento della creazione
@@ -23,6 +23,9 @@ public class Track {
     private String genre;
     private int year;
 
+    // US9 - percorso del file audio sorgente, necessario alla riproduzione (sola lettura)
+    private final String filePath;
+
     // US3 - playlist in cui questa traccia e' inserita. Serve a rimuoverla da tutte
     // le sue playlist quando viene eliminata (rimozione in cascata), senza interrogare
     // un gestore esterno. La lista e' mantenuta sincronizzata da Playlist.addTrack /
@@ -30,20 +33,26 @@ public class Track {
     private final List<Playlist> playlists = new ArrayList<>();
 
     /**
-     * Crea una traccia con i dati forniti.
+     * US1 - Crea una traccia con tutti i dati provenienti dalla view, incluso il
+     * percorso del file audio sorgente.
      *
-     * @param title    titolo della traccia
-     * @param author   autore/artista
-     * @param duration durata in secondi (estratta dal file audio, sola lettura)
-     * @param genre    genere musicale
-     * @param year     anno di pubblicazione
+     * I parametri seguono lo stesso ordine del form di inserimento e di
+     * {@link com.example.progetto_sad.factory.TrackFactory#createTrack}.
+     *
+     * @param title           titolo della traccia
+     * @param author          autore/artista
+     * @param genre           genere musicale
+     * @param year            anno di pubblicazione
+     * @param filePath        percorso del file audio sorgente (US9 - usato per la riproduzione)
+     * @param durationSeconds durata in secondi (estratta dal file audio, sola lettura)
      */
-    public Track(String title, String author, int duration, String genre, int year) {
+    public Track(String title, String author, String genre, int year, String filePath, int durationSeconds) {
         this.title = title;
         this.author = author;
-        this.duration = duration;
         this.genre = genre;
         this.year = year;
+        this.filePath = filePath;
+        this.duration = durationSeconds;
     }
 
     public String getTitle() {
@@ -64,6 +73,15 @@ public class Track {
 
     public int getDuration() {
         return duration;
+    }
+
+    /**
+     * US9 - Restituisce il percorso del file audio sorgente.
+     *
+     * @return il percorso del file audio, oppure {@code null} se non impostato
+     */
+    public String getFilePath() {
+        return filePath;
     }
 
     public String getGenre() {

@@ -12,7 +12,9 @@ import com.example.progetto_sad.audio.AudioPlayer;
  * Espone il caricamento di una traccia ({@link #load(Track)}) e l'avvio della
  * riproduzione ({@link #play()} / {@link #play(Track)}) tramite un motore audio astratto
  * ({@link AudioPlayer}). Il completamento naturale del brano riporta il player
- * in stato stabile e pubblica un evento per le integrazioni successive.
+ * in stato stabile e pubblica un evento per le integrazioni successive. Se
+ * viene avviata una nuova traccia mentre un'altra e' in riproduzione, il motore
+ * audio rilascia quella precedente prima di partire col nuovo file.
  * Arresto/reset manuale e motore-tempo sono implementati nelle schede US9 successive.
  *
  * Pausa e ripresa (stato IN_PAUSA) non fanno parte di questa classe: appartengono
@@ -100,7 +102,9 @@ public class Player {
      *
      * Riusa il flusso gia' definito da {@link #load(Track)} e {@link #play()}:
      * il caricamento porta il tempo a 00:00 e prepara la traccia, poi l'avvio
-     * delega al motore audio. La ripresa da pausa resta fuori scope (US11).
+     * delega al motore audio. Se un'altra traccia e' in riproduzione, il motore
+     * audio la ferma e la rilascia durante il caricamento del nuovo file. La
+     * ripresa da pausa resta fuori scope (US11).
      *
      * @param track la traccia selezionata da riprodurre
      * @throws IllegalArgumentException se la traccia e' null

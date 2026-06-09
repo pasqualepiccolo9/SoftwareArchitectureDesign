@@ -33,6 +33,7 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * US3/US4 - Controller della schermata principale (home / "Libreria tracce").
@@ -58,6 +59,7 @@ public class LibraryController implements Observer {
 
     private Track selectedTrack;
     private final Observer playerObserver;
+    private final AtomicBoolean playerBarRefreshScheduled;
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
@@ -86,13 +88,8 @@ public class LibraryController implements Observer {
         this.playlistManager = playlistManager;
         this.seqController = seqController;
         this.player = player;
-        this.playerObserver = () -> {
-            if (Platform.isFxApplicationThread()) {
-                refreshPlayerBar();
-            } else {
-                Platform.runLater(this::refreshPlayerBar);
-            }
-        };
+        this.playerObserver = this::requestPlayerBarRefresh;
+        this.playerBarRefreshScheduled = new AtomicBoolean(false);
     }
 
     @FXML
@@ -350,7 +347,7 @@ public class LibraryController implements Observer {
     private void selectTrack(Track track) {
         selectedTrack = track;
         refreshTracks();
-        refreshPlayerBar();
+        requestPlayerBarRefresh();
     }
 
     @FXML
@@ -360,7 +357,7 @@ public class LibraryController implements Observer {
         }
         Track trackToPlay = selectedTrack != null ? selectedTrack : player.getCurrentTrack();
         player.play(trackToPlay);
-        refreshPlayerBar();
+        requestPlayerBarRefresh();
     }
 
     @FXML
@@ -369,7 +366,17 @@ public class LibraryController implements Observer {
             return;
         }
         player.stop();
-        refreshPlayerBar();
+        requestPlayerBarRefresh();
+    }
+
+    private void requestPlayerBarRefresh() {
+        if (!playerBarRefreshScheduled.compareAndSet(false, true)) {
+            return;
+        }
+        Platform.runLater(() -> {
+            playerBarRefreshScheduled.set(false);
+            refreshPlayerBar();
+        });
     }
 
     private void refreshPlayerBar() {
@@ -421,7 +428,7 @@ public class LibraryController implements Observer {
             player.stop();
         }
         if (selectedTrackRemoved || currentTrackRemoved) {
-            refreshPlayerBar();
+            requestPlayerBarRefresh();
         }
     }
 

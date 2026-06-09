@@ -56,4 +56,14 @@ public class FakeAudioPlayer implements AudioPlayer {
         onEndOfTrack = null;
         playing = false;
     }
+    
+    public void pause() {
+        
+        this.playing = false;
+    }
+
+    
+    public void resume() {
+        this.playing = true;
+    }
 }

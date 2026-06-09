@@ -3,6 +3,7 @@ package com.example.progetto_sad.view;
 import com.example.progetto_sad.controller.LibraryController;
 import com.example.progetto_sad.controller.PlaylistSequenceController;
 import com.example.progetto_sad.controller.TrackController;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
@@ -33,16 +34,17 @@ public class LibraryView {
      * @param trackController controller applicativo per creare/eliminare tracce
      * @param playlistManager gestore delle playlist (sidebar e navigazione)
      * @param seqController   controller della sequenza di riproduzione condivisa (US14)
+     * @param player          il player audio condiviso per i comandi di riproduzione
      * @return il nodo radice della home
      * @throws IllegalStateException se l'FXML non puo' essere caricato
      */
     public static Parent load(TrackLibrary library, TrackController trackController,
                               PlaylistManager playlistManager,
-                              PlaylistSequenceController seqController) {
+                              PlaylistSequenceController seqController,Player player) {
         try {
             FXMLLoader loader = new FXMLLoader(LibraryView.class.getResource("LibraryView.fxml"));
             loader.setControllerFactory(type ->
-                    new LibraryController(library, trackController, playlistManager, seqController));
+                    new LibraryController(library, trackController, playlistManager, seqController, player));
             return loader.load();
         } catch (IOException e) {
             throw new IllegalStateException("Impossibile caricare LibraryView.fxml", e);
@@ -69,14 +71,57 @@ public class LibraryView {
             // istanza standalone per la demo: nel task INT verra' sostituita
             // dall'istanza condivisa creata nel flusso principale dell'applicazione.
             PlaylistSequenceController seqController = new PlaylistSequenceController();
+            
+            com.example.progetto_sad.audio.AudioPlayer audio = new com.example.progetto_sad.audio.JavaFxAudioPlayer();
+            Player sharedPlayer = new Player(audio);
 
+            
+            sharedPlayer.setOnEndOfTrack(() -> {
+                seqController.onTrackFinished();
+                Track next = seqController.getCurrentTrack();
+                if (next != null) {
+                    sharedPlayer.play(next);
+                }
+            });
             seedSampleData(library, playlistManager);
 
-            Parent root = LibraryView.load(library, trackController, playlistManager, seqController);
+            Parent root = LibraryView.load(library, trackController, playlistManager, seqController, sharedPlayer);
+            
+            Scene mainScene = new Scene(root, 1150, 760);
+            
+            
+            
+            Runnable navigazioneVersoCoda = () -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("QueueView.fxml"));
+                    Parent queueRoot = loader.load();
+                    
+                    com.example.progetto_sad.controller.QueueController queueCtrl = loader.getController();
+                    // Iniettiamo la stessa istanza della coda condivisa
+                    queueCtrl.setSequenceController(seqController);
+                    queueCtrl.setTrackLibrary(library);
+                    
+                    // Definiamo l'azione per tornare indietro alla libreria
+                    queueCtrl.setOnBackAction(() -> mainScene.setRoot(root));
+                    
+                    // Sostituiamo il contenuto della finestra senza distruggere la memoria
+                    mainScene.setRoot(queueRoot);
+                    queueCtrl.refresh();
+                } catch (java.io.IOException e) {
+                    e.printStackTrace();
+                }
+            };
+            
             stage.setTitle("Playlist Manager - Libreria");
-            stage.setScene(new Scene(root, 1150, 760));
+            stage.setScene(mainScene);
+            mainScene.setOnKeyPressed(event -> {
+                if (event.getCode() == javafx.scene.input.KeyCode.SPACE) {
+                    navigazioneVersoCoda.run();
+                }
+            });
             stage.show();
         }
+                    
 
         // Dati d'esempio coerenti col mockup (tracce in libreria + alcune playlist).
         private void seedSampleData(TrackLibrary library, PlaylistManager playlistManager) {

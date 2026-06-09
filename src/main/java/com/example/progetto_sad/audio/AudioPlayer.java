@@ -26,6 +26,18 @@ public interface AudioPlayer {
      * US9 - Avvia la riproduzione del file precedentemente caricato.
      */
     void play();
+    /**
+     * US11 Mette in pausa la riproduzione corrente.
+     * Blocca l'avanzamento dell'audio mantenendo in memoria la posizione attuale
+     * per consentire una futura ripresa.
+     */
+    void pause();
+    
+    /**
+     * US11 Riprende la riproduzione dall'esatto punto in cui era stata sospesa.
+     * Non ricarica il file audio e non riavvia il brano dall'inizio.
+     */
+    void resume();
 
     /**
      * US9 - Registra l'azione da eseguire quando il brano caricato termina in modo naturale.

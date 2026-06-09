@@ -1,5 +1,6 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
@@ -50,11 +51,13 @@ public class LibraryController implements Observer {
     private final TrackController trackController;
     private final PlaylistManager playlistManager;
     private final PlaylistSequenceController seqController; // US14
+    private final Player player;
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
     @FXML private TextField searchField;
 
+    @FXML private Button playPauseBtn;
     /**
      * @param library         libreria delle tracce mostrata nella tabella
      * @param trackController controller applicativo per creare/eliminare tracce
@@ -63,11 +66,12 @@ public class LibraryController implements Observer {
      */
     public LibraryController(TrackLibrary library, TrackController trackController,
                              PlaylistManager playlistManager,
-                             PlaylistSequenceController seqController) {
+                             PlaylistSequenceController seqController,Player player) {
         this.library = library;
         this.trackController = trackController;
         this.playlistManager = playlistManager;
         this.seqController = seqController;
+        this.player = player;
     }
 
     @FXML
@@ -328,5 +332,42 @@ public class LibraryController implements Observer {
             return (newText.length() <= maxLength || newText.length() < change.getControlText().length())
                     ? change : null;
         }));
+    }
+    
+    /* ===== [INT] Comandi Player ===== */
+    
+    /**
+     * Metodo per gestire il clic sul pulsante Play/Pausa nella UI.
+     * Inoltra il comando al Player condiviso senza interrompere la coda.
+     */
+    @FXML
+    private void handlePlayPauseAction() {
+        if (player == null) return;
+
+        if (player.getState() == Player.PlayerState.IN_RIPRODUZIONE) {
+            player.pause();
+        } else if (player.getState() == Player.PlayerState.IN_PAUSA) {
+            player.resume();
+        } else if (player.getState() == Player.PlayerState.FERMO) {
+            // Se è fermo, cerco di far partire la prima traccia in coda
+            Track current = seqController.getCurrentTrack();
+            if (current != null) {
+                player.play(current);
+            }
+        }
+        refreshPlayerUI(); // Aggiorno l'icona
+    }
+    
+    /**
+     * Aggiorna visivamente il pulsante Play/Pausa in base allo stato del Player.
+     */
+    private void refreshPlayerUI() {
+        if (playPauseBtn == null || player == null) return;
+        
+        if (player.getState() == Player.PlayerState.IN_RIPRODUZIONE) {
+            playPauseBtn.setText("⏸ Pausa");
+        } else {
+            playPauseBtn.setText("▶ Play");
+        }
     }
 }

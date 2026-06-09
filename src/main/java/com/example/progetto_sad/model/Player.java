@@ -110,6 +110,33 @@ public class Player {
         load(track);
         play();
     }
+    /**
+     * US11-M - Mette in pausa la traccia in riproduzione.
+     * * Il player passa allo stato IN_PAUSA e l'esecuzione viene bloccata
+     * delegando l'azione al motore audio. Il valore di currentTime non viene 
+     * azzerato, conservando così il secondo esatto per una futura ripresa.
+     * Se il player non è attualmente in riproduzione, la chiamata viene ignorata.
+     */
+    public void pause() {
+        if (this.state == PlayerState.IN_RIPRODUZIONE) {
+            this.state = PlayerState.IN_PAUSA;
+            audioPlayer.pause();
+        }
+    }
+    
+    /**
+     * US11-M - Riprende la riproduzione dal punto di pausa.
+     * * Il player torna allo stato IN_RIPRODUZIONE e delega al motore audio
+     * la ripartenza. Il brano non viene ricaricato tramite load() e 
+     * il currentTime non viene azzerato, garantendo una ripresa fluida.
+     * Se il player non si trova in stato IN_PAUSA, la chiamata viene ignorata.
+     */
+    public void resume() {
+        if (this.state == PlayerState.IN_PAUSA) {
+            this.state = PlayerState.IN_RIPRODUZIONE;
+            audioPlayer.resume();
+        }
+    }
 
     /**
      * US9 - Registra l'azione da eseguire quando la traccia termina naturalmente.

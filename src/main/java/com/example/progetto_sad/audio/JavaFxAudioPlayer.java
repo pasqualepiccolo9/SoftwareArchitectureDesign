@@ -69,4 +69,29 @@ public class JavaFxAudioPlayer implements AudioPlayer {
             onEndOfTrack.run();
         }
     }
+     
+
+   /**
+     * US11 Mette in pausa il MediaPlayer di JavaFX.
+     * Sospende la riproduzione audio memorizzando nativamente la posizione corrente.
+     */
+    @Override
+    public void pause() {
+        if (mediaPlayer != null) {
+            mediaPlayer.pause();
+        }
+    }
+    
+    /**
+     * US11 Riprende la riproduzione dal punto di pausa.
+     * In JavaFX, invocare play() su un player in pausa riprende l'esecuzione
+     * dall'esatto secondo in cui era stata interrotta.
+     */
+    @Override
+    public void resume() {
+        if (mediaPlayer != null) {
+            mediaPlayer.play();
+        }
+    
+    }
 }

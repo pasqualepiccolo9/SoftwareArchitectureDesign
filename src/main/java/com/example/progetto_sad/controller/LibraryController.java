@@ -107,10 +107,15 @@ public class LibraryController implements Observer {
      */
     @Override
     public void update() {
-        Platform.runLater(this::refreshTracks);
+        Platform.runLater(this::refreshLibraryView);
     }
 
     /* ===== US4 - tabella tracce ===== */
+
+    private void refreshLibraryView() {
+        refreshTracks();
+        syncPlayerBarWithLibrary();
+    }
 
     private void refreshTracks() {
         if (trackListVBox == null) {
@@ -395,7 +400,8 @@ public class LibraryController implements Observer {
         boolean isPlaying = state == Player.PlayerState.IN_RIPRODUZIONE;
 
         if (displayedTrack == null) {
-            setPlayerText("—", "Seleziona una traccia");
+            resetPlayerBar();
+            return;
         } else if (isPlaying && currentTrack != null) {
             setPlayerText(currentTrack.getTitle(), currentTrack.getAuthor() + " • In riproduzione");
         } else if (!hasPlayableAudio(displayedTrack)) {
@@ -414,6 +420,31 @@ public class LibraryController implements Observer {
 
         if (!isPlaying) {
             stopPlayerRefresh();
+        }
+    }
+
+    private void resetPlayerBar() {
+        setPlayerText("—", "Seleziona una traccia");
+        updateProgress(0, 0);
+        updatePlayerButtons(false);
+    }
+
+    private void syncPlayerBarWithLibrary() {
+        boolean selectedTrackRemoved = selectedTrack != null
+                && !trackController.getTracks().contains(selectedTrack);
+        boolean currentTrackRemoved = player != null
+                && player.getCurrentTrack() != null
+                && !trackController.getTracks().contains(player.getCurrentTrack());
+
+        if (selectedTrackRemoved) {
+            selectedTrack = null;
+        }
+        if (currentTrackRemoved) {
+            player.stop();
+            stopPlayerRefresh();
+        }
+        if (selectedTrackRemoved || currentTrackRemoved) {
+            refreshPlayerBar();
         }
     }
 
@@ -442,6 +473,15 @@ public class LibraryController implements Observer {
     }
 
     private void updatePlayerButtons(boolean isPlaying) {
+        if (player == null) {
+            if (playButton != null) {
+                playButton.setDisable(true);
+            }
+            if (stopButton != null) {
+                stopButton.setDisable(true);
+            }
+            return;
+        }
         Track playableTrack = selectedTrack != null ? selectedTrack : player.getCurrentTrack();
         if (playButton != null) {
             playButton.setDisable(isPlaying || !hasPlayableAudio(playableTrack));

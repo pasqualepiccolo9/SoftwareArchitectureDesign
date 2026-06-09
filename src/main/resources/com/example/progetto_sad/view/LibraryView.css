@@ -229,7 +229,7 @@
     -fx-opacity: 0.6;
 }
 
-/* ===== PLAYER (placeholder) ===== */
+/* ===== PLAYER BAR ===== */
 .player-bar {
     -fx-background-color: #0f0f12;
     -fx-border-color: #2a2b2f transparent transparent transparent;

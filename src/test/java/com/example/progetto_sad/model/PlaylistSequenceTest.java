@@ -23,9 +23,9 @@ class PlaylistSequenceTest {
     @BeforeEach
     void setUp() {
         playlist = new Playlist("Test Playlist");
-        track1 = new Track("Song A", "Artist A", 180, "Pop", 2020);
-        track2 = new Track("Song B", "Artist B", 200, "Rock", 2021);
-        track3 = new Track("Song C", "Artist C", 240, "Jazz", 2022);
+        track1 = new Track("Song A", "Artist A", "Pop", 2020, null, 180);
+        track2 = new Track("Song B", "Artist B", "Rock", 2021, null, 200);
+        track3 = new Track("Song C", "Artist C", "Jazz", 2022, null, 240);
         playlist.addTrack(track1);
         playlist.addTrack(track2);
         playlist.addTrack(track3);
@@ -231,7 +231,7 @@ class PlaylistSequenceTest {
 
     @Test
     void removeNextTrackAtRemovesIntermediateTrackMaintainingOrder() {
-        Track track4 = new Track("Song D", "Artist D", 210, "Soul", 2023);
+        Track track4 = new Track("Song D", "Artist D", "Soul", 2023, null, 210);
         PlaylistSequence sequence = new PlaylistSequence(List.of(track1, track2, track3, track4));
 
         assertTrue(sequence.removeNextTrackAt(1));

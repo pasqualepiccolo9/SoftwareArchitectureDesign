@@ -2,6 +2,7 @@ package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
@@ -19,6 +20,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputDialog;
@@ -31,6 +33,7 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * US3/US4 - Controller della schermata principale (home / "Libreria tracce").
@@ -38,6 +41,8 @@ import java.io.IOException;
  * della libreria (US4), permette di eliminarle dalla riga con la "x" (US3, con
  * rimozione in cascata dalle playlist), di aprire il form "Aggiungi traccia" (US1),
  * di creare nuove playlist (US5) e di navigare al contenuto di una playlist (US8).
+ * Collega inoltre la Player Bar ai metodi del {@link Player} per la riproduzione
+ * singola (US9), lasciando la logica di riproduzione al modello.
  * Osserva la {@link TrackLibrary} (pattern Observer) per aggiornare la lista quando
  * il modello cambia.
  */
@@ -50,24 +55,41 @@ public class LibraryController implements Observer {
     private final TrackController trackController;
     private final PlaylistManager playlistManager;
     private final PlaylistSequenceController seqController; // US14
+    private final Player player;
+
+    private Track selectedTrack;
+    private final Observer playerObserver;
+    private final AtomicBoolean playerBarRefreshScheduled;
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
     @FXML private TextField searchField;
+    @FXML private Label playerTitleLabel;
+    @FXML private Label playerMetaLabel;
+    @FXML private Label currentTimeLabel;
+    @FXML private Label durationLabel;
+    @FXML private Slider playerProgressSlider;
+    @FXML private Button playButton;
+    @FXML private Button stopButton;
 
     /**
      * @param library         libreria delle tracce mostrata nella tabella
      * @param trackController controller applicativo per creare/eliminare tracce
      * @param playlistManager gestore delle playlist (sidebar e navigazione)
      * @param seqController   controller della sequenza di riproduzione condivisa (US14)
+     * @param player          player di dominio condiviso con la Player Bar (US9)
      */
     public LibraryController(TrackLibrary library, TrackController trackController,
                              PlaylistManager playlistManager,
-                             PlaylistSequenceController seqController) {
+                             PlaylistSequenceController seqController,
+                             Player player) {
         this.library = library;
         this.trackController = trackController;
         this.playlistManager = playlistManager;
         this.seqController = seqController;
+        this.player = player;
+        this.playerObserver = this::requestPlayerBarRefresh;
+        this.playerBarRefreshScheduled = new AtomicBoolean(false);
     }
 
     @FXML
@@ -76,6 +98,7 @@ public class LibraryController implements Observer {
         if (searchField != null) {
             limitLength(searchField, 20); // US5 CA4 - limite caratteri
         }
+        initializePlayerBar();
         refreshTracks();
         refreshPlaylists();
     }
@@ -86,10 +109,15 @@ public class LibraryController implements Observer {
      */
     @Override
     public void update() {
-        Platform.runLater(this::refreshTracks);
+        Platform.runLater(this::refreshLibraryView);
     }
 
     /* ===== US4 - tabella tracce ===== */
+
+    private void refreshLibraryView() {
+        refreshTracks();
+        syncPlayerBarWithLibrary();
+    }
 
     private void refreshTracks() {
         if (trackListVBox == null) {
@@ -120,6 +148,10 @@ public class LibraryController implements Observer {
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(12, 16, 12, 16));
         row.getStyleClass().add("track-row");
+        if (t == selectedTrack) {
+            row.getStyleClass().add("track-row-selected");
+        }
+        row.setOnMouseClicked(e -> selectTrack(t));
         return row;
     }
 
@@ -301,10 +333,180 @@ public class LibraryController implements Observer {
         scene.setRoot(playlistRoot);
     }
 
+    /* ===== US9 - Player Bar ===== */
+
+    private void initializePlayerBar() {
+        if (player == null) {
+            return;
+        }
+        player.attach(playerObserver);
+        resetProgressSlider();
+        refreshPlayerBar();
+    }
+
+    private void selectTrack(Track track) {
+        selectedTrack = track;
+        refreshTracks();
+        requestPlayerBarRefresh();
+    }
+
+    @FXML
+    private void onPlayPlayer() {
+        if (player == null) {
+            return;
+        }
+        Track trackToPlay = selectedTrack != null ? selectedTrack : player.getCurrentTrack();
+        player.play(trackToPlay);
+        requestPlayerBarRefresh();
+    }
+
+    @FXML
+    private void onStopPlayer() {
+        if (player == null) {
+            return;
+        }
+        player.stop();
+        requestPlayerBarRefresh();
+    }
+
+    /**
+     * US21 - Richiede un aggiornamento della Player Bar sul JavaFX Application Thread,
+     * "fondendo" (coalescing) piu' richieste ravvicinate in un solo refresh.
+     *
+     * Le notifiche possono arrivare fitte e da thread diversi (il clock del Player
+     * notifica ogni secondo, piu' gli eventi UI Play/Stop/selezione): senza coalescing
+     * si accumulerebbero tante Platform.runLater, con sfarfallii e carico inutile sul
+     * FX thread. La AtomicBoolean garantisce che sia in coda un solo refresh per volta;
+     * il flag viene rimesso a false PRIMA di disegnare, cosi' un cambiamento avvenuto
+     * nel frattempo pianifica comunque un nuovo refresh (nessun aggiornamento perso).
+     */
+    private void requestPlayerBarRefresh() {
+        // un refresh e' gia' schedulato: coprira' anche questa richiesta, quindi esco
+        if (!playerBarRefreshScheduled.compareAndSet(false, true)) {
+            return;
+        }
+        Platform.runLater(() -> {
+            playerBarRefreshScheduled.set(false); // riapre la "coda" prima del refresh: non si perdono update
+            refreshPlayerBar();
+        });
+    }
+
+    private void refreshPlayerBar() {
+        if (player == null) {
+            return;
+        }
+        Track currentTrack = player.getCurrentTrack();
+        Track displayedTrack = currentTrack != null ? currentTrack : selectedTrack;
+        Player.PlayerState state = player.getState();
+        boolean isPlaying = state == Player.PlayerState.IN_RIPRODUZIONE;
+
+        if (displayedTrack == null) {
+            resetPlayerBar();
+            return;
+        } else if (isPlaying && currentTrack != null) {
+            setPlayerText(currentTrack.getTitle(), currentTrack.getAuthor() + " • In riproduzione");
+        } else if (!hasPlayableAudio(displayedTrack)) {
+            setPlayerText(displayedTrack.getTitle(), displayedTrack.getAuthor() + " • File audio non disponibile");
+        } else if (currentTrack != null) {
+            setPlayerText(currentTrack.getTitle(), currentTrack.getAuthor() + " • Fermata");
+        } else {
+            setPlayerText(displayedTrack.getTitle(), displayedTrack.getAuthor() + " • Pronta");
+        }
+
+        int currentTime = player.getCurrentTime();
+        int duration = currentTrack != null ? player.getDuration()
+                : (displayedTrack != null ? Math.max(0, displayedTrack.getDuration()) : 0);
+        updateProgress(currentTime, duration);
+        updatePlayerButtons(isPlaying);
+    }
+
+    private void resetPlayerBar() {
+        setPlayerText("—", "Seleziona una traccia");
+        updateProgress(0, 0);
+        updatePlayerButtons(false);
+    }
+
+    private void syncPlayerBarWithLibrary() {
+        boolean selectedTrackRemoved = selectedTrack != null
+                && !trackController.getTracks().contains(selectedTrack);
+        boolean currentTrackRemoved = player != null
+                && player.getCurrentTrack() != null
+                && !trackController.getTracks().contains(player.getCurrentTrack());
+
+        if (selectedTrackRemoved) {
+            selectedTrack = null;
+        }
+        if (currentTrackRemoved) {
+            player.stop();
+        }
+        if (selectedTrackRemoved || currentTrackRemoved) {
+            requestPlayerBarRefresh();
+        }
+    }
+
+    private void setPlayerText(String title, String meta) {
+        if (playerTitleLabel != null) {
+            playerTitleLabel.setText(title);
+        }
+        if (playerMetaLabel != null) {
+            playerMetaLabel.setText(meta);
+        }
+    }
+
+    private void updateProgress(int currentTime, int duration) {
+        int safeCurrentTime = Math.max(0, currentTime);
+        int safeDuration = Math.max(0, duration);
+        if (currentTimeLabel != null) {
+            currentTimeLabel.setText(formatDuration(safeCurrentTime));
+        }
+        if (durationLabel != null) {
+            durationLabel.setText(formatDuration(safeDuration));
+        }
+        if (playerProgressSlider != null) {
+            playerProgressSlider.setMax(safeDuration > 0 ? safeDuration : 1);
+            playerProgressSlider.setValue(Math.min(safeCurrentTime, safeDuration));
+        }
+    }
+
+    private void updatePlayerButtons(boolean isPlaying) {
+        if (player == null) {
+            if (playButton != null) {
+                playButton.setDisable(true);
+            }
+            if (stopButton != null) {
+                stopButton.setDisable(true);
+            }
+            return;
+        }
+        Track playableTrack = selectedTrack != null ? selectedTrack : player.getCurrentTrack();
+        if (playButton != null) {
+            playButton.setDisable(isPlaying || !hasPlayableAudio(playableTrack));
+        }
+        if (stopButton != null) {
+            stopButton.setDisable(!isPlaying);
+        }
+    }
+
+    private boolean hasPlayableAudio(Track track) {
+        return track != null
+                && track.getDuration() > 0
+                && track.getFilePath() != null
+                && !track.getFilePath().isBlank();
+    }
+
+    private void resetProgressSlider() {
+        if (playerProgressSlider != null) {
+            playerProgressSlider.setMin(0);
+            playerProgressSlider.setMax(1);
+            playerProgressSlider.setValue(0);
+        }
+    }
+
     /* ===== util ===== */
 
     private String formatDuration(int totalSeconds) {
-        return String.format("%d:%02d", totalSeconds / 60, totalSeconds % 60);
+        int safeSeconds = Math.max(0, totalSeconds);
+        return String.format("%d:%02d", safeSeconds / 60, safeSeconds % 60);
     }
 
     private Window currentWindow() {

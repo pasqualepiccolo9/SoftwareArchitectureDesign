@@ -11,6 +11,8 @@ import java.io.File;
  * Avvolge {@link MediaPlayer}/{@link Media} di JavaFX traducendo le operazioni
  * di dominio nelle chiamate della libreria. E' l'unico punto del codice che
  * conosce JavaFX media, cosi' il resto dell'applicazione resta disaccoppiato.
+ * Quando viene caricato un nuovo file, l'eventuale brano precedente viene
+ * fermato e rilasciato prima di preparare il successivo.
  */
 public class JavaFxAudioPlayer implements AudioPlayer {
 
@@ -33,9 +35,7 @@ public class JavaFxAudioPlayer implements AudioPlayer {
         if (filePath == null || filePath.isBlank()) {
             throw new IllegalArgumentException("Il percorso del file audio non puo' essere vuoto");
         }
-        if (mediaPlayer != null) {
-            mediaPlayer.dispose();
-        }
+        releaseCurrentPlayer();
         Media media = new Media(new File(filePath).toURI().toString());
         this.mediaPlayer = new MediaPlayer(media);
         this.mediaPlayer.setOnEndOfMedia(this::notifyEndOfTrack);
@@ -55,6 +55,17 @@ public class JavaFxAudioPlayer implements AudioPlayer {
     }
 
     /**
+     * US9 - Arresta la riproduzione corrente e riporta il file caricato all'inizio.
+     * Se non c'e' alcun player caricato, l'operazione non modifica lo stato.
+     */
+    @Override
+    public void stop() {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+        }
+    }
+
+    /**
      * US9 - Registra il callback da invocare quando JavaFX segnala la fine naturale del brano.
      *
      * @param onEndOfTrack callback di fine traccia; se null, non viene eseguita alcuna azione
@@ -68,5 +79,15 @@ public class JavaFxAudioPlayer implements AudioPlayer {
         if (onEndOfTrack != null) {
             onEndOfTrack.run();
         }
+    }
+
+    private void releaseCurrentPlayer() {
+        if (mediaPlayer == null) {
+            return;
+        }
+        mediaPlayer.setOnEndOfMedia(null);
+        stop();
+        mediaPlayer.dispose();
+        mediaPlayer = null;
     }
 }

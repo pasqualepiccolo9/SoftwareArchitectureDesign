@@ -28,9 +28,9 @@ class PlaylistSequenceControllerTest {
     void setUp() {
         controller = new PlaylistSequenceController();
         playlist = new Playlist("Test Playlist");
-        track1 = new Track("Song A", "Artist A", 180, "Pop", 2020);
-        track2 = new Track("Song B", "Artist B", 200, "Rock", 2021);
-        track3 = new Track("Song C", "Artist C", 240, "Jazz", 2022);
+        track1 = new Track("Song A", "Artist A", "Pop", 2020, "dummy/path/A.mp3", 180);
+        track2 = new Track("Song B", "Artist B", "Rock", 2021, "dummy/path/B.mp3", 200);
+        track3 = new Track("Song C", "Artist C", "Jazz", 2022, "dummy/path/C.mp3", 240);
         playlist.addTrack(track1);
         playlist.addTrack(track2);
         playlist.addTrack(track3);
@@ -177,7 +177,7 @@ class PlaylistSequenceControllerTest {
     // US16-T - un brano accodato viene aggiunto in fondo senza alterare l'ordine
     @Test
     void addToQueueAppendsTrackMaintainingOrder() {
-        Track queuedTrack = new Track("Queued Song", "Queued Artist", 210, "Soul", 2023);
+        Track queuedTrack = new Track("Queued Song", "Queued Artist","Soul", 2023,"dummy/path/queued.mp3",200);
         controller.startPlaylist(playlist);
 
         controller.addToQueue(queuedTrack);
@@ -333,5 +333,25 @@ class PlaylistSequenceControllerTest {
         controller.addToQueue(track1);
 
         assertEquals(1, notifications[0]);
+    }
+    // US14-T - verificare che i duplicati vengano aggiunti come nuove occorrenze
+    @Test
+    void addToQueueAllowsDuplicateTracksAsSeparateOccurrences() {
+        controller.startPlaylist(playlist); 
+
+        
+        controller.addToQueue(track1);
+        controller.addToQueue(track1);
+
+        
+        List<Track> totalTracks = controller.getSequence().getTracks();
+        assertEquals(5, totalTracks.size());
+        
+        
+        assertEquals(track1, totalTracks.get(3));
+        assertEquals(track1, totalTracks.get(4));
+
+        
+        assertEquals(List.of(track2, track3, track1, track1), controller.getNextTracks());
     }
 }

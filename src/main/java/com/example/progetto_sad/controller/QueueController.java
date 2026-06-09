@@ -1,8 +1,10 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.view.AddPlaylistDialogView;
 import com.example.progetto_sad.view.AddTrackDialogView;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
@@ -35,6 +37,7 @@ public class QueueController implements Observer {
     private Runnable onBackAction;
     private PlaylistSequenceController seqController;
     private TrackLibrary trackLibrary;
+    private PlaylistManager playlistManager;
 
     @FXML private Label trackCountLabel;
     @FXML private VBox emptyStateVBox;
@@ -155,6 +158,32 @@ public class QueueController implements Observer {
      */
     public void setTrackLibrary(TrackLibrary library) {
         this.trackLibrary = library;
+    }
+
+    /**
+     * Inietta il gestore delle playlist da cui selezionare una playlist da aggiungere
+     * alla coda. Deve essere chiamato prima dell'uso del comando "+ Playlist".
+     *
+     * @param manager il gestore condiviso delle playlist
+     */
+    public void setPlaylistManager(PlaylistManager manager) {
+        this.playlistManager = manager;
+    }
+
+    @FXML
+    private void onAddPlaylist() {
+        if (playlistManager == null || seqController == null
+                || trackCountLabel == null || trackCountLabel.getScene() == null) {
+            return;
+        }
+
+        AddPlaylistDialogView dialog = new AddPlaylistDialogView();
+        dialog.initForQueue(
+                playlistManager.getPlaylists(),
+                seqController::addPlaylistToQueue,
+                trackCountLabel.getScene().getWindow()
+        );
+        dialog.show();
     }
 
     /**

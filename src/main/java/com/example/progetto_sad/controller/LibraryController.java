@@ -369,12 +369,24 @@ public class LibraryController implements Observer {
         requestPlayerBarRefresh();
     }
 
+    /**
+     * US21 - Richiede un aggiornamento della Player Bar sul JavaFX Application Thread,
+     * "fondendo" (coalescing) piu' richieste ravvicinate in un solo refresh.
+     *
+     * Le notifiche possono arrivare fitte e da thread diversi (il clock del Player
+     * notifica ogni secondo, piu' gli eventi UI Play/Stop/selezione): senza coalescing
+     * si accumulerebbero tante Platform.runLater, con sfarfallii e carico inutile sul
+     * FX thread. La AtomicBoolean garantisce che sia in coda un solo refresh per volta;
+     * il flag viene rimesso a false PRIMA di disegnare, cosi' un cambiamento avvenuto
+     * nel frattempo pianifica comunque un nuovo refresh (nessun aggiornamento perso).
+     */
     private void requestPlayerBarRefresh() {
+        // un refresh e' gia' schedulato: coprira' anche questa richiesta, quindi esco
         if (!playerBarRefreshScheduled.compareAndSet(false, true)) {
             return;
         }
         Platform.runLater(() -> {
-            playerBarRefreshScheduled.set(false);
+            playerBarRefreshScheduled.set(false); // riapre la "coda" prima del refresh: non si perdono update
             refreshPlayerBar();
         });
     }

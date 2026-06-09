@@ -30,8 +30,7 @@
 
         <HBox spacing="10" alignment="CENTER_RIGHT">
             <Button text="+ Brano" styleClass="queue-action-btn" onAction="#onAddTrack"/>
-            <!-- + Playlist: predisposto nel layout, non collegato (US15 fuori scope) -->
-            <Button text="+ Playlist" styleClass="queue-action-btn-secondary"/>
+            <Button text="+ Playlist" styleClass="queue-action-btn" onAction="#onAddPlaylist"/>
         </HBox>
     </HBox>
 

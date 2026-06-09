@@ -139,6 +139,21 @@ public class PlaylistSequence {
     }
 
     /**
+     * Aggiunge piu' brani alla fine della sequenza mantenendo l'ordine ricevuto.
+     * Le tracce nulle vengono ignorate.
+     *
+     * @param tracksToAdd brani da accodare
+     */
+    public void addTracks(List<Track> tracksToAdd) {
+        if (tracksToAdd == null) {
+            return;
+        }
+        for (Track track : tracksToAdd) {
+            addTrack(track);
+        }
+    }
+
+    /**
      * Rimuove un brano successivo a quello corrente usando un indice relativo alla
      * lista restituita da {@link #getNextTracks()}. La traccia corrente e la sua
      * posizione non vengono modificate.

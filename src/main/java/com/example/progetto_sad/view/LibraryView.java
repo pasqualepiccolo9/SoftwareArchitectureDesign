@@ -3,8 +3,10 @@ package com.example.progetto_sad.view;
 import com.example.progetto_sad.controller.LibraryController;
 import com.example.progetto_sad.controller.PlaylistSequenceController;
 import com.example.progetto_sad.controller.TrackController;
+import com.example.progetto_sad.audio.JavaFxAudioPlayer;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import javafx.application.Application;
@@ -33,20 +35,40 @@ public class LibraryView {
      * @param trackController controller applicativo per creare/eliminare tracce
      * @param playlistManager gestore delle playlist (sidebar e navigazione)
      * @param seqController   controller della sequenza di riproduzione condivisa (US14)
+     * @param player          player di dominio collegato alla Player Bar (US9)
+     * @return il nodo radice della home
+     * @throws IllegalStateException se l'FXML non puo' essere caricato
+     */
+    public static Parent load(TrackLibrary library, TrackController trackController,
+                              PlaylistManager playlistManager,
+                              PlaylistSequenceController seqController,
+                              Player player) {
+        try {
+            FXMLLoader loader = new FXMLLoader(LibraryView.class.getResource("LibraryView.fxml"));
+            loader.setControllerFactory(type ->
+                    new LibraryController(library, trackController, playlistManager, seqController, player));
+            return loader.load();
+        } catch (IOException e) {
+            throw new IllegalStateException("Impossibile caricare LibraryView.fxml", e);
+        }
+    }
+
+    /**
+     * Carica la home creando il player reale JavaFX per compatibilita' con i
+     * chiamanti esistenti.
+     *
+     * @param library         libreria delle tracce
+     * @param trackController controller applicativo per creare/eliminare tracce
+     * @param playlistManager gestore delle playlist (sidebar e navigazione)
+     * @param seqController   controller della sequenza di riproduzione condivisa (US14)
      * @return il nodo radice della home
      * @throws IllegalStateException se l'FXML non puo' essere caricato
      */
     public static Parent load(TrackLibrary library, TrackController trackController,
                               PlaylistManager playlistManager,
                               PlaylistSequenceController seqController) {
-        try {
-            FXMLLoader loader = new FXMLLoader(LibraryView.class.getResource("LibraryView.fxml"));
-            loader.setControllerFactory(type ->
-                    new LibraryController(library, trackController, playlistManager, seqController));
-            return loader.load();
-        } catch (IOException e) {
-            throw new IllegalStateException("Impossibile caricare LibraryView.fxml", e);
-        }
+        return load(library, trackController, playlistManager, seqController,
+                new Player(new JavaFxAudioPlayer()));
     }
 
     public static void main(String[] args) {
@@ -69,10 +91,11 @@ public class LibraryView {
             // istanza standalone per la demo: nel task INT verra' sostituita
             // dall'istanza condivisa creata nel flusso principale dell'applicazione.
             PlaylistSequenceController seqController = new PlaylistSequenceController();
+            Player player = new Player(new JavaFxAudioPlayer());
 
             seedSampleData(library, playlistManager);
 
-            Parent root = LibraryView.load(library, trackController, playlistManager, seqController);
+            Parent root = LibraryView.load(library, trackController, playlistManager, seqController, player);
             stage.setTitle("Playlist Manager - Libreria");
             stage.setScene(new Scene(root, 1150, 760));
             stage.show();

@@ -99,6 +99,7 @@ public class LibraryView {
             stage.setTitle("Playlist Manager - Libreria");
             stage.setScene(new Scene(root, 1150, 760));
             stage.show();
+
         }
 
         // Dati d'esempio coerenti col mockup (tracce in libreria + alcune playlist).

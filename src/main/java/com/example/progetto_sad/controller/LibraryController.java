@@ -8,9 +8,7 @@ import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.view.PlaylistView;
 import com.example.progetto_sad.view.QueueView;
-import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -59,7 +57,7 @@ public class LibraryController implements Observer {
     private final Player player;
 
     private Track selectedTrack;
-    private Timeline playerRefreshTimeline;
+    private final Observer playerObserver;
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
@@ -88,6 +86,13 @@ public class LibraryController implements Observer {
         this.playlistManager = playlistManager;
         this.seqController = seqController;
         this.player = player;
+        this.playerObserver = () -> {
+            if (Platform.isFxApplicationThread()) {
+                refreshPlayerBar();
+            } else {
+                Platform.runLater(this::refreshPlayerBar);
+            }
+        };
     }
 
     @FXML
@@ -337,10 +342,7 @@ public class LibraryController implements Observer {
         if (player == null) {
             return;
         }
-        player.setOnEndOfTrack(() -> Platform.runLater(() -> {
-            stopPlayerRefresh();
-            refreshPlayerBar();
-        }));
+        player.attach(playerObserver);
         resetProgressSlider();
         refreshPlayerBar();
     }
@@ -358,11 +360,6 @@ public class LibraryController implements Observer {
         }
         Track trackToPlay = selectedTrack != null ? selectedTrack : player.getCurrentTrack();
         player.play(trackToPlay);
-        if (player.getState() == Player.PlayerState.IN_RIPRODUZIONE) {
-            startPlayerRefresh();
-        } else {
-            stopPlayerRefresh();
-        }
         refreshPlayerBar();
     }
 
@@ -372,22 +369,7 @@ public class LibraryController implements Observer {
             return;
         }
         player.stop();
-        stopPlayerRefresh();
         refreshPlayerBar();
-    }
-
-    private void startPlayerRefresh() {
-        stopPlayerRefresh();
-        playerRefreshTimeline = new Timeline(new KeyFrame(Duration.millis(250), e -> refreshPlayerBar()));
-        playerRefreshTimeline.setCycleCount(Timeline.INDEFINITE);
-        playerRefreshTimeline.play();
-    }
-
-    private void stopPlayerRefresh() {
-        if (playerRefreshTimeline != null) {
-            playerRefreshTimeline.stop();
-            playerRefreshTimeline = null;
-        }
     }
 
     private void refreshPlayerBar() {
@@ -417,10 +399,6 @@ public class LibraryController implements Observer {
                 : (displayedTrack != null ? Math.max(0, displayedTrack.getDuration()) : 0);
         updateProgress(currentTime, duration);
         updatePlayerButtons(isPlaying);
-
-        if (!isPlaying) {
-            stopPlayerRefresh();
-        }
     }
 
     private void resetPlayerBar() {
@@ -441,7 +419,6 @@ public class LibraryController implements Observer {
         }
         if (currentTrackRemoved) {
             player.stop();
-            stopPlayerRefresh();
         }
         if (selectedTrackRemoved || currentTrackRemoved) {
             refreshPlayerBar();

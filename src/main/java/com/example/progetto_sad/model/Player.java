@@ -1,7 +1,11 @@
 package com.example.progetto_sad.model;
 
 import com.example.progetto_sad.audio.AudioPlayer;
+import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.observer.Subject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
@@ -24,11 +28,13 @@ import java.util.concurrent.TimeUnit;
  * riporta la traccia corrente a 00:00 e lascia il player in stato stabile.
  * Gli stati non validi vengono intercettati prima di avviare il motore audio,
  * cosi' il player resta sempre in una condizione coerente.
+ * Lo stato del player e' osservabile dalla UI tramite il pattern Observer, cosi'
+ * i controller possono reagire ai cambiamenti senza spostare logica nella view.
  *
  * Pausa e ripresa (stato IN_PAUSA) non fanno parte di questa classe: appartengono
  * alla US11.
  */
-public class Player {
+public class Player implements Subject {
 
     /**
      * US9 - Stati minimi del player per la riproduzione singola.
@@ -64,6 +70,9 @@ public class Player {
     private ScheduledExecutorService clockExecutor;
     private ScheduledFuture<?> clockTask;
 
+    // US21 - observer interessati a stato, traccia corrente, tempo e durata.
+    private final List<Observer> observers;
+
     /**
      * US9 - Crea un player a riposo (nessuna traccia, tempo a 0, stato
      * {@link PlayerState#FERMO}) collegato al motore audio fornito.
@@ -85,6 +94,7 @@ public class Player {
         this.onEndOfTrack = null;
         this.clockExecutor = null;
         this.clockTask = null;
+        this.observers = new ArrayList<>();
         this.audioPlayer.setOnEndOfTrack(this::handleEndOfTrack);
     }
 
@@ -112,6 +122,7 @@ public class Player {
         this.currentTrack = track;
         this.currentTime = 0;
         this.state = PlayerState.FERMO;
+        notifyObservers();
     }
 
     /**
@@ -162,6 +173,7 @@ public class Player {
     public synchronized void play() {
         if (!canPlay(currentTrack)) {
             stopActivePlayback();
+            notifyObservers();
             return;
         }
         stopActivePlayback();
@@ -173,11 +185,13 @@ public class Player {
             audioPlayer.stop();
             this.currentTime = 0;
             this.state = PlayerState.FERMO;
+            notifyObservers();
             return;
         }
         this.currentTime = 0;
         this.state = PlayerState.IN_RIPRODUZIONE;
         startClock();
+        notifyObservers();
     }
 
     /**
@@ -190,6 +204,7 @@ public class Player {
      */
     public synchronized void stop() {
         stopActivePlayback();
+        notifyObservers();
     }
 
     private void handleEndOfTrack() {
@@ -201,6 +216,7 @@ public class Player {
             this.state = PlayerState.FERMO;
             callback = onEndOfTrack;
         }
+        notifyObservers();
         if (callback != null) {
             callback.run();
         }
@@ -229,6 +245,7 @@ public class Player {
 
     private void advanceTime() {
         boolean trackEnded = false;
+        boolean timeAdvanced = false;
         synchronized (this) {
             if (state != PlayerState.IN_RIPRODUZIONE) {
                 return;
@@ -238,11 +255,50 @@ public class Player {
                 trackEnded = true;
             } else {
                 currentTime = Math.min(Math.max(currentTime, 0) + 1, duration);
+                timeAdvanced = true;
                 trackEnded = currentTime >= duration;
             }
         }
         if (trackEnded) {
             handleEndOfTrack();
+        } else if (timeAdvanced) {
+            notifyObservers();
+        }
+    }
+
+    /**
+     * US21 - Registra un osservatore interessato ai cambiamenti del Player.
+     *
+     * @param observer osservatore da registrare; se null viene ignorato
+     */
+    @Override
+    public synchronized void attach(Observer observer) {
+        if (observer != null && !observers.contains(observer)) {
+            observers.add(observer);
+        }
+    }
+
+    /**
+     * US21 - Rimuove un osservatore precedentemente registrato.
+     *
+     * @param observer osservatore da rimuovere
+     */
+    @Override
+    public synchronized void detach(Observer observer) {
+        observers.remove(observer);
+    }
+
+    /**
+     * US21 - Notifica alla UI che stato, traccia, tempo o durata potrebbero essere cambiati.
+     */
+    @Override
+    public void notifyObservers() {
+        List<Observer> observersSnapshot;
+        synchronized (this) {
+            observersSnapshot = new ArrayList<>(observers);
+        }
+        for (Observer observer : observersSnapshot) {
+            observer.update();
         }
     }
 

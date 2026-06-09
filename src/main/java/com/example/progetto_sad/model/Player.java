@@ -20,9 +20,10 @@ import java.util.concurrent.TimeUnit;
  * in stato stabile e pubblica un evento per le integrazioni successive. Se
  * viene avviata una nuova traccia mentre un'altra e' in riproduzione, il motore
  * audio rilascia quella precedente prima di partire col nuovo file. Il tempo
- * corrente avanza tramite un clock interno durante la riproduzione.
- * Arresto/reset manuale e gestione completa degli stati non validi sono
- * implementati nelle schede US9 successive.
+ * corrente avanza tramite un clock interno durante la riproduzione. L'arresto
+ * riporta la traccia corrente a 00:00 e lascia il player in stato stabile.
+ * Gli stati non validi vengono intercettati prima di avviare il motore audio,
+ * cosi' il player resta sempre in una condizione coerente.
  *
  * Pausa e ripresa (stato IN_PAUSA) non fanno parte di questa classe: appartengono
  * alla US11.
@@ -96,7 +97,9 @@ public class Player {
      * la traccia e' pronta ma non ancora avviata.
      *
      * La validazione avviene prima di modificare lo stato, cosi' che con un input
-     * non valido il player resti in una condizione stabile.
+     * non valido il player resti in una condizione stabile. Se una traccia era
+     * in riproduzione, il caricamento di una nuova traccia arresta prima il
+     * brano corrente.
      *
      * @param track la traccia da caricare
      * @throws IllegalArgumentException se la traccia e' null
@@ -105,7 +108,7 @@ public class Player {
         if (track == null) {
             throw new IllegalArgumentException("La traccia da caricare non puo' essere null");
         }
-        stopClock();
+        stopActivePlayback();
         this.currentTrack = track;
         this.currentTime = 0;
         this.state = PlayerState.FERMO;
@@ -120,11 +123,15 @@ public class Player {
      * audio la ferma e la rilascia durante il caricamento del nuovo file. La
      * ripresa da pausa resta fuori scope (US11).
      *
+     * Se la traccia selezionata non e' riproducibile, la chiamata non modifica
+     * lo stato corrente.
+     *
      * @param track la traccia selezionata da riprodurre
-     * @throws IllegalArgumentException se la traccia e' null
-     * @throws IllegalStateException se il motore audio non riesce ad avviare la riproduzione
      */
     public synchronized void play(Track track) {
+        if (!canPlay(track)) {
+            return;
+        }
         load(track);
         play();
     }
@@ -148,23 +155,48 @@ public class Player {
      * {@link PlayerState#IN_RIPRODUZIONE}. Avvia un nuovo brano dall'inizio: la
      * ripresa da pausa non e' gestita qui (US11).
      *
-     * @throws IllegalStateException se non e' caricata alcuna traccia
+     * Se non c'e' una traccia caricata, oppure la traccia caricata non ha durata
+     * o percorso audio validi, la chiamata non avvia nulla e lascia il player
+     * in stato stabile.
      */
     public synchronized void play() {
-        if (currentTrack == null) {
-            throw new IllegalStateException("Nessuna traccia caricata da riprodurre");
+        if (!canPlay(currentTrack)) {
+            stopActivePlayback();
+            return;
         }
-        audioPlayer.load(currentTrack.getFilePath());
-        audioPlayer.play();
+        stopActivePlayback();
+        try {
+            audioPlayer.load(currentTrack.getFilePath());
+            audioPlayer.play();
+        } catch (RuntimeException exception) {
+            stopClock();
+            audioPlayer.stop();
+            this.currentTime = 0;
+            this.state = PlayerState.FERMO;
+            return;
+        }
         this.currentTime = 0;
         this.state = PlayerState.IN_RIPRODUZIONE;
         startClock();
+    }
+
+    /**
+     * US9 - Arresta la riproduzione corrente e riporta il tempo a 00:00.
+     *
+     * La traccia corrente resta caricata, cosi' puo' essere riavviata dall'inizio.
+     * Se il player e' gia' fermo, l'operazione e' idempotente e mantiene lo
+     * stato coerente.
+     * Pausa e ripresa dallo stesso punto restano fuori scope (US11).
+     */
+    public synchronized void stop() {
+        stopActivePlayback();
     }
 
     private void handleEndOfTrack() {
         Runnable callback;
         synchronized (this) {
             stopClock();
+            audioPlayer.stop();
             this.currentTime = 0;
             this.state = PlayerState.FERMO;
             callback = onEndOfTrack;
@@ -203,14 +235,44 @@ public class Player {
             }
             int duration = getDuration();
             if (duration <= 0) {
-                return;
+                trackEnded = true;
+            } else {
+                currentTime = Math.min(Math.max(currentTime, 0) + 1, duration);
+                trackEnded = currentTime >= duration;
             }
-            currentTime = Math.min(currentTime + 1, duration);
-            trackEnded = currentTime >= duration;
         }
         if (trackEnded) {
             handleEndOfTrack();
         }
+    }
+
+    private void stopActivePlayback() {
+        boolean wasPlaying = state == PlayerState.IN_RIPRODUZIONE;
+        stopClock();
+        if (wasPlaying) {
+            audioPlayer.stop();
+        }
+        this.currentTime = 0;
+        this.state = PlayerState.FERMO;
+    }
+
+    private boolean canPlay(Track track) {
+        if (track == null) {
+            return false;
+        }
+        if (track.getDuration() <= 0) {
+            return false;
+        }
+        String filePath = track.getFilePath();
+        return filePath != null && !filePath.isBlank();
+    }
+
+    private int clampCurrentTime() {
+        int duration = getDuration();
+        if (duration <= 0) {
+            return 0;
+        }
+        return Math.max(0, Math.min(currentTime, duration));
     }
 
     /**
@@ -228,6 +290,7 @@ public class Player {
      * @return i secondi trascorsi della traccia corrente
      */
     public synchronized int getCurrentTime() {
+        currentTime = clampCurrentTime();
         return currentTime;
     }
 
@@ -250,6 +313,6 @@ public class Player {
      * @return la durata in secondi della traccia corrente, oppure 0 se nessuna traccia e' caricata
      */
     public synchronized int getDuration() {
-        return currentTrack != null ? currentTrack.getDuration() : 0;
+        return currentTrack != null ? Math.max(0, currentTrack.getDuration()) : 0;
     }
 }

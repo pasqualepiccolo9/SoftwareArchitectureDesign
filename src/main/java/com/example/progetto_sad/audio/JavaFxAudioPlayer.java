@@ -55,6 +55,17 @@ public class JavaFxAudioPlayer implements AudioPlayer {
     }
 
     /**
+     * US9 - Arresta la riproduzione corrente e riporta il file caricato all'inizio.
+     * Se non c'e' alcun player caricato, l'operazione non modifica lo stato.
+     */
+    @Override
+    public void stop() {
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+        }
+    }
+
+    /**
      * US9 - Registra il callback da invocare quando JavaFX segnala la fine naturale del brano.
      *
      * @param onEndOfTrack callback di fine traccia; se null, non viene eseguita alcuna azione
@@ -75,7 +86,7 @@ public class JavaFxAudioPlayer implements AudioPlayer {
             return;
         }
         mediaPlayer.setOnEndOfMedia(null);
-        mediaPlayer.stop();
+        stop();
         mediaPlayer.dispose();
         mediaPlayer = null;
     }

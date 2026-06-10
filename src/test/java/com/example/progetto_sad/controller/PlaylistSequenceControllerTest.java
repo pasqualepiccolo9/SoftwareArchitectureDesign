@@ -215,10 +215,9 @@ class PlaylistSequenceControllerTest {
         controller.addPlaylistToQueue(playlist);
 
         assertNotNull(controller.getSequence());
-        assertEquals(3, controller.getSequence().getTracks().size());
-        assertTrue(controller.getSequence().getTracks().containsAll(List.of(track1, track2, track3)));
+        assertEquals(List.of(track1, track2, track3), controller.getSequence().getTracks());
         assertEquals(track1, controller.getCurrentTrack());
-        assertEquals(2, controller.getNextTracks().size());
+        assertEquals(List.of(track2, track3), controller.getNextTracks());
     }
 
     @Test
@@ -228,10 +227,18 @@ class PlaylistSequenceControllerTest {
 
         controller.addPlaylistToQueue(playlist);
 
-        assertEquals(4, controller.getSequence().getTracks().size());
-        assertTrue(controller.getSequence().getTracks().containsAll(List.of(queuedTrack, track1, track2, track3)));
+        assertEquals(List.of(queuedTrack, track1, track2, track3), controller.getSequence().getTracks());
         assertEquals(queuedTrack, controller.getCurrentTrack());
-        assertEquals(3, controller.getNextTracks().size());
+        assertEquals(List.of(track1, track2, track3), controller.getNextTracks());
+    }
+
+    @Test
+    void addPlaylistToQueueDoesNotModifySourcePlaylist() {
+        controller.addToQueue(new Track("Queued Song", "Queued Artist", "Soul", 2023, null, 210));
+
+        controller.addPlaylistToQueue(playlist);
+
+        assertEquals(List.of(track1, track2, track3), playlist.getTracks());
     }
 
     @Test
@@ -242,6 +249,58 @@ class PlaylistSequenceControllerTest {
         controller.addPlaylistToQueue(playlist);
 
         assertEquals(1, notifications[0]);
+    }
+
+    @Test
+    void addPlaylistToQueueWithNullPlaylistDoesNotCreateSequenceOrNotifyObservers() {
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        assertDoesNotThrow(() -> controller.addPlaylistToQueue(null));
+
+        assertNull(controller.getSequence());
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
+    void addPlaylistToQueueWithEmptyPlaylistDoesNotCreateSequenceOrNotifyObservers() {
+        Playlist emptyPlaylist = new Playlist("Empty");
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        controller.addPlaylistToQueue(emptyPlaylist);
+
+        assertNull(controller.getSequence());
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
+    void addPlaylistToQueueWithNullPlaylistDoesNotChangeExistingSequence() {
+        controller.startPlaylist(playlist);
+        List<Track> tracksBeforeAdd = controller.getSequence().getTracks();
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        assertDoesNotThrow(() -> controller.addPlaylistToQueue(null));
+
+        assertEquals(tracksBeforeAdd, controller.getSequence().getTracks());
+        assertEquals(track1, controller.getCurrentTrack());
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
+    void addPlaylistToQueueWithEmptyPlaylistDoesNotChangeExistingSequence() {
+        Playlist emptyPlaylist = new Playlist("Empty");
+        controller.startPlaylist(playlist);
+        List<Track> tracksBeforeAdd = controller.getSequence().getTracks();
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        controller.addPlaylistToQueue(emptyPlaylist);
+
+        assertEquals(tracksBeforeAdd, controller.getSequence().getTracks());
+        assertEquals(track1, controller.getCurrentTrack());
+        assertEquals(0, notifications[0]);
     }
 
     @Test

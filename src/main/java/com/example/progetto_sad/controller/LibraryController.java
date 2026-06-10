@@ -102,11 +102,6 @@ public class LibraryController implements Observer {
         syncPlayerBarWithLibrary();
     }
 
-    private void refreshLibraryView() {
-        refreshTracks();
-        syncPlayerBarWithLibrary();
-    }
-
     private void refreshTracks() {
         if (trackListVBox == null) return;
         trackListVBox.getChildren().clear();

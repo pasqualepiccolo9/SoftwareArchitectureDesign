@@ -6,13 +6,15 @@ import com.example.progetto_sad.support.PlayerTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// US9-T - test del Player su caricamento, avvio, cambio traccia e reset.
+// US9-T - test del Player su caricamento, avvio, cambio traccia, reset e fine brano.
 class PlayerTest {
 
     private FakeAudioPlayer audioPlayer;
@@ -141,11 +143,62 @@ class PlayerTest {
         assertEquals(PlayerState.FERMO, player.getState());
     }
 
+    @Test
+    void motoreTempoAvanzaDuranteLaRiproduzioneSenzaSuperareLaDurata() throws InterruptedException {
+        Track track = PlayerTestFixtures.trackWithDuration(3);
+
+        player.play(track);
+        waitUntilClockAdvances();
+
+        assertTrue(player.getCurrentTime() > 0);
+        assertTrue(player.getCurrentTime() <= track.getDuration());
+        assertEquals(PlayerState.IN_RIPRODUZIONE, player.getState());
+    }
+
+    @Test
+    void fineBranoDaMotoreAudioResettaTempoStatoENotificaCallback() {
+        AtomicInteger completedTracks = new AtomicInteger(0);
+        Track track = PlayerTestFixtures.trackWithDuration(10);
+        player.setOnEndOfTrack(completedTracks::incrementAndGet);
+        player.play(track);
+
+        audioPlayer.simulateEndOfTrack();
+
+        assertEquals(1, audioPlayer.getStopCalls());
+        assertEquals(1, completedTracks.get());
+        assertEquals(track, player.getCurrentTrack());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    @Test
+    void fineBranoDaMotoreTempoFermaLaRiproduzioneEResettaTempo() throws InterruptedException {
+        Track track = PlayerTestFixtures.trackWithDuration(1);
+
+        player.play(track);
+        waitUntilPlayerStops();
+
+        assertEquals(1, audioPlayer.getStopCalls());
+        assertEquals(track, player.getCurrentTrack());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
     private void waitUntilClockAdvances() throws InterruptedException {
         long deadline = System.currentTimeMillis() + 2500;
         while (System.currentTimeMillis() < deadline && player.getCurrentTime() < 1) {
             Thread.sleep(25);
         }
         assertTrue(player.getCurrentTime() >= 1);
+    }
+
+    private void waitUntilPlayerStops() throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 2500;
+        while (System.currentTimeMillis() < deadline && player.getState() != PlayerState.FERMO) {
+            Thread.sleep(25);
+        }
+        assertEquals(PlayerState.FERMO, player.getState());
     }
 }

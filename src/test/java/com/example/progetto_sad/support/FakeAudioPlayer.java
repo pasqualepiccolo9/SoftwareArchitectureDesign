@@ -13,6 +13,7 @@ public class FakeAudioPlayer implements AudioPlayer {
     private String loadedPath;
     private Runnable onEndOfTrack;
     private boolean playing;
+    private int stopCalls;
 
     @Override
     public void load(String filePath) {
@@ -26,6 +27,12 @@ public class FakeAudioPlayer implements AudioPlayer {
             throw new IllegalStateException("Nessun file audio caricato: invocare prima load()");
         }
         this.playing = true;
+    }
+
+    @Override
+    public void stop() {
+        this.playing = false;
+        this.stopCalls++;
     }
 
     @Override
@@ -51,9 +58,14 @@ public class FakeAudioPlayer implements AudioPlayer {
         return playing;
     }
 
+    public int getStopCalls() {
+        return stopCalls;
+    }
+
     public void reset() {
         loadedPath = null;
         onEndOfTrack = null;
         playing = false;
+        stopCalls = 0;
     }
 }

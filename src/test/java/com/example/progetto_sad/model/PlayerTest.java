@@ -1,6 +1,7 @@
 package com.example.progetto_sad.model;
 
 import com.example.progetto_sad.model.Player.PlayerState;
+import com.example.progetto_sad.audio.AudioPlayer;
 import com.example.progetto_sad.support.FakeAudioPlayer;
 import com.example.progetto_sad.support.PlayerTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -186,6 +188,20 @@ class PlayerTest {
         assertEquals(PlayerState.FERMO, player.getState());
     }
 
+    // US9-T - se il motore audio lancia all'avvio, il Player recupera uno stato stabile.
+    @Test
+    void playRecuperaStatoStabileSeIlMotoreAudioLanciaUnEccezione() {
+        Player playerConMotoreInErrore = new Player(new MotoreCheLanciaAllAvvio());
+        Track track = PlayerTestFixtures.sampleTrack();
+
+        // l'Adapter lancia su play(): il Player deve intercettare e restare stabile
+        assertDoesNotThrow(() -> playerConMotoreInErrore.play(track));
+
+        assertEquals(track, playerConMotoreInErrore.getCurrentTrack());
+        assertEquals(0, playerConMotoreInErrore.getCurrentTime());
+        assertEquals(PlayerState.FERMO, playerConMotoreInErrore.getState());
+    }
+
     private void waitUntilClockAdvances() throws InterruptedException {
         long deadline = System.currentTimeMillis() + 2500;
         while (System.currentTimeMillis() < deadline && player.getCurrentTime() < 1) {
@@ -200,5 +216,14 @@ class PlayerTest {
             Thread.sleep(25);
         }
         assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    // Doppio di AudioPlayer che simula un motore che fallisce all'avvio della riproduzione,
+    // per verificare il ramo di recupero (try/catch) di Player.play().
+    private static class MotoreCheLanciaAllAvvio implements AudioPlayer {
+        @Override public void load(String filePath) { }
+        @Override public void play() { throw new RuntimeException("motore audio non disponibile"); }
+        @Override public void stop() { }
+        @Override public void setOnEndOfTrack(Runnable onEndOfTrack) { }
     }
 }

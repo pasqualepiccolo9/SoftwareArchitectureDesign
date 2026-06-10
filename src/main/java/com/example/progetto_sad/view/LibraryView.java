@@ -56,13 +56,6 @@ public class LibraryView {
     /**
      * Carica la home creando il player reale JavaFX per compatibilita' con i
      * chiamanti esistenti.
-     *
-     * @param library         libreria delle tracce
-     * @param trackController controller applicativo per creare/eliminare tracce
-     * @param playlistManager gestore delle playlist (sidebar e navigazione)
-     * @param seqController   controller della sequenza di riproduzione condivisa (US14)
-     * @return il nodo radice della home
-     * @throws IllegalStateException se l'FXML non puo' essere caricato
      */
     public static Parent load(TrackLibrary library, TrackController trackController,
                               PlaylistManager playlistManager,
@@ -77,9 +70,6 @@ public class LibraryView {
 
     /**
      * Avvio standalone della home con dati d'esempio.
-     *
-     * La classe esterna NON estende Application (avvio affidabile da module-path e
-     * classpath); l'app JavaFX e' questa classe annidata.
      */
     public static class App extends Application {
 
@@ -88,16 +78,58 @@ public class LibraryView {
             TrackLibrary library = new TrackLibrary();
             TrackController trackController = new TrackController(library);
             PlaylistManager playlistManager = new PlaylistManager();
-            // istanza standalone per la demo: nel task INT verra' sostituita
-            // dall'istanza condivisa creata nel flusso principale dell'applicazione.
             PlaylistSequenceController seqController = new PlaylistSequenceController();
+            
+            
             Player player = new Player(new JavaFxAudioPlayer());
 
+            
+            player.setOnEndOfTrack(() -> {
+                seqController.onTrackFinished();
+                Track next = seqController.getCurrentTrack();
+                if (next != null) {
+                    player.play(next);
+                }
+            });
+            
             seedSampleData(library, playlistManager);
 
+           
             Parent root = LibraryView.load(library, trackController, playlistManager, seqController, player);
+            
+            
+            Scene mainScene = new Scene(root, 1150, 760);
+
+            
+            Runnable navigazioneVersoCoda = () -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("QueueView.fxml"));
+                    Parent queueRoot = loader.load();
+                    
+                    com.example.progetto_sad.controller.QueueController queueCtrl = loader.getController();
+                    queueCtrl.setSequenceController(seqController);
+                    queueCtrl.setTrackLibrary(library);
+                    queueCtrl.setPlaylistManager(playlistManager);
+                    
+                    queueCtrl.setOnBackAction(() -> mainScene.setRoot(root));
+                    
+                    mainScene.setRoot(queueRoot);
+                    queueCtrl.refresh();
+                } catch (java.io.IOException e) {
+                    e.printStackTrace();
+                }
+            };
+
             stage.setTitle("Playlist Manager - Libreria");
-            stage.setScene(new Scene(root, 1150, 760));
+            stage.setScene(mainScene);
+            
+            // TRUCCO PER TESTARE: Premi SPAZIO sulla tastiera per passare alla Coda!
+            mainScene.setOnKeyPressed(event -> {
+                if (event.getCode() == javafx.scene.input.KeyCode.SPACE) {
+                    navigazioneVersoCoda.run();
+                }
+            });
+            
             stage.show();
 
         }

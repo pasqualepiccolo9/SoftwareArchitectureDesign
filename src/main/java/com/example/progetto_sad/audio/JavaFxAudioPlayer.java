@@ -90,4 +90,18 @@ public class JavaFxAudioPlayer implements AudioPlayer {
         mediaPlayer.dispose();
         mediaPlayer = null;
     }
+
+    @Override
+    public void pause() {
+        if (mediaPlayer != null) {
+            mediaPlayer.pause(); 
+        }
+    }
+
+    @Override
+    public void resume() {
+        if (mediaPlayer != null) {
+            mediaPlayer.play(); 
+        }
+    }
 }

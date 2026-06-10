@@ -28,9 +28,9 @@ class PlaylistSequenceControllerTest {
     void setUp() {
         controller = new PlaylistSequenceController();
         playlist = new Playlist("Test Playlist");
-        track1 = new Track("Song A", "Artist A", "Pop", 2020, "dummy/path/A.mp3", 180);
-        track2 = new Track("Song B", "Artist B", "Rock", 2021, "dummy/path/B.mp3", 200);
-        track3 = new Track("Song C", "Artist C", "Jazz", 2022, "dummy/path/C.mp3", 240);
+        track1 = new Track("Song A", "Artist A", "Pop", 2020, null, 180);
+        track2 = new Track("Song B", "Artist B", "Rock", 2021, null, 200);
+        track3 = new Track("Song C", "Artist C", "Jazz", 2022, null, 240);
         playlist.addTrack(track1);
         playlist.addTrack(track2);
         playlist.addTrack(track3);
@@ -177,7 +177,7 @@ class PlaylistSequenceControllerTest {
     // US16-T - un brano accodato viene aggiunto in fondo senza alterare l'ordine
     @Test
     void addToQueueAppendsTrackMaintainingOrder() {
-        Track queuedTrack = new Track("Queued Song", "Queued Artist","Soul", 2023,"dummy/path/queued.mp3",200);
+        Track queuedTrack = new Track("Queued Song", "Queued Artist", "Soul", 2023, null, 210);
         controller.startPlaylist(playlist);
 
         controller.addToQueue(queuedTrack);

@@ -13,6 +13,7 @@ public class FakeAudioPlayer implements AudioPlayer {
     private String loadedPath;
     private Runnable onEndOfTrack;
     private boolean playing;
+    private int stopCalls;
 
     @Override
     public void load(String filePath) {
@@ -28,6 +29,15 @@ public class FakeAudioPlayer implements AudioPlayer {
         this.playing = true;
     }
 
+    public void stop() {
+        this.playing = false;
+        this.stopCalls++;
+    }
+    
+    public int getStopCalls() {
+        return stopCalls;
+    }
+    
     @Override
     public void setOnEndOfTrack(Runnable onEndOfTrack) {
         this.onEndOfTrack = onEndOfTrack;
@@ -66,4 +76,6 @@ public class FakeAudioPlayer implements AudioPlayer {
     public void resume() {
         this.playing = true;
     }
+
+    
 }

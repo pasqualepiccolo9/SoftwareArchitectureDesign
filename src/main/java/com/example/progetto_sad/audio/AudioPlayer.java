@@ -9,8 +9,9 @@ package com.example.progetto_sad.audio;
  * nell'unica implementazione concreta ({@code JavaFxAudioPlayer}) ed e' possibile
  * usare un doppio nei test (FakeAudioPlayer).
  *
- * In questa fase espone caricamento, avvio ed evento di completamento naturale;
- * le altre operazioni (stop, pausa, seek) vengono aggiunte dalle card successive.
+ * In questa fase espone caricamento, avvio, arresto/reset ed evento di
+ * completamento naturale; le altre operazioni (pausa, seek) vengono aggiunte
+ * dalle card successive.
  */
 public interface AudioPlayer {
 
@@ -38,6 +39,11 @@ public interface AudioPlayer {
      * Non ricarica il file audio e non riavvia il brano dall'inizio.
      */
     void resume();
+
+    /**
+     * US9 - Arresta la riproduzione corrente e riporta il brano caricato all'inizio.
+     */
+    void stop();
 
     /**
      * US9 - Registra l'azione da eseguire quando il brano caricato termina in modo naturale.

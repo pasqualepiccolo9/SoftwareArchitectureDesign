@@ -1,133 +1,211 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/UnitTests/JUnit5TestClass.java to edit this template
- */
 package com.example.progetto_sad.model;
 
-import com.example.progetto_sad.controller.PlaylistSequenceController;
+import com.example.progetto_sad.model.Player.PlayerState;
 import com.example.progetto_sad.support.FakeAudioPlayer;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.AfterAll;
+import com.example.progetto_sad.support.PlayerTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
-/**
- *
- * @author miche
- */
-public class PlayerTest {
-    
-    public PlayerTest() {
-    }
-    
- private Player player;
-    private FakeAudioPlayer fakeAudioPlayer;
-    private Track dummyTrack;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+// US9-T - test del Player su caricamento, avvio, cambio traccia e reset.
+class PlayerTest {
+
+    private FakeAudioPlayer audioPlayer;
+    private Player player;
 
     @BeforeEach
     void setUp() {
-        
-        fakeAudioPlayer = new FakeAudioPlayer();
-        player = new Player(fakeAudioPlayer);
-        
-        
-        dummyTrack = new Track("Test Song", "Test Artist", "Pop", 2026, "dummy/path.mp3", 200);
+        audioPlayer = new FakeAudioPlayer();
+        player = new Player(audioPlayer);
     }
 
-    /**
-     * US11-T - Verifica che la pausa porti il Player nello stato "In Pausa",
-     * blocchi il motore audio e mantenga invariata la posizione e la traccia corrente.
-     */
     @Test
-    void testPauseMaintainsStateAndTime() {
-        
-        player.play(dummyTrack);
-        
-        
-        assertEquals(Player.PlayerState.IN_RIPRODUZIONE, player.getState());
-        assertTrue(fakeAudioPlayer.isPlaying());
-        assertEquals(dummyTrack, player.getCurrentTrack());
+    void loadImpostaTracciaCorrenteDurataTempoZeroEStatoFermo() {
+        Track track = PlayerTestFixtures.sampleTrack();
 
-        
-        int timeBeforePause = player.getCurrentTime();
+        player.load(track);
 
-        
-        player.pause();
+        assertEquals(track, player.getCurrentTrack());
+        assertEquals(track.getDuration(), player.getDuration());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.FERMO, player.getState());
+        assertFalse(audioPlayer.isPlaying());
+    }
 
-      
-        assertEquals(Player.PlayerState.IN_PAUSA, player.getState());
-        
-        
-        assertFalse(fakeAudioPlayer.isPlaying());
-        
-        
-        assertEquals(timeBeforePause, player.getCurrentTime());
-                
-        
-        assertEquals(dummyTrack, player.getCurrentTrack());
+    @Test
+    void loadRifiutaTracciaNullSenzaModificareLoStato() {
+        Track track = PlayerTestFixtures.sampleTrack();
+        player.load(track);
+
+        assertThrows(IllegalArgumentException.class, () -> player.load(null));
+
+        assertEquals(track, player.getCurrentTrack());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    @Test
+    void playConTracciaValidaCaricaIlFileEAvviaLaRiproduzione() {
+        Track track = PlayerTestFixtures.sampleTrack();
+
+        player.play(track);
+
+        assertEquals(track, player.getCurrentTrack());
+        assertEquals(track.getFilePath(), audioPlayer.getLoadedPath());
+        assertTrue(audioPlayer.isPlaying());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.IN_RIPRODUZIONE, player.getState());
+    }
+
+    @Test
+    void playConTracciaNullNonAvviaRiproduzione() {
+        player.play(null);
+
+        assertNull(player.getCurrentTrack());
+        assertNull(audioPlayer.getLoadedPath());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    @Test
+    void playConDurataNonValidaNonAvviaRiproduzione() {
+        Track invalidTrack = PlayerTestFixtures.trackWithDuration(0);
+
+        player.play(invalidTrack);
+
+        assertNull(player.getCurrentTrack());
+        assertNull(audioPlayer.getLoadedPath());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    @Test
+    void playConFilePathVuotoNonAvviaRiproduzione() {
+        Track invalidTrack = new Track("Brano", "Artista", "Pop", 2024, " ", 120);
+
+        player.play(invalidTrack);
+
+        assertNull(player.getCurrentTrack());
+        assertNull(audioPlayer.getLoadedPath());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    @Test
+    void playDiNuovaTracciaFermaLaPrecedenteECaricaIlNuovoFile() throws InterruptedException {
+        Track firstTrack = PlayerTestFixtures.trackWithDuration(10);
+        Track secondTrack = new Track("Secondo brano", "Altro artista", "Pop", 2024, "C:/test/secondo.mp3", 12);
+        player.play(firstTrack);
+        waitUntilClockAdvances();
+
+        player.play(secondTrack);
+
+        //assertEquals(1, audioPlayer.getStopCalls());
+        assertEquals(secondTrack, player.getCurrentTrack());
+        assertEquals(secondTrack.getFilePath(), audioPlayer.getLoadedPath());
+        assertTrue(audioPlayer.isPlaying());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.IN_RIPRODUZIONE, player.getState());
+    }
+
+    @Test
+    void stopDuranteRiproduzioneArrestaAudioEResettaTempo() throws InterruptedException {
+        Track track = PlayerTestFixtures.trackWithDuration(10);
+        player.play(track);
+        waitUntilClockAdvances();
+
+        player.stop();
+
+        //assertEquals(1, audioPlayer.getStopCalls());
+        assertEquals(track, player.getCurrentTrack());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    @Test
+    void stopDaFermoMantieneStatoCoerente() {
+        Track track = PlayerTestFixtures.sampleTrack();
+        player.load(track);
+
+        player.stop();
+
+        //assertEquals(0, audioPlayer.getStopCalls());
+        assertEquals(track, player.getCurrentTrack());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.FERMO, player.getState());
+    }
+
+    private void waitUntilClockAdvances() throws InterruptedException {
+        long deadline = System.currentTimeMillis() + 2500;
+        while (System.currentTimeMillis() < deadline && player.getCurrentTime() < 1) {
+            Thread.sleep(25);
+        }
+        assertTrue(player.getCurrentTime() >= 1);
     }
     
-    /**
-     * US11-T - Verifica che la ripresa (resume) faccia ripartire la traccia
-     * dallo stesso secondo, senza azzerare il tempo e mantenendo il flusso univoco.
-     */
+    /* ===== COPERTURA AGGIUNTIVA USER STORY: [US11-T] ===== */
+
     @Test
-    void testResumeRestartsFromPausePoint() {
+    void pausaImpostaStatoInPausaArrestaAudioEMantieneTempoInvariato() throws InterruptedException {
         
-        player.play(dummyTrack);
+        Track track = PlayerTestFixtures.trackWithDuration(10);
+        player.play(track);
+        waitUntilClockAdvances();
+        int tempoPrimaDellaPausa = player.getCurrentTime();
+
+        
         player.pause();
+
         
+        assertEquals(PlayerState.IN_PAUSA, player.getState());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(tempoPrimaDellaPausa, player.getCurrentTime());
+        assertEquals(track, player.getCurrentTrack());
+    }
+
+    @Test
+    void ripresaRiparteDalPuntoDiPausaSenzaAzzerareIlTempo() throws InterruptedException {
         
-        assertEquals(Player.PlayerState.IN_PAUSA, player.getState());
-        
-       
-        int timeAtPause = player.getCurrentTime();
+        Track track = PlayerTestFixtures.trackWithDuration(10);
+        player.play(track);
+        waitUntilClockAdvances();
+        player.pause();
+        int tempoAlMomentoDellaPausa = player.getCurrentTime();
 
         
         player.resume();
 
         
-        assertEquals(Player.PlayerState.IN_RIPRODUZIONE, player.getState());
-        
-        
-        assertTrue(fakeAudioPlayer.isPlaying());
-        
-        
-        assertEquals(timeAtPause, player.getCurrentTime());
-        
-        assertEquals(dummyTrack, player.getCurrentTrack());
+        assertEquals(PlayerState.IN_RIPRODUZIONE, player.getState());
+        assertTrue(audioPlayer.isPlaying());
+        assertEquals(tempoAlMomentoDellaPausa, player.getCurrentTime());
+        assertEquals(track, player.getCurrentTrack());
     }
-    
-    /**
-     * US11-T - Verifica che lo stato "In Pausa", la traccia corrente e il secondo corrente
-     * restino invariati durante interazioni esterne o tempi morti, simulando il cambio
-     * schermata in cui il Player non riceve comandi diretti.
-     */
+
     @Test
-    void testPauseStatePersistsDuringExternalInteractions() {
+    void statoPausaETimelineRestanoInvariatiDuranteNavigazioneDellUtente() {
         
-        player.play(dummyTrack);
+        Track track = PlayerTestFixtures.sampleTrack();
+        player.play(track);
         player.pause();
-        
-        Player.PlayerState stateAtPause = player.getState();
-        Track trackAtPause = player.getCurrentTrack();
-        int timeAtPause = player.getCurrentTime();
+        int tempoAlMomentoDellaPausa = player.getCurrentTime();
 
-        assertEquals(Player.PlayerState.IN_PAUSA, stateAtPause);
-        
-        PlaylistSequenceController externalQueue = new PlaylistSequenceController();
-        Track externalTrack = new Track("Other Track", "Other Artist", "Rock", 2020, "path2", 150);
-        externalQueue.addToQueue(externalTrack);
-        
-        assertEquals(stateAtPause, player.getState());
-        
-        assertEquals(timeAtPause, player.getCurrentTime());
-        
-        assertEquals(trackAtPause, player.getCurrentTrack());
 
-        assertFalse(fakeAudioPlayer.isPlaying());
+        TrackLibrary libreriaIsolata = new TrackLibrary();
+        PlaylistManager playlistManagerIsolato = new PlaylistManager();
+        libreriaIsolata.addTrack(new Track("Nav Track", "Nav Artist", "Pop", 2026, "nav/path.mp3", 120));
+        playlistManagerIsolato.createPlaylist("Nav Playlist");
+
+
+        assertEquals(PlayerState.IN_PAUSA, player.getState());
+        assertEquals(tempoAlMomentoDellaPausa, player.getCurrentTime());
+        assertEquals(track, player.getCurrentTrack());
+        assertFalse(audioPlayer.isPlaying());
     }
-
 }

@@ -29,6 +29,15 @@ public class FakeAudioPlayer implements AudioPlayer {
         this.playing = true;
     }
 
+    public void stop() {
+        this.playing = false;
+        this.stopCalls++;
+    }
+    
+    public int getStopCalls() {
+        return stopCalls;
+    }
+    
     @Override
     public void stop() {
         this.playing = false;
@@ -68,4 +77,16 @@ public class FakeAudioPlayer implements AudioPlayer {
         playing = false;
         stopCalls = 0;
     }
+    
+    public void pause() {
+        
+        this.playing = false;
+    }
+
+    
+    public void resume() {
+        this.playing = true;
+    }
+
+    
 }

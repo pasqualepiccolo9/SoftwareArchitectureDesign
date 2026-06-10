@@ -427,4 +427,24 @@ class PlaylistSequenceControllerTest {
 
         assertEquals(1, notifications[0]);
     }
+    // US14-T - verificare che i duplicati vengano aggiunti come nuove occorrenze
+    @Test
+    void addToQueueAllowsDuplicateTracksAsSeparateOccurrences() {
+        controller.startPlaylist(playlist); 
+
+        
+        controller.addToQueue(track1);
+        controller.addToQueue(track1);
+
+        
+        List<Track> totalTracks = controller.getSequence().getTracks();
+        assertEquals(5, totalTracks.size());
+        
+        
+        assertEquals(track1, totalTracks.get(3));
+        assertEquals(track1, totalTracks.get(4));
+
+        
+        assertEquals(List.of(track2, track3, track1, track1), controller.getNextTracks());
+    }
 }

@@ -12,7 +12,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * US9 - Modello del player per la riproduzione di una singola traccia.
+ * US9 / US11 - Modello del player per la riproduzione di una singola traccia.
  *
  * Incapsula lo stato necessario alla riproduzione di un brano: la traccia
  * correntemente caricata, il tempo trascorso (in secondi) e lo stato di
@@ -30,15 +30,12 @@ import java.util.concurrent.TimeUnit;
  * cosi' il player resta sempre in una condizione coerente.
  * Lo stato del player e' osservabile dalla UI tramite il pattern Observer, cosi'
  * i controller possono reagire ai cambiamenti senza spostare logica nella view.
- *
- * Pausa e ripresa (stato IN_PAUSA) non fanno parte di questa classe: appartengono
- * alla US11.
  */
 public class Player implements Subject {
 
     /**
      * US9 - Stati minimi del player per la riproduzione singola.
-     * Lo stato IN_PAUSA verra' aggiunto con la US11.
+     * Esteso con lo stato IN_PAUSA dalla US11.
      */
     public enum PlayerState {
         /** Nessuna riproduzione attiva: stato iniziale, dopo lo stop e dopo la fine del brano. */
@@ -46,8 +43,7 @@ public class Player implements Subject {
         /** Una traccia e' attualmente in riproduzione. */
         IN_RIPRODUZIONE,
         /** Una traccia e' caricata ma la riproduzione e' temporaneamente sospesa (pausa). */
-        IN_PAUSA   /* Attualmente non viene utilizzata ma la inserisco perché ha un overhead irrisorio e perché servirà
-                      al mio collega quando si dedicherà alla US11 */
+        IN_PAUSA
     }
 
     // US9 - traccia attualmente caricata nel player (null se nessuna)
@@ -131,8 +127,7 @@ public class Player implements Subject {
      * Riusa il flusso gia' definito da {@link #load(Track)} e {@link #play()}:
      * il caricamento porta il tempo a 00:00 e prepara la traccia, poi l'avvio
      * delega al motore audio. Se un'altra traccia e' in riproduzione, il motore
-     * audio la ferma e la rilascia durante il caricamento del nuovo file. La
-     * ripresa da pausa resta fuori scope (US11).
+     * audio la ferma e la rilascia durante il caricamento del nuovo file.
      *
      * Se la traccia selezionata non e' riproducibile, la chiamata non modifica
      * lo stato corrente.
@@ -145,6 +140,38 @@ public class Player implements Subject {
         }
         load(track);
         play();
+    }
+    
+    /**
+     * US11-M - Mette in pausa la traccia in riproduzione.
+     * Il player passa allo stato IN_PAUSA e l'esecuzione viene bloccata
+     * delegando l'azione al motore audio. Il valore di currentTime non viene 
+     * azzerato, conservando così il secondo esatto per una futura ripresa.
+     * Se il player non è attualmente in riproduzione, la chiamata viene ignorata.
+     */
+    public synchronized void pause() {
+        if (this.state == PlayerState.IN_RIPRODUZIONE) {
+            this.state = PlayerState.IN_PAUSA;
+            stopClock(); // Spegne il timer così non gira a vuoto consumando risorse
+            audioPlayer.pause();
+            notifyObservers(); // Aggiorna immediatamente la UI dello stato di pausa
+        }
+    }
+    
+    /**
+     * US11-M - Riprende la riproduzione dal punto di pausa.
+     * Il player torna allo stato IN_RIPRODUZIONE e delega al motore audio
+     * la ripartenza. Il brano non viene ricaricato tramite load() e 
+     * il currentTime non viene azzerato, garantendo una ripresa fluida.
+     * Se il player non si trova in stato IN_PAUSA, la chiamata viene ignorata.
+     */
+    public synchronized void resume() {
+        if (this.state == PlayerState.IN_PAUSA) {
+            this.state = PlayerState.IN_RIPRODUZIONE;
+            audioPlayer.resume();
+            startClock(); // Riaccende il timer esattamente dal secondo in cui era
+            notifyObservers(); // Sveglia gli observer della UI
+        }
     }
 
     /**
@@ -164,7 +191,7 @@ public class Player implements Subject {
      *
      * Delega l'avvio al motore audio (Adapter) e porta il player nello stato
      * {@link PlayerState#IN_RIPRODUZIONE}. Avvia un nuovo brano dall'inizio: la
-     * ripresa da pausa non e' gestita qui (US11).
+     * ripresa da pausa non e' gestita qui (vedere metodo resume).
      *
      * Se non c'e' una traccia caricata, oppure la traccia caricata non ha durata
      * o percorso audio validi, la chiamata non avvia nulla e lascia il player
@@ -200,7 +227,6 @@ public class Player implements Subject {
      * La traccia corrente resta caricata, cosi' puo' essere riavviata dall'inizio.
      * Se il player e' gia' fermo, l'operazione e' idempotente e mantiene lo
      * stato coerente.
-     * Pausa e ripresa dallo stesso punto restano fuori scope (US11).
      */
     public synchronized void stop() {
         stopActivePlayback();
@@ -302,10 +328,14 @@ public class Player implements Subject {
         }
     }
 
+    /**
+     * Arresta definitivamente l'audio sia se il brano sta suonando,
+     * sia se si trova momentaneamente in pausa.
+     */
     private void stopActivePlayback() {
-        boolean wasPlaying = state == PlayerState.IN_RIPRODUZIONE;
+        boolean deveArrestareAudio = (state == PlayerState.IN_RIPRODUZIONE || state == PlayerState.IN_PAUSA);
         stopClock();
-        if (wasPlaying) {
+        if (deveArrestareAudio) {
             audioPlayer.stop();
         }
         this.currentTime = 0;

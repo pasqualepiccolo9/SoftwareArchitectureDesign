@@ -3,6 +3,7 @@ package com.example.progetto_sad.controller;
 import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
@@ -94,6 +95,11 @@ public class LibraryController implements Observer {
     @Override
     public void update() {
         Platform.runLater(this::refreshLibraryView);
+    }
+
+    private void refreshLibraryView() {
+        refreshTracks();
+        syncPlayerBarWithLibrary();
     }
 
     private void refreshLibraryView() {

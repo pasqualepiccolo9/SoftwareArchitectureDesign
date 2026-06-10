@@ -131,6 +131,7 @@ public class LibraryView {
             });
             
             stage.show();
+
         }
 
         // Dati d'esempio coerenti col mockup (tracce in libreria + alcune playlist).

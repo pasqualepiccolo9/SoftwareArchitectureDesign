@@ -46,11 +46,6 @@ public interface AudioPlayer {
     void stop();
 
     /**
-     * US9 - Arresta la riproduzione corrente e riporta il brano caricato all'inizio.
-     */
-    void stop();
-
-    /**
      * US9 - Registra l'azione da eseguire quando il brano caricato termina in modo naturale.
      *
      * @param onEndOfTrack callback di fine traccia; se null, non viene eseguita alcuna azione

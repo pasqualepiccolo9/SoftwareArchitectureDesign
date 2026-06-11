@@ -39,6 +39,12 @@ public class FakeAudioPlayer implements AudioPlayer {
     }
     
     @Override
+    public void stop() {
+        this.playing = false;
+        this.stopCalls++;
+    }
+
+    @Override
     public void setOnEndOfTrack(Runnable onEndOfTrack) {
         this.onEndOfTrack = onEndOfTrack;
     }
@@ -61,10 +67,15 @@ public class FakeAudioPlayer implements AudioPlayer {
         return playing;
     }
 
+    public int getStopCalls() {
+        return stopCalls;
+    }
+
     public void reset() {
         loadedPath = null;
         onEndOfTrack = null;
         playing = false;
+        stopCalls = 0;
     }
     
     public void pause() {

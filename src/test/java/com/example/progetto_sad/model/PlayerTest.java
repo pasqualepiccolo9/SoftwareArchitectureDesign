@@ -274,6 +274,8 @@ class PlayerTest {
     private static class MotoreCheLanciaAllAvvio implements AudioPlayer {
         @Override public void load(String filePath) { }
         @Override public void play() { throw new RuntimeException("motore audio non disponibile"); }
+        @Override public void pause() { }
+        @Override public void resume() { }
         @Override public void stop() { }
         @Override public void setOnEndOfTrack(Runnable onEndOfTrack) { }
     }

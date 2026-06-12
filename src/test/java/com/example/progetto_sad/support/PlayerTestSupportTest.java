@@ -18,7 +18,7 @@ class PlayerTestSupportTest {
     @BeforeEach
     void setUp() {
         audioPlayer = new FakeAudioPlayer();
-        player = new Player(audioPlayer);
+        player = Player.resetForTesting(audioPlayer);
     }
 
     @Test

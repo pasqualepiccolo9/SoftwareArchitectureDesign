@@ -3,7 +3,6 @@ package com.example.progetto_sad.view;
 import com.example.progetto_sad.controller.LibraryController;
 import com.example.progetto_sad.controller.PlaylistSequenceController;
 import com.example.progetto_sad.controller.TrackController;
-import com.example.progetto_sad.audio.JavaFxAudioPlayer;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Player;
@@ -61,7 +60,7 @@ public class LibraryView {
                               PlaylistManager playlistManager,
                               PlaylistSequenceController seqController) {
         return load(library, trackController, playlistManager, seqController,
-                new Player(new JavaFxAudioPlayer()));
+                Player.getInstance());
     }
 
     public static void main(String[] args) {
@@ -81,7 +80,7 @@ public class LibraryView {
             PlaylistSequenceController seqController = new PlaylistSequenceController();
             
             
-            Player player = new Player(new JavaFxAudioPlayer());
+            Player player = Player.getInstance();
 
             
             player.setOnEndOfTrack(() -> {
@@ -136,9 +135,9 @@ public class LibraryView {
 
         // Dati d'esempio coerenti col mockup (tracce in libreria + alcune playlist).
         private void seedSampleData(TrackLibrary library, PlaylistManager playlistManager) {
-            library.addTrack(new Track("Midnight Rain", "Taylor Swift", "Pop", 2022, null, 221));
-            library.addTrack(new Track("Blinding Lights", "The Weeknd", "Synth-pop", 2019, null, 200));
-            library.addTrack(new Track("Levitating", "Dua Lipa", "Pop", 2020, null, 203));
+            library.addTrack(new Track("A Me Me Piace O Blues", "Pino D'Aniele", "pop", 2022, "C:/Users/Gabbo/Desktop/SOFTWARE_ARCHITECTURE_DESIGN/File_MP3/A Me Me Piace O Blues (Remastered 2014).mp3.mpeg", 221));
+            library.addTrack(new Track("Jailhouse Rock", "Elvis Presley", "Rock", 2019, "C:/Users/Gabbo/Desktop/SOFTWARE ARCHITECTURE DESIGN/File_MP3/Elvis Presley - Jailhouse Rock (Official Audio).mp3.mpeg", 200));
+            library.addTrack(new Track("Beat It", "Michael Jackson", "Pop", 2020, null, 203));
             library.addTrack(new Track("Stay", "The Kid LAROI", "Hip-hop", 2021, null, 141));
             library.addTrack(new Track("As It Was", "Harry Styles", "Pop", 2022, null, 157));
             library.addTrack(new Track("Heat Waves", "Glass Animals", "Indie", 2020, null, 239));

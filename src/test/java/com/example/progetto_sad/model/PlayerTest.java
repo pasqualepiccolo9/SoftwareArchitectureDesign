@@ -25,7 +25,7 @@ class PlayerTest {
     @BeforeEach
     void setUp() {
         audioPlayer = new FakeAudioPlayer();
-        player = new Player(audioPlayer);
+        player = Player.resetForTesting(audioPlayer);
     }
 
     @Test
@@ -191,7 +191,7 @@ class PlayerTest {
     // US9-T - se il motore audio lancia all'avvio, il Player recupera uno stato stabile.
     @Test
     void playRecuperaStatoStabileSeIlMotoreAudioLanciaUnEccezione() {
-        Player playerConMotoreInErrore = new Player(new MotoreCheLanciaAllAvvio());
+        Player playerConMotoreInErrore = Player.resetForTesting(new MotoreCheLanciaAllAvvio());
         Track track = PlayerTestFixtures.sampleTrack();
 
         // l'Adapter lancia su play(): il Player deve intercettare e restare stabile

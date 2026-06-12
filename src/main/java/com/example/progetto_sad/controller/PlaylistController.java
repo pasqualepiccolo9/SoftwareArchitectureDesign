@@ -1,5 +1,10 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.command.AddTrackToPlaylistCommand;
+import com.example.progetto_sad.command.CommandManager;
+import com.example.progetto_sad.command.CreatePlaylistCommand;
+import com.example.progetto_sad.command.DeletePlaylistCommand;
+import com.example.progetto_sad.command.RemoveTrackFromPlaylistCommand;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
@@ -32,10 +37,18 @@ import java.util.List;
  *   della lista e le azioni dell'utente. Osserva la playlist mostrata (pattern Observer) per
  *   aggiornare la UI quando il modello cambia.
  * Il caricamento dell'FXML e l'avvio sono delegati a {@code view/PlaylistView}.
+ *
+ * US22 - Nel pattern Command questo controller e' il Client: crea e configura i
+ * comandi concreti (crea/elimina playlist, aggiungi/rimuovi traccia) e li passa
+ * all'Invoker ({@link CommandManager}), che li esegue e li registra nello storico
+ * per l'annullamento. Le firme dei metodi invocati dalla UI restano invariate.
  */
 public class PlaylistController implements Observer {
 
     private final PlaylistManager manager;
+
+    // US22 - Invoker condiviso a cui il controller (Client) consegna i comandi.
+    private final CommandManager commandManager;
 
     // Stato della vista: la schermata mostra UNA playlist alla volta.
     private Playlist currentPlaylist;
@@ -50,12 +63,32 @@ public class PlaylistController implements Observer {
     @FXML private Button addTrackBtn;
 
     /**
-     * Crea il controller con il gestore delle playlist.
+     * Crea il controller con il gestore delle playlist e un proprio storico comandi.
+     * Mantiene compatibile l'uso esistente (test e anteprime); l'applicazione reale
+     * usa il costruttore a due argomenti per condividere un unico storico tra i
+     * controller.
      *
      * @param manager il gestore usato per creare e rimuovere playlist
      */
     public PlaylistController(PlaylistManager manager) {
+        this(manager, new CommandManager());
+    }
+
+    /**
+     * US22 - Crea il controller collegandolo allo storico comandi condiviso
+     * dell'applicazione, cosi' che il pulsante "Annulla" agisca su un'unica
+     * cronologia per tutte le operazioni annullabili.
+     *
+     * @param manager il gestore usato per creare e rimuovere playlist
+     * @param commandManager l'Invoker condiviso che esegue e registra i comandi
+     * @throws IllegalArgumentException se commandManager e' null
+     */
+    public PlaylistController(PlaylistManager manager, CommandManager commandManager) {
+        if (commandManager == null) {
+            throw new IllegalArgumentException("Il command manager non puo' essere null");
+        }
         this.manager = manager;
+        this.commandManager = commandManager;
     }
 
     /* ===== US5 - creazione/rimozione playlist ===== */
@@ -67,7 +100,9 @@ public class PlaylistController implements Observer {
      */
     public void createPlaylist(String name) {
         try {
-            manager.createPlaylist(name);
+            // US22 - la creazione transita dall'Invoker come comando annullabile; se la
+            // validazione del manager fallisce, nessun comando entra nello storico.
+            commandManager.executeCommand(new CreatePlaylistCommand(manager, name));
             System.out.println("Playlist '" + name + "' creata con successo.");
         } catch (IllegalArgumentException e) {
             System.err.println("Errore UI: " + e.getMessage());
@@ -81,7 +116,9 @@ public class PlaylistController implements Observer {
      */
     public void removePlaylist(Playlist playlist) {
         if (playlist != null) {
-            manager.removePlaylist(playlist);
+            // US22 - l'eliminazione transita dall'Invoker; il comando salva la posizione
+            // originaria per il ripristino (undo) completo di playlist e collegamenti.
+            commandManager.executeCommand(new DeletePlaylistCommand(manager, playlist));
         }
     }
 
@@ -95,7 +132,8 @@ public class PlaylistController implements Observer {
      */
     public void addTrackToPlaylist(Track track, Playlist playlist) {
         if (playlist != null) {
-            playlist.addTrack(track);
+            // US22 - l'aggiunta transita dall'Invoker come comando annullabile.
+            commandManager.executeCommand(new AddTrackToPlaylistCommand(playlist, track));
         }
     }
 
@@ -107,7 +145,9 @@ public class PlaylistController implements Observer {
      */
     public void removeTrackFromPlaylist(Track track, Playlist playlist) {
         if (playlist != null) {
-            playlist.removeTrack(track);
+            // US22 - la rimozione transita dall'Invoker; il comando salva la posizione
+            // originaria per reinserire la traccia al posto giusto in caso di undo (CA2).
+            commandManager.executeCommand(new RemoveTrackFromPlaylistCommand(playlist, track));
         }
     }
 

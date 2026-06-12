@@ -62,6 +62,36 @@ public class PlaylistManager {
         }
         playlists.remove(p);
     }
+
+    /**
+     * US22 - Reinserisce una playlist esistente in una posizione specifica,
+     * ripristinando la sincronizzazione con le sue tracce. E' l'esatto inverso di
+     * {@link #removePlaylist(Playlist)} e serve ai comandi di annullamento per
+     * ripristinare una playlist eliminata: poiche' la playlist conserva le proprie
+     * tracce anche dopo la rimozione, e' sufficiente ripristinarne i collegamenti.
+     *
+     * @param index la posizione di inserimento, da 0 a size (inclusi)
+     * @param p la playlist da reinserire
+     * @throws IllegalArgumentException se p e' null, l'indice e' fuori intervallo o
+     *         la playlist e' gia' presente
+     */
+    public void addPlaylistAt(int index, Playlist p) {
+        if (p == null) {
+            throw new IllegalArgumentException("La playlist non puo' essere null");
+        }
+        if (index < 0 || index > playlists.size()) {
+            throw new IllegalArgumentException("Posizione di inserimento non valida");
+        }
+        if (playlists.contains(p)) {
+            throw new IllegalArgumentException("La playlist e' gia' presente");
+        }
+        playlists.add(index, p);
+        // US22 - ripristina la sincronizzazione inversa rotta da removePlaylist:
+        // ogni traccia torna a riferire questa playlist.
+        for (Track t : p.getTracks()) {
+            t.addPlaylist(p);
+        }
+    }
     
     /**
      * Restituisce l'elenco completo di tutte le playlist attualmente salvate.

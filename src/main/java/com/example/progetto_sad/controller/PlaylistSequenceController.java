@@ -16,10 +16,11 @@ import java.util.List;
  * playlist, mantiene la sequenza attiva ed espone la traccia corrente al resto
  * del sistema. Non contiene logica di UI nè dipendenze JavaFX.
  */
-public class
-PlaylistSequenceController implements Subject {
+public class PlaylistSequenceController implements Subject, Observer {
 
     private PlaylistSequence sequence;
+    private Playlist sourcePlaylist;
+    private int sourceTrackCount;
     private final List<Observer> observers;
 
     /**
@@ -27,6 +28,8 @@ PlaylistSequenceController implements Subject {
      */
     public PlaylistSequenceController() {
         this.sequence = null;
+        this.sourcePlaylist = null;
+        this.sourceTrackCount = 0;
         this.observers = new ArrayList<>();
     }
 
@@ -39,7 +42,13 @@ PlaylistSequenceController implements Subject {
      * @param playlist la playlist da avviare; puo' essere null o vuota
      */
     public void startPlaylist(Playlist playlist) {
+        detachSourcePlaylist();
+        sourcePlaylist = playlist;
+        if (sourcePlaylist != null) {
+            sourcePlaylist.attach(this);
+        }
         sequence = PlaylistSequence.from(playlist);
+        sourceTrackCount = sequence.getTracks().size();
         notifyObservers();
     }
 
@@ -168,6 +177,41 @@ PlaylistSequenceController implements Subject {
             notifyObservers();
         }
         return removed;
+    }
+
+    /**
+     * US22 - Sincronizza la sequenza quando la playlist in riproduzione cambia
+     * per effetto di un comando di annullamento. La sincronizzazione non controlla
+     * il Player: aggiorna solo il modello della sequenza e lascia intatto l'audio.
+     */
+    @Override
+    public void update() {
+        if (sourcePlaylist == null || sequence == null) {
+            return;
+        }
+        List<Track> sourceTracks = sourcePlaylist.getTracks();
+        boolean changed = sequence.syncWithSourceTracksPreservingCurrent(
+                mergeSourceTracksWithQueuedTail(sourceTracks));
+        sourceTrackCount = sourceTracks.size();
+        if (changed) {
+            notifyObservers();
+        }
+    }
+
+    private List<Track> mergeSourceTracksWithQueuedTail(List<Track> sourceTracks) {
+        List<Track> mergedTracks = new ArrayList<>(sourceTracks);
+        List<Track> currentTracks = sequence.getTracks();
+        int tailStart = Math.min(Math.max(sourceTrackCount, 0), currentTracks.size());
+        mergedTracks.addAll(currentTracks.subList(tailStart, currentTracks.size()));
+        return mergedTracks;
+    }
+
+    private void detachSourcePlaylist() {
+        if (sourcePlaylist != null) {
+            sourcePlaylist.detach(this);
+            sourcePlaylist = null;
+            sourceTrackCount = 0;
+        }
     }
 
     @Override

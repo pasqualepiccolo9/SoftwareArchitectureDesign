@@ -27,6 +27,26 @@ public class TrackLibrary implements Subject {
         notifyObservers();
     }
 
+    /**
+     * US22 - Inserisce una traccia in una posizione specifica dell'elenco e notifica
+     * gli observer. Serve ai comandi di annullamento per ripristinare una traccia
+     * rimossa esattamente nella sua posizione originaria.
+     *
+     * @param index la posizione di inserimento, da 0 a size (inclusi)
+     * @param t la traccia da inserire
+     * @throws IllegalArgumentException se la traccia e' null o l'indice e' fuori intervallo
+     */
+    public void addTrackAt(int index, Track t) {
+        if (t == null) {
+            throw new IllegalArgumentException("La traccia non puo' essere null");
+        }
+        if (index < 0 || index > tracks.size()) {
+            throw new IllegalArgumentException("Posizione di inserimento non valida");
+        }
+        tracks.add(index, t);
+        notifyObservers();
+    }
+
     // US4 - rimuove una traccia e notifica gli observer se la rimozione ha effetto
     public void removeTrack(Track t) {
         if (tracks.remove(t)) {

@@ -64,6 +64,32 @@ public class Playlist implements Subject {
         t.addPlaylist(this); // US3 - mantiene sincronizzata la lista playlist della traccia
         notifyObservers();
     }
+
+    /**
+     * US22 - Inserisce una traccia in una posizione specifica della playlist e notifica
+     * gli osservatori, mantenendo la sincronizzazione bidirezionale Track-Playlist.
+     * Serve ai comandi di annullamento per ripristinare una traccia rimossa
+     * esattamente nella sua posizione originaria.
+     *
+     * @param index la posizione di inserimento, da 0 a size (inclusi)
+     * @param t la traccia da inserire
+     * @throws IllegalArgumentException se la traccia e' null, l'indice e' fuori
+     *         intervallo o la traccia e' gia' presente nella playlist
+     */
+    public void addTrackAt(int index, Track t) {
+        if (t == null) {
+            throw new IllegalArgumentException("Selezione non valida: nessuna traccia selezionata.");
+        }
+        if (index < 0 || index > tracks.size()) {
+            throw new IllegalArgumentException("Posizione di inserimento non valida");
+        }
+        if (tracks.contains(t)) {
+            throw new IllegalArgumentException("La traccia e' gia' presente in questa playlist.");
+        }
+        tracks.add(index, t);
+        t.addPlaylist(this); // US3 - mantiene sincronizzata la lista playlist della traccia
+        notifyObservers();
+    }
     
     /**
      * Rimuove una traccia specifica dalla playlist e notifica gli osservatori.

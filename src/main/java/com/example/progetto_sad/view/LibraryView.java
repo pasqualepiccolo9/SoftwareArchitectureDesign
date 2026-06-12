@@ -1,5 +1,6 @@
 package com.example.progetto_sad.view;
 
+import com.example.progetto_sad.command.CommandManager;
 import com.example.progetto_sad.controller.LibraryController;
 import com.example.progetto_sad.controller.PlaylistSequenceController;
 import com.example.progetto_sad.controller.TrackController;
@@ -42,10 +43,25 @@ public class LibraryView {
                               PlaylistManager playlistManager,
                               PlaylistSequenceController seqController,
                               Player player) {
+        return load(library, trackController, playlistManager, seqController, player,
+                new CommandManager());
+    }
+
+    /**
+     * US22 - Variante con lo storico comandi condiviso fornito dal composition root:
+     * lo STESSO {@link CommandManager} va passato anche ai controller che eseguono
+     * operazioni annullabili (es. {@code new TrackController(library, manager)}),
+     * cosi' il pulsante "Annulla" della home agisce su un'unica cronologia.
+     */
+    public static Parent load(TrackLibrary library, TrackController trackController,
+                              PlaylistManager playlistManager,
+                              PlaylistSequenceController seqController,
+                              Player player, CommandManager commandManager) {
         try {
             FXMLLoader loader = new FXMLLoader(LibraryView.class.getResource("LibraryView.fxml"));
             loader.setControllerFactory(type ->
-                    new LibraryController(library, trackController, playlistManager, seqController, player));
+                    new LibraryController(library, trackController, playlistManager, seqController,
+                            player, commandManager));
             return loader.load();
         } catch (IOException e) {
             throw new IllegalStateException("Impossibile caricare LibraryView.fxml", e);
@@ -75,11 +91,15 @@ public class LibraryView {
         @Override
         public void start(Stage stage) {
             TrackLibrary library = new TrackLibrary();
-            TrackController trackController = new TrackController(library);
+            // US22 - composition root: un UNICO storico comandi per tutta l'app,
+            // condiviso tra il pulsante "Annulla" della home e tutti i controller
+            // che eseguono operazioni annullabili (tracce e playlist).
+            CommandManager commandManager = new CommandManager();
+            TrackController trackController = new TrackController(library, commandManager);
             PlaylistManager playlistManager = new PlaylistManager();
             PlaylistSequenceController seqController = new PlaylistSequenceController();
-            
-            
+
+
             Player player = Player.getInstance();
 
             
@@ -94,7 +114,8 @@ public class LibraryView {
             seedSampleData(library, playlistManager);
 
            
-            Parent root = LibraryView.load(library, trackController, playlistManager, seqController, player);
+            Parent root = LibraryView.load(library, trackController, playlistManager, seqController,
+                    player, commandManager);
             
             
             Scene mainScene = new Scene(root, 1150, 760);

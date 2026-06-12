@@ -40,7 +40,11 @@ public class CreatePlaylistCommand implements Command {
 
     @Override
     public void unexecute() {
-        if (created != null) {
+        // US22 - casi limite: se il comando non e' mai stato eseguito (created null)
+        // o la playlist non e' piu' registrata nel gestore (gia' eliminata da
+        // un'altra operazione), non c'e' nulla da disfare: si ignora senza lanciare
+        // (removePlaylist lancerebbe per playlist inesistente).
+        if (created != null && manager.getPlaylists().contains(created)) {
             manager.removePlaylist(created);
         }
     }

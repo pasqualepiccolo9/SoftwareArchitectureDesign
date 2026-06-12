@@ -43,7 +43,17 @@ public class DeletePlaylistCommand implements Command {
 
     @Override
     public void unexecute() {
-        int target = (index >= 0) ? index : manager.getPlaylists().size();
+        // US22 - caso limite: se la playlist e' gia' tornata nel gestore (es.
+        // ripristinata da un'altra operazione), un nuovo inserimento lancerebbe
+        // per duplicato: si ignora.
+        if (manager.getPlaylists().contains(playlist)) {
+            return;
+        }
+        // US22 - caso limite: se nel frattempo il gestore si e' accorciato, la
+        // posizione salvata puo' essere fuori intervallo; si reinserisce nella
+        // posizione piu' vicina possibile (in coda) invece di lanciare.
+        int size = manager.getPlaylists().size();
+        int target = (index < 0 || index > size) ? size : index;
         manager.addPlaylistAt(target, playlist);
     }
 }

@@ -43,10 +43,17 @@ public class RemoveTrackFromPlaylistCommand implements Command {
 
     @Override
     public void unexecute() {
-        if (index >= 0) {
-            playlist.addTrackAt(index, track);
-        } else {
-            playlist.addTrack(track);
+        // US22 - caso limite: se la traccia e' gia' tornata nella playlist (es.
+        // ri-aggiunta da un'altra operazione), non c'e' nulla da ripristinare e un
+        // nuovo inserimento lancerebbe per duplicato: si ignora.
+        if (playlist.getTracks().contains(track)) {
+            return;
         }
+        // US22 - caso limite: se nel frattempo la playlist si e' accorciata, la
+        // posizione salvata puo' essere fuori intervallo; si reinserisce nella
+        // posizione piu' vicina possibile (in coda) invece di lanciare.
+        int size = playlist.getTracks().size();
+        int target = (index < 0 || index > size) ? size : index;
+        playlist.addTrackAt(target, track);
     }
 }

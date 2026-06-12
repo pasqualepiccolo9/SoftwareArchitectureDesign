@@ -38,6 +38,11 @@ public class AddTrackToPlaylistCommand implements Command {
 
     @Override
     public void unexecute() {
-        playlist.removeTrack(track);
+        // US22 - caso limite: se nel frattempo la traccia non e' piu' nella playlist
+        // (es. rimossa da un'altra operazione), l'annullamento non ha nulla da
+        // disfare: si ignora senza sollevare eccezioni (removeTrack lancerebbe).
+        if (playlist.getTracks().contains(track)) {
+            playlist.removeTrack(track);
+        }
     }
 }

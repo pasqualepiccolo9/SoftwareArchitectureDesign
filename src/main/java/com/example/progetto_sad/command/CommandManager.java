@@ -49,13 +49,24 @@ public class CommandManager {
      * Se lo storico e' vuoto la chiamata e' una no-op: non viene sollevata alcuna
      * eccezione (criterio di accettazione 3), cosi' il pulsante "Annulla" puo'
      * essere invocato senza rischi anche all'avvio dell'applicazione.
+     *
+     * Casi limite: i comandi gestiscono internamente i riferimenti non piu' validi,
+     * ma come rete di sicurezza finale un'eventuale eccezione imprevista durante
+     * l'annullamento viene intercettata qui e segnalata su standard error, senza
+     * propagarsi alla UI ("il sistema non deve generare eccezioni non gestite").
+     * Il comando e' comunque rimosso dallo storico: un annullamento fallito viene
+     * scartato e il successivo undo agisce sull'operazione precedente.
      */
     public void undo() {
         if (history.isEmpty()) {
             return;
         }
         Command command = history.pop();
-        command.unexecute();
+        try {
+            command.unexecute();
+        } catch (RuntimeException e) {
+            System.err.println("Annullamento non riuscito: " + e.getMessage());
+        }
     }
 
     /**

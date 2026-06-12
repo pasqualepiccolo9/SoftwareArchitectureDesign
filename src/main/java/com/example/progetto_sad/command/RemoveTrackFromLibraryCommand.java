@@ -72,20 +72,28 @@ public class RemoveTrackFromLibraryCommand implements Command {
 
     @Override
     public void unexecute() {
-        // Ripristina la traccia in libreria nella posizione originaria...
-        if (libraryIndex >= 0) {
-            library.addTrackAt(libraryIndex, track);
-        } else {
-            library.addTrack(track);
+        // Ripristina la traccia in libreria nella posizione originaria.
+        // US22 - casi limite: se la traccia e' gia' tornata in libreria si ignora
+        // (evita il doppione); se la libreria si e' accorciata e l'indice salvato
+        // e' fuori intervallo, si reinserisce nella posizione piu' vicina (in coda).
+        if (!library.contains(track)) {
+            int librarySize = library.getTracks().size();
+            int libraryTarget = (libraryIndex < 0 || libraryIndex > librarySize)
+                    ? librarySize : libraryIndex;
+            library.addTrackAt(libraryTarget, track);
         }
         // ...e in ogni playlist coinvolta, alla rispettiva posizione originaria
         // (addTrackAt ricostruisce anche il collegamento bidirezionale Track-Playlist).
+        // US22 - stessi casi limite per ciascuna playlist: duplicato ignorato,
+        // indice fuori intervallo riportato in coda. Cosi' un imprevisto su una
+        // playlist non interrompe il ripristino delle altre.
         for (PlaylistPosition pp : playlistPositions) {
-            if (pp.index >= 0) {
-                pp.playlist.addTrackAt(pp.index, track);
-            } else {
-                pp.playlist.addTrack(track);
+            if (pp.playlist.getTracks().contains(track)) {
+                continue;
             }
+            int size = pp.playlist.getTracks().size();
+            int target = (pp.index < 0 || pp.index > size) ? size : pp.index;
+            pp.playlist.addTrackAt(target, track);
         }
     }
 }

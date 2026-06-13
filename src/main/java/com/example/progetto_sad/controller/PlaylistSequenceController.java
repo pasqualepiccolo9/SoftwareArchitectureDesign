@@ -6,6 +6,7 @@ import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.observer.Subject;
 import com.example.progetto_sad.strategy.PlayModeContext;
+import com.example.progetto_sad.strategy.SequentialModeStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,12 +34,14 @@ public class PlaylistSequenceController implements Subject, Observer {
 
     /**
      * Crea il controller senza alcuna sequenza attiva.
+     * Inizializza il contesto Strategy con la modalità sequenziale come default.
      */
     public PlaylistSequenceController() {
         this.sequence = null;
         this.sourcePlaylist = null;
         this.sourceTrackCount = 0;
         this.observers = new ArrayList<>();
+        this.playModeContext = new PlayModeContext(new SequentialModeStrategy());
     }
 
     /**
@@ -84,14 +87,22 @@ public class PlaylistSequenceController implements Subject, Observer {
 
     /**
      * Notifica il controller che la traccia corrente è terminata naturalmente.
-     * Avanza automaticamente alla traccia successiva nella sequenza.
-     * Se la sequenza non è attiva o è gia' terminata, la chiamata non ha effetto.
+     * Delega a {@link PlayModeContext} la scelta del prossimo brano, poi aggiorna
+     * la sequenza di conseguenza. Se la strategia non restituisce un brano successivo,
+     * la sequenza viene portata in stato terminato.
+     * Se la sequenza non è attiva o è già terminata, la chiamata non ha effetto.
      */
     public void onTrackFinished() {
-        if (sequence != null && !sequence.isFinished()) {
-            sequence.advance();
-            notifyObservers();
+        if (sequence == null || sequence.isFinished()) {
+            return;
         }
+        Track next = playModeContext.getNextTrack(sequence.getTracks(), sequence.getCurrentIndex());
+        if (next != null) {
+            sequence.advanceTo(next);
+        } else {
+            sequence.advance();
+        }
+        notifyObservers();
     }
 
     /**

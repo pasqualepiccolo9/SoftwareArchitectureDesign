@@ -107,6 +107,56 @@ public class PlaylistSequence {
     }
 
     /**
+     * US17 - Restituisce l'indice zero-based del brano attualmente in riproduzione.
+     * Necessario per passare la posizione corrente a {@code PlayModeStrategy.getNextTrack}.
+     *
+     * @return l'indice corrente; può essere uguale a {@code getTracks().size()} se
+     *         la sequenza è terminata
+     */
+    public int getCurrentIndex() {
+        return currentIndex;
+    }
+
+    /**
+     * US17 - Sposta la posizione corrente della sequenza sulla traccia indicata,
+     * consentendo a {@code PlaylistSequenceController} di applicare la traccia
+     * scelta da {@code PlayModeContext} senza manipolare direttamente l'indice.
+     *
+     * Ricerca la traccia a partire dalla posizione immediatamente successiva a
+     * quella corrente, per gestire correttamente le liste con duplicati. Se non
+     * trovata in avanti, ricerca dall'inizio (necessario per strategie non lineari,
+     * come loop o shuffle).
+     *
+     * @param track la traccia su cui posizionare la sequenza; se null o non presente
+     *              nella lista, la chiamata non ha effetto
+     * @return {@code true} se la sequenza è stata aggiornata, {@code false} altrimenti
+     */
+    public boolean advanceTo(Track track) {
+        if (track == null) {
+            return false;
+        }
+
+        if (currentIndex >= 0 && currentIndex < tracks.size() && tracks.get(currentIndex).equals(track)) {
+            return true;
+        }
+
+        for (int i = currentIndex + 1; i < tracks.size(); i++) {
+            if (tracks.get(i).equals(track)) {
+                currentIndex = i;
+                return true;
+            }
+        }
+
+        int idx = tracks.indexOf(track);
+        if (idx >= 0) {
+            currentIndex = idx;
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
      * Restituisce i brani che seguono la traccia corrente nell'ordine della sequenza.
      * Se la sequenza e' vuota, terminata o non ha successivi, restituisce una lista vuota.
      *

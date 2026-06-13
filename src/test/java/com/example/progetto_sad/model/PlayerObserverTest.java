@@ -21,7 +21,7 @@ class PlayerObserverTest {
     @BeforeEach
     void setUp() {
         audioPlayer = new FakeAudioPlayer();
-        player = new Player(audioPlayer);
+        player = Player.resetForTesting(audioPlayer);
     }
 
     // US21-T - un observer registrato viene notificato al caricamento di una traccia.

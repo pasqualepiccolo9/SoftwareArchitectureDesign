@@ -124,6 +124,43 @@ public class PlaylistSequence {
     }
 
     /**
+     * US22 - Riallinea la sequenza al contenuto aggiornato della playlist sorgente
+     * preservando la traccia corrente, cosi' un annullamento non interrompe ne'
+     * fa saltare l'audio in corso.
+     *
+     * @param updatedTracks contenuto aggiornato della playlist sorgente
+     * @return {@code true} se la sequenza e' cambiata, {@code false} altrimenti
+     */
+    public boolean syncWithSourceTracksPreservingCurrent(List<Track> updatedTracks) {
+        List<Track> updated = (updatedTracks != null) ? new ArrayList<>(updatedTracks) : new ArrayList<>();
+
+        if (isFinished()) {
+            boolean changed = !tracks.equals(updated) || currentIndex != updated.size();
+            if (changed) {
+                tracks.clear();
+                tracks.addAll(updated);
+                currentIndex = tracks.size();
+            }
+            return changed;
+        }
+
+        Track current = tracks.get(currentIndex);
+        int newCurrentIndex = updated.indexOf(current);
+        if (newCurrentIndex < 0) {
+            newCurrentIndex = Math.min(currentIndex, updated.size());
+            updated.add(newCurrentIndex, current);
+        }
+
+        boolean changed = !tracks.equals(updated) || currentIndex != newCurrentIndex;
+        if (changed) {
+            tracks.clear();
+            tracks.addAll(updated);
+            currentIndex = newCurrentIndex;
+        }
+        return changed;
+    }
+
+    /**
      * Aggiunge un brano alla fine della sequenza senza alterare la posizione corrente
      * né interrompere la riproduzione in corso. Se la sequenza era terminata, il brano
      * aggiunto diventa il prossimo da riprodurre.

@@ -58,6 +58,8 @@
                 <Label text="Libreria tracce" styleClass="main-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <TextField fx:id="searchField" promptText="Cerca..." styleClass="search-field" prefWidth="220"/>
+                <!-- US22 - annulla l'ultima operazione (undo); la logica sta nel CommandManager -->
+                <Button fx:id="undoBtn" text="↩ Annulla" styleClass="new-playlist-btn" onAction="#onUndo"/>
                 <Button text="+ Aggiungi" styleClass="add-btn" onAction="#onAddTrack"/>
             </HBox>
 

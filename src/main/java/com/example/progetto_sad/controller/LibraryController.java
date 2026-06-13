@@ -1,5 +1,7 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.command.CommandManager;
+import com.example.progetto_sad.command.CreatePlaylistCommand;
 import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
@@ -51,6 +53,11 @@ public class LibraryController implements Observer {
     private final PlaylistSequenceController seqController; // US14
     private final Player player; // [INT-C] Player condiviso
 
+    // US22 - storico comandi CONDIVISO dell'applicazione: il pulsante "Annulla"
+    // della home e i controller che eseguono operazioni annullabili agiscono
+    // tutti sulla stessa cronologia (un solo Invoker).
+    private final CommandManager commandManager;
+
     private Track selectedTrack;
     private final Observer playerObserver;
     private final AtomicBoolean playerBarRefreshScheduled;
@@ -67,18 +74,53 @@ public class LibraryController implements Observer {
     // I due bottoni del nuovo design
     @FXML private Button playButton; 
     @FXML private Button stopButton;
+    @FXML private Button undoBtn;
 
     public LibraryController(TrackLibrary library, TrackController trackController,
                              PlaylistManager playlistManager,
                              PlaylistSequenceController seqController,
                              Player player) {
+        this(library, trackController, playlistManager, seqController, player,
+                new CommandManager());
+    }
+
+    /**
+     * US22 - Variante con lo storico comandi condiviso dell'applicazione, usata
+     * dal composition root ({@code LibraryView.load}) cosi' che il pulsante
+     * "Annulla" agisca su un'unica cronologia per tutte le operazioni annullabili.
+     *
+     * @param commandManager l'Invoker condiviso che esegue e registra i comandi
+     * @throws IllegalArgumentException se commandManager e' null
+     */
+    public LibraryController(TrackLibrary library, TrackController trackController,
+                             PlaylistManager playlistManager,
+                             PlaylistSequenceController seqController,
+                             Player player, CommandManager commandManager) {
+        if (commandManager == null) {
+            throw new IllegalArgumentException("Il command manager non puo' essere null");
+        }
         this.library = library;
         this.trackController = trackController;
         this.playlistManager = playlistManager;
         this.seqController = seqController;
         this.player = player;
+        this.commandManager = commandManager;
         this.playerObserver = this::requestPlayerBarRefresh;
         this.playerBarRefreshScheduled = new AtomicBoolean(false);
+    }
+
+    /**
+     * US22 - Annulla l'ultima operazione: la View delega tutto all'Invoker
+     * ({@link CommandManager#undo()}), nessuna logica di annullamento qui.
+     * La libreria si aggiorna da sola (Observer su TrackLibrary); la sidebar
+     * delle playlist va rinfrescata esplicitamente, come nelle altre azioni,
+     * perche' PlaylistManager non e' un Subject osservabile.
+     */
+    @FXML
+    private void onUndo() {
+        commandManager.undo();
+        refreshPlaylists();
+        refreshUndoButton();
     }
 
     @FXML
@@ -90,6 +132,7 @@ public class LibraryController implements Observer {
         initializePlayerBar();
         refreshTracks();
         refreshPlaylists();
+        refreshUndoButton();
     }
 
     @Override
@@ -100,6 +143,7 @@ public class LibraryController implements Observer {
     private void refreshLibraryView() {
         refreshTracks();
         syncPlayerBarWithLibrary();
+        refreshUndoButton();
     }
 
     private void refreshTracks() {
@@ -242,8 +286,11 @@ public class LibraryController implements Observer {
         dialog.setContentText("Nome:");
         dialog.showAndWait().ifPresent(name -> {
             try {
-                playlistManager.createPlaylist(name);
+                // US22 - anche la creazione dalla home transita dallo storico condiviso
+                // come comando annullabile (prima chiamava il manager direttamente).
+                commandManager.executeCommand(new CreatePlaylistCommand(playlistManager, name));
                 refreshPlaylists();
+                refreshUndoButton();
             } catch (IllegalArgumentException e) {
                 showError(e.getMessage());
             }
@@ -284,14 +331,26 @@ public class LibraryController implements Observer {
         Scene scene = (trackListVBox != null) ? trackListVBox.getScene() : null;
         if (scene == null) return;
         Parent libraryRoot = scene.getRoot();
-        PlaylistController playlistController = new PlaylistController(playlistManager);
+        // US22 - la schermata playlist condivide lo stesso storico comandi della home.
+        PlaylistController playlistController = new PlaylistController(playlistManager, commandManager);
         Parent playlistRoot = PlaylistView.load(
                 playlist, playlistController, trackController.getTracks(),
                 () -> {
                     scene.setRoot(libraryRoot);
                     refreshPlaylists();
+                    refreshUndoButton();
                 });
         scene.setRoot(playlistRoot);
+    }
+
+    /**
+     * US22 - Sincronizza lo stato visivo del pulsante "Annulla" con lo storico:
+     * il bottone e' disabilitato quando non esistono operazioni annullabili.
+     */
+    private void refreshUndoButton() {
+        if (undoBtn != null) {
+            undoBtn.setDisable(!commandManager.canUndo());
+        }
     }
 
     /* ===== US9 - Player Bar ===== */

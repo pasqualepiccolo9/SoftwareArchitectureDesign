@@ -1,6 +1,7 @@
 package com.example.progetto_sad.model;
 
 import com.example.progetto_sad.audio.AudioPlayer;
+import com.example.progetto_sad.audio.JavaFxAudioPlayer;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.observer.Subject;
 
@@ -46,6 +47,10 @@ public class Player implements Subject {
         IN_PAUSA
     }
 
+    // Singleton - unica istanza condivisa nell'intero sistema (membro statico).
+    // L'accesso passa sempre da getInstance(); il costruttore e' privato.
+    private static Player instance;
+
     // US9 - traccia attualmente caricata nel player (null se nessuna)
     private Track currentTrack;
 
@@ -70,16 +75,17 @@ public class Player implements Subject {
     private final List<Observer> observers;
 
     /**
-     * US9 - Crea un player a riposo (nessuna traccia, tempo a 0, stato
-     * {@link PlayerState#FERMO}) collegato al motore audio fornito.
+     * Singleton - Costruttore privato: vieta {@code new Player(...)} dall'esterno.
+     * L'unica istanza si ottiene tramite {@link #getInstance()} in produzione,
+     * oppure {@link #resetForTesting(AudioPlayer)} negli unit test.
      *
-     * Il motore e' iniettato come astrazione {@link AudioPlayer} (DIP): il model
-     * non dipende da JavaFX e nei test si puo' usare un doppio.
+     * Il motore audio resta iniettato come astrazione {@link AudioPlayer} (DIP):
+     * il model non dipende dalla classe concreta JavaFX e nei test si usa un doppio.
      *
      * @param audioPlayer il motore audio da usare per la riproduzione
      * @throws IllegalArgumentException se audioPlayer e' null
      */
-    public Player(AudioPlayer audioPlayer) {
+    private Player(AudioPlayer audioPlayer) {
         if (audioPlayer == null) {
             throw new IllegalArgumentException("Il motore audio non puo' essere null");
         }
@@ -92,6 +98,40 @@ public class Player implements Subject {
         this.clockTask = null;
         this.observers = new ArrayList<>();
         this.audioPlayer.setOnEndOfTrack(this::handleEndOfTrack);
+    }
+
+    /**
+     * Singleton - Punto di accesso globale all'unica istanza del Player.
+     *
+     * Crea l'istanza alla prima richiesta (lazy initialization) usando il motore
+     * audio reale JavaFX. Il metodo e' {@code synchronized} per garantire l'unicita'
+     * anche con piu' thread (il Player usa un clock su un thread separato): senza
+     * sincronizzazione, due chiamate concorrenti con istanza ancora null potrebbero
+     * crearne due, rompendo il pattern.
+     *
+     * @return l'unica istanza condivisa del Player
+     */
+    public static synchronized Player getInstance() {
+        if (instance == null) {
+            instance = new Player(new JavaFxAudioPlayer());
+        }
+        return instance;
+    }
+
+    /**
+     * Solo per i test - Reinizializza il Singleton con un motore audio fornito
+     * dall'esterno (tipicamente un FakeAudioPlayer), per consentire gli unit test
+     * headless del Player. Realizza il "punto di sostituzione" previsto dal pattern
+     * (l'implementazione del Singleton puo' essere sostituita per scopi di test o di
+     * configurazione). Va invocato nel setUp dei test per isolare ogni caso dallo
+     * stato globale del Singleton.
+     *
+     * @param audioPlayer il motore audio (doppio di test) da iniettare
+     * @return l'istanza del Player ricreata per il test
+     */
+    public static synchronized Player resetForTesting(AudioPlayer audioPlayer) {
+        instance = new Player(audioPlayer);
+        return instance;
     }
 
     /**

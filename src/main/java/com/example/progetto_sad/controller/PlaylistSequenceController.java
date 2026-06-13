@@ -5,6 +5,7 @@ import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.observer.Subject;
+import com.example.progetto_sad.strategy.PlayModeContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,9 +13,13 @@ import java.util.List;
 /**
  * US10 - Controller applicativo per la gestione della sequenza di riproduzione.
  *
- * Orchestra la creazione della {@link PlaylistSequence} quando viene avviata una
+ * Organizza la creazione della {@link PlaylistSequence} quando viene avviata una
  * playlist, mantiene la sequenza attiva ed espone la traccia corrente al resto
  * del sistema. Non contiene logica di UI nè dipendenze JavaFX.
+ *
+ * US17 - Collabora con {@link PlayModeContext} come Client del Pattern Strategy.
+ * Espone il punto di aggancio per usare il Context nelle future operazioni di
+ * avanzamento della sequenza, senza implementare direttamente la logica delle modalità.
  */
 public class PlaylistSequenceController implements Subject, Observer {
 
@@ -22,6 +27,9 @@ public class PlaylistSequenceController implements Subject, Observer {
     private Playlist sourcePlaylist;
     private int sourceTrackCount;
     private final List<Observer> observers;
+
+    /** US17 - Contesto Strategy usato per delegare la scelta del prossimo brano. */
+    private PlayModeContext playModeContext;
 
     /**
      * Crea il controller senza alcuna sequenza attiva.
@@ -204,6 +212,37 @@ public class PlaylistSequenceController implements Subject, Observer {
         int tailStart = Math.min(Math.max(sourceTrackCount, 0), currentTracks.size());
         mergedTracks.addAll(currentTracks.subList(tailStart, currentTracks.size()));
         return mergedTracks;
+    }
+
+    /**
+     * US17 - Imposta il contesto Strategy da usare per le modalità di riproduzione.
+     *
+     * @param playModeContext contesto Strategy; non può essere null
+     * @throws IllegalArgumentException se playModeContext è null
+     */
+    public void setPlayModeContext(PlayModeContext playModeContext) {
+        if (playModeContext == null) {
+            throw new IllegalArgumentException("Il contesto Strategy non può essere null.");
+        }
+        this.playModeContext = playModeContext;
+    }
+
+    /**
+     * US17 - Restituisce il contesto Strategy associato al controller.
+     *
+     * @return il contesto Strategy, oppure {@code null} se non ancora configurato
+     */
+    public PlayModeContext getPlayModeContext() {
+        return playModeContext;
+    }
+
+    /**
+     * US17 - Indica se il controller ha già un contesto Strategy configurato.
+     *
+     * @return {@code true} se il contesto Strategy è presente, {@code false} altrimenti
+     */
+    public boolean hasPlayModeContext() {
+        return playModeContext != null;
     }
 
     private void detachSourcePlaylist() {

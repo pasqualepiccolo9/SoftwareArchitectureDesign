@@ -7,6 +7,7 @@ import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.observer.Subject;
 import com.example.progetto_sad.strategy.PlayModeContext;
 import com.example.progetto_sad.strategy.SequentialModeStrategy;
+import com.example.progetto_sad.strategy.ShuffleModeStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -474,6 +475,16 @@ public class PlaylistSequenceController implements Subject, Observer {
      */
     public void setSequentialMode() {
         playModeContext.setStrategy(new SequentialModeStrategy());
+        notifyObservers();
+    }
+
+    /**
+     * US18-M - Imposta la modalità di riproduzione casuale (shuffle),
+     * sostituendo la strategia attiva nel contesto con una nuova {@link ShuffleModeStrategy}.
+     * Notifica gli observer affinché la UI rifletta il cambio di modalità.
+     */
+    public void setShuffleMode() {
+        playModeContext.setStrategy(new ShuffleModeStrategy());
         notifyObservers();
     }
 

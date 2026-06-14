@@ -298,6 +298,20 @@ class PlayerTest {
         assertEquals(0, audioPlayer.getSeekPositionSeconds());
     }
 
+    @Test
+    void clearCurrentTrackScaricaLaTracciaCorrenteEArrestaAudio() {
+        Track track = PlayerTestFixtures.trackWithDuration(120);
+        player.play(track);
+
+        player.clearCurrentTrack();
+
+        assertNull(player.getCurrentTrack());
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(PlayerState.FERMO, player.getState());
+        assertFalse(audioPlayer.isPlaying());
+        assertEquals(1, audioPlayer.getStopCalls());
+    }
+
     private void waitUntilClockAdvances() throws InterruptedException {
         long deadline = System.currentTimeMillis() + 2500;
         while (System.currentTimeMillis() < deadline && player.getCurrentTime() < 1) {

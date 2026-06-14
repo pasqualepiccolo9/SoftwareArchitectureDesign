@@ -273,4 +273,30 @@ class PlaylistSequenceTest {
         assertEquals(List.of(track1, track2), sequence.getTracks());
         assertTrue(sequence.getNextTracks().isEmpty());
     }
+
+    @Test
+    void removeTracksNotInRemovesDeletedTracksAndPreservesCurrentPosition() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        sequence.advance();
+
+        List<Integer> removedIndices = sequence.removeTracksNotIn(List.of(track1, track3));
+
+        assertEquals(List.of(1), removedIndices);
+        assertEquals(List.of(track1, track3), sequence.getTracks());
+        assertEquals(track3, sequence.getCurrentTrack());
+        assertTrue(sequence.getNextTracks().isEmpty());
+    }
+
+    @Test
+    void removeTracksNotInRemovesPreviousTracksAndShiftsCurrentIndex() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        sequence.advance();
+
+        List<Integer> removedIndices = sequence.removeTracksNotIn(List.of(track2, track3));
+
+        assertEquals(List.of(0), removedIndices);
+        assertEquals(List.of(track2, track3), sequence.getTracks());
+        assertEquals(track2, sequence.getCurrentTrack());
+        assertEquals(List.of(track3), sequence.getNextTracks());
+    }
 }

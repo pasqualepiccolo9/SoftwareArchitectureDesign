@@ -59,7 +59,7 @@
             </padding>
 
             <!-- SEZIONE: IN RIPRODUZIONE -->
-            <Label text="In riproduzione" styleClass="section-label"/>
+            <Label fx:id="currentSectionLabel" text="In riproduzione" styleClass="section-label"/>
 
             <HBox fx:id="currentTrackRow"
                   styleClass="current-track-row"
@@ -77,7 +77,7 @@
             </HBox>
 
             <!-- SEZIONE: SUCCESSIVI -->
-            <Label text="Successivi" styleClass="section-label"/>
+            <Label fx:id="nextSectionLabel" text="Successivi" styleClass="section-label"/>
             <VBox fx:id="nextTracksVBox" spacing="0"/>
 
         </VBox>

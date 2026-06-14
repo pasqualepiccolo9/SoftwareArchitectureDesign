@@ -298,6 +298,19 @@ public class Player implements Subject {
         notifyObservers();
     }
 
+    /**
+     * Scarica la traccia corrente dal Player e riporta il player allo stato
+     * iniziale. Va usato quando la traccia caricata non e' piu' valida nel
+     * dominio, ad esempio perche' e' stata eliminata dalla libreria.
+     */
+    public synchronized void clearCurrentTrack() {
+        stopActivePlayback();
+        this.currentTrack = null;
+        this.currentTime = 0;
+        this.state = PlayerState.FERMO;
+        notifyObservers();
+    }
+
     private void handleEndOfTrack() {
         Runnable callback;
         synchronized (this) {

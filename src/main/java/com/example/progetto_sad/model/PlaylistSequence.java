@@ -341,4 +341,42 @@ public class PlaylistSequence {
         tracks.remove(absoluteIndex);
         return true;
     }
+
+    /**
+     * Rimuove dalla sequenza tutte le tracce non piu' presenti nella collezione
+     * fornita, mantenendo coerente l'indice corrente.
+     *
+     * Gli indici restituiti indicano la posizione occupata da ogni traccia al
+     * momento della rispettiva rimozione. Questo consente al controller della
+     * sequenza di riallineare eventuali metadati collegati agli indici.
+     *
+     * @param availableTracks tracce ancora valide nella libreria
+     * @return indici rimossi in ordine di rimozione
+     */
+    public List<Integer> removeTracksNotIn(List<Track> availableTracks) {
+        List<Track> retainedTracks = availableTracks != null ? availableTracks : List.of();
+        List<Integer> removedIndices = new ArrayList<>();
+
+        int index = 0;
+        while (index < tracks.size()) {
+            if (!retainedTracks.contains(tracks.get(index))) {
+                tracks.remove(index);
+                removedIndices.add(index);
+                if (index < currentIndex) {
+                    currentIndex--;
+                }
+            } else {
+                index++;
+            }
+        }
+
+        if (currentIndex < 0) {
+            currentIndex = 0;
+        }
+        if (currentIndex > tracks.size()) {
+            currentIndex = tracks.size();
+        }
+
+        return Collections.unmodifiableList(removedIndices);
+    }
 }

@@ -148,6 +148,7 @@ public class LibraryController implements Observer {
 
     private void refreshLibraryView() {
         refreshTracks();
+        syncQueueWithLibrary();
         syncPlayerBarWithLibrary();
         refreshUndoButton();
     }
@@ -323,6 +324,7 @@ public class LibraryController implements Observer {
         Parent libraryRoot = scene.getRoot();
         QueueController queueController = new QueueController();
         queueController.setSequenceController(seqController);
+        queueController.setPlayer(player);
         queueController.setTrackLibrary(library);
         queueController.setPlaylistManager(playlistManager);
         // US12 - doppio click su una traccia della coda: sposta la sequenza e avvia la riproduzione
@@ -346,6 +348,7 @@ public class LibraryController implements Observer {
         });
         Parent queueRoot = QueueView.load(queueController, () -> {
             queueController.setSequenceController(null);
+            queueController.setPlayer(null);
             scene.setRoot(libraryRoot);
         });
         queueController.refresh();
@@ -455,9 +458,15 @@ public class LibraryController implements Observer {
                 && !trackController.getTracks().contains(player.getCurrentTrack());
 
         if (selectedTrackRemoved) selectedTrack = null;
-        if (currentTrackRemoved) player.stop();
+        if (currentTrackRemoved) player.clearCurrentTrack();
         if (selectedTrackRemoved || currentTrackRemoved) {
             requestPlayerBarRefresh();
+        }
+    }
+
+    private void syncQueueWithLibrary() {
+        if (seqController != null) {
+            seqController.removeTracksNotInLibrary(trackController.getTracks());
         }
     }
 

@@ -1,6 +1,7 @@
 package com.example.progetto_sad.controller;
 
 import com.example.progetto_sad.model.PlaylistManager;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
@@ -20,6 +21,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -41,16 +43,19 @@ public class QueueController implements Observer {
     private Consumer<Track> onPlayTrackAction;
     private Runnable onRemoveCurrentTrackAction;
     private PlaylistSequenceController seqController;
+    private Player player;
     private TrackLibrary trackLibrary;
     private PlaylistManager playlistManager;
 
     @FXML private Label trackCountLabel;
     @FXML private VBox emptyStateVBox;
     @FXML private ScrollPane queueScrollPane;
+    @FXML private Label currentSectionLabel;
     @FXML private HBox currentTrackRow;
     @FXML private Label currentTitleLabel;
     @FXML private Label currentAuthorLabel;
     @FXML private Label currentDurationLabel;
+    @FXML private Label nextSectionLabel;
     @FXML private VBox nextTracksVBox;
 
     /**
@@ -179,6 +184,22 @@ public class QueueController implements Observer {
     }
 
     /**
+     * Inietta il Player condiviso. La sezione "In riproduzione" della Coda deve
+     * derivare dal Player, non dalla prima traccia presente nella sequenza.
+     *
+     * @param player il player condiviso dell'applicazione
+     */
+    public void setPlayer(Player player) {
+        if (this.player != null) {
+            this.player.detach(this);
+        }
+        this.player = player;
+        if (this.player != null) {
+            this.player.attach(this);
+        }
+    }
+
+    /**
      * Inietta la libreria da cui selezionare le tracce da aggiungere alla coda.
      *
      * @param library la libreria condivisa delle tracce
@@ -226,38 +247,86 @@ public class QueueController implements Observer {
     }
 
     /**
-     * Aggiorna la UI leggendo i dati dalla sequenza condivisa impostata con
-     * {@link #setSequenceController}. Se nessuna sequenza e' impostata, non ha effetto.
-     * Mostra lo stato vuoto se la sequenza e' null, vuota o terminata;
-     * altrimenti popola la sezione "In riproduzione" e la lista "Successivi".
+     * Aggiorna la UI leggendo la traccia in riproduzione dal Player e le tracce
+     * accodate dalla sequenza. La prima traccia della sequenza non viene mai
+     * promossa a "In riproduzione" se il Player non la sta realmente suonando.
      */
     public void refresh() {
-        if (seqController == null) {
+        if (seqController == null && player == null) {
             return;
         }
-        Track current = seqController.getCurrentTrack();
-        if (current == null) {
-            // sequenza assente, vuota o terminata
+        Track playingTrack = getActivePlayerTrack();
+        boolean playbackAlignedWithSequence = isPlaybackAlignedWithSequence(playingTrack);
+        List<Track> queuedTracks = resolveQueuedTracks(playingTrack, playbackAlignedWithSequence);
+        int totale = queuedTracks.size() + (playingTrack != null ? 1 : 0);
+
+        if (totale == 0) {
             setTrackCount(0);
+            setCurrentTrackVisible(false);
             if (nextTracksVBox != null) {
                 nextTracksVBox.getChildren().clear();
             }
             showEmpty(true);
             return;
         }
-        List<Track> next = seqController.getNextTracks();
-        int totale = 1 + next.size();
 
         showEmpty(false);
         setTrackCount(totale);
-        setCurrentTrack(current.getTitle(), current.getAuthor(), formatDuration(current.getDuration()));
+        renderCurrentTrack(playingTrack, playbackAlignedWithSequence);
+        renderQueuedTracks(queuedTracks, playingTrack != null, playbackAlignedWithSequence);
+    }
 
-        // Aggiunge (o aggiorna) il bottone X sulla riga "In riproduzione".
-        // I figli statici della riga sono definiti in FXML (play indicator, info VBox,
-        // duration label): rimuoviamo qualsiasi Button aggiunto nelle iterazioni precedenti
-        // e aggiungiamo quello aggiornato col callback corrente.
-        if (currentTrackRow != null) {
-            currentTrackRow.getChildren().removeIf(n -> n instanceof Button);
+    private Track getActivePlayerTrack() {
+        if (player == null || player.getCurrentTrack() == null) {
+            return null;
+        }
+        Player.PlayerState state = player.getState();
+        if (state == Player.PlayerState.IN_RIPRODUZIONE || state == Player.PlayerState.IN_PAUSA) {
+            return player.getCurrentTrack();
+        }
+        return null;
+    }
+
+    private boolean isPlaybackAlignedWithSequence(Track playingTrack) {
+        return playingTrack != null && seqController != null && seqController.getCurrentTrack() == playingTrack;
+    }
+
+    private List<Track> resolveQueuedTracks(Track playingTrack, boolean playbackAlignedWithSequence) {
+        if (seqController == null || seqController.getSequence() == null
+                || seqController.getSequence().isFinished()) {
+            return List.of();
+        }
+        if (playbackAlignedWithSequence) {
+            return seqController.getNextTracks();
+        }
+
+        List<Track> queuedTracks = getPendingSequenceTracks();
+        if (playingTrack != null) {
+            queuedTracks.remove(playingTrack);
+        }
+        return queuedTracks;
+    }
+
+    private List<Track> getPendingSequenceTracks() {
+        List<Track> tracks = seqController.getSequence().getTracks();
+        int start = Math.max(0, Math.min(seqController.getSequence().getCurrentIndex(), tracks.size()));
+        return new ArrayList<>(tracks.subList(start, tracks.size()));
+    }
+
+    private void renderCurrentTrack(Track playingTrack, boolean playbackAlignedWithSequence) {
+        boolean hasCurrentTrack = playingTrack != null;
+        setCurrentTrackVisible(hasCurrentTrack);
+        if (!hasCurrentTrack) {
+            return;
+        }
+
+        setCurrentTrack(playingTrack.getTitle(), playingTrack.getAuthor(), formatDuration(playingTrack.getDuration()));
+
+        if (currentTrackRow == null) {
+            return;
+        }
+        currentTrackRow.getChildren().removeIf(n -> n instanceof Button);
+        if (playbackAlignedWithSequence) {
             if (onRemoveCurrentTrackAction != null) {
                 Button removeCurrentBtn = new Button("✕");
                 removeCurrentBtn.getStyleClass().add("remove-btn");
@@ -267,10 +336,8 @@ public class QueueController implements Observer {
                 currentTrackRow.getChildren().add(removeCurrentBtn);
             }
 
-            // US12 - doppio click sulla riga "In riproduzione" per riavviare il brano corrente.
-            // Guard: ignora se l'evento proviene da un ButtonBase (es. click sulla X).
             if (onPlayTrackAction != null) {
-                final Track currentRef = current;
+                final Track currentRef = playingTrack;
                 currentTrackRow.setOnMouseClicked(e -> {
                     if (e.getClickCount() == 2 && !(e.getTarget() instanceof ButtonBase)) {
                         onPlayTrackAction.accept(currentRef);
@@ -279,14 +346,39 @@ public class QueueController implements Observer {
             } else {
                 currentTrackRow.setOnMouseClicked(null);
             }
+        } else {
+            currentTrackRow.setOnMouseClicked(null);
         }
+    }
 
+    private void setCurrentTrackVisible(boolean visible) {
+        if (currentSectionLabel != null) {
+            currentSectionLabel.setVisible(visible);
+            currentSectionLabel.setManaged(visible);
+        }
+        if (currentTrackRow != null) {
+            currentTrackRow.setVisible(visible);
+            currentTrackRow.setManaged(visible);
+            if (!visible) {
+                currentTrackRow.getChildren().removeIf(n -> n instanceof Button);
+                currentTrackRow.setOnMouseClicked(null);
+            }
+        }
+    }
+
+    private void renderQueuedTracks(List<Track> tracks, boolean hasPlayingTrack,
+                                    boolean playbackAlignedWithSequence) {
+        if (nextSectionLabel != null) {
+            nextSectionLabel.setText(hasPlayingTrack ? "Successivi" : "In coda");
+        }
         if (nextTracksVBox != null) {
             nextTracksVBox.getChildren().clear();
         }
-        for (int i = 0; i < next.size(); i++) {
-            Track t = next.get(i);
-            HBox row = buildNextTrackRow(i + 1, t.getTitle(), t.getAuthor(), formatDuration(t.getDuration()), i);
+        for (int i = 0; i < tracks.size(); i++) {
+            Track t = tracks.get(i);
+            Integer removableNextIndex = playbackAlignedWithSequence ? i : null;
+            HBox row = buildNextTrackRow(i + 1, t.getTitle(), t.getAuthor(),
+                    formatDuration(t.getDuration()), removableNextIndex);
             // US12 - doppio click per avviare il brano successivo selezionato.
             // Guard: ignora se l'evento proviene da un ButtonBase (es. click sulla X).
             if (onPlayTrackAction != null) {

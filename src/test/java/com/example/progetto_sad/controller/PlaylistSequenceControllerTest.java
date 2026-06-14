@@ -322,6 +322,29 @@ class PlaylistSequenceControllerTest {
     }
 
     @Test
+    void removeTracksNotInLibraryRemovesDeletedTrackFromQueue() {
+        controller.startPlaylist(playlist);
+
+        assertTrue(controller.removeTracksNotInLibrary(List.of(track1, track3)));
+
+        assertEquals(List.of(track1, track3), controller.getSequence().getTracks());
+        assertEquals(track1, controller.getCurrentTrack());
+        assertEquals(List.of(track3), controller.getNextTracks());
+    }
+
+    @Test
+    void removeTracksNotInLibraryWithoutChangesDoesNotNotifyObservers() {
+        controller.startPlaylist(playlist);
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+
+        assertFalse(controller.removeTracksNotInLibrary(List.of(track1, track2, track3)));
+
+        assertEquals(0, notifications[0]);
+        assertEquals(List.of(track1, track2, track3), controller.getSequence().getTracks());
+    }
+
+    @Test
     void startPlaylistNotifiesObservers() {
         int[] notifications = {0};
         controller.attach(() -> notifications[0]++);

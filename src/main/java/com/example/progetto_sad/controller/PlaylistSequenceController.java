@@ -322,6 +322,29 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * Rimuove dalla sequenza tutte le tracce non piu' presenti nella libreria.
+     * Serve a evitare che la coda mantenga riferimenti a brani eliminati.
+     *
+     * @param libraryTracks tracce ancora presenti nella libreria
+     * @return {@code true} se la sequenza e' stata modificata
+     */
+    public boolean removeTracksNotInLibrary(List<Track> libraryTracks) {
+        if (sequence == null) {
+            return false;
+        }
+        List<Integer> removedIndices = sequence.removeTracksNotIn(libraryTracks);
+        if (removedIndices.isEmpty()) {
+            return false;
+        }
+
+        for (Integer removedIndex : removedIndices) {
+            registerRemovedIndex(removedIndex);
+        }
+        notifyObservers();
+        return true;
+    }
+
+    /**
      * Rimuove il brano attualmente in riproduzione dalla sequenza e notifica gli observer.
      * Se dopo la rimozione esiste un brano successivo, questo diventa il nuovo brano corrente
      * e viene restituito al chiamante affinche' il Player possa avviarlo.
@@ -368,6 +391,22 @@ public class PlaylistSequenceController implements Subject, Observer {
         int tailStart = Math.min(Math.max(sourceTrackCount, 0), currentTracks.size());
         mergedTracks.addAll(currentTracks.subList(tailStart, currentTracks.size()));
         return mergedTracks;
+    }
+
+    private void registerRemovedIndex(int removedIndex) {
+        if (removedIndex < sourceTrackCount) {
+            sourceTrackCount = Math.max(0, sourceTrackCount - 1);
+        }
+
+        for (PlaylistSegment segment : playlistSegments) {
+            if (removedIndex < segment.start) {
+                segment.start--;
+                segment.end--;
+            } else if (removedIndex < segment.end) {
+                segment.end--;
+            }
+        }
+        playlistSegments.removeIf(segment -> segment.start >= segment.end);
     }
 
     /**

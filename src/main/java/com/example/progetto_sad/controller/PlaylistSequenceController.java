@@ -164,6 +164,42 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * US12 - Sposta la sequenza al brano successivo e notifica gli observer.
+     * Restituisce la nuova traccia corrente se lo spostamento riesce, {@code null} altrimenti.
+     *
+     * @return la nuova traccia corrente, oppure {@code null} se lo spostamento non è possibile
+     */
+    public Track goToNextTrack() {
+        if (sequence == null) {
+            return null;
+        }
+        boolean moved = sequence.moveToNextTrack();
+        if (moved) {
+            notifyObservers();
+            return sequence.getCurrentTrack();
+        }
+        return null;
+    }
+
+    /**
+     * US12 - Sposta la sequenza al brano precedente e notifica gli observer.
+     * Restituisce la nuova traccia corrente se lo spostamento riesce, {@code null} altrimenti.
+     *
+     * @return la nuova traccia corrente, oppure {@code null} se lo spostamento non è possibile
+     */
+    public Track goToPreviousTrack() {
+        if (sequence == null) {
+            return null;
+        }
+        boolean moved = sequence.moveToPreviousTrack();
+        if (moved) {
+            notifyObservers();
+            return sequence.getCurrentTrack();
+        }
+        return null;
+    }
+
+    /**
      * Aggiunge un singolo brano alla fine della sequenza di riproduzione senza
      * interrompere la traccia corrente. Se nessuna sequenza e' attiva, ne crea una
      * vuota e vi inserisce il brano come primo elemento. Se {@code track} e' null,

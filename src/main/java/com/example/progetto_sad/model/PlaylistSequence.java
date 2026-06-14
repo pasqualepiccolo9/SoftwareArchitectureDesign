@@ -194,6 +194,32 @@ public class PlaylistSequence {
     }
 
     /**
+     * US12 - Sposta la posizione corrente al brano successivo.
+     *
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} se non esiste un brano successivo
+     */
+    public boolean moveToNextTrack() {
+        if (!hasNextTrack()) {
+            return false;
+        }
+        currentIndex++;
+        return true;
+    }
+
+    /**
+     * US12 - Sposta la posizione corrente al brano precedente.
+     *
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} se non esiste un brano precedente
+     */
+    public boolean moveToPreviousTrack() {
+        if (!hasPreviousTrack()) {
+            return false;
+        }
+        currentIndex--;
+        return true;
+    }
+
+    /**
      * US22 - Riallinea la sequenza al contenuto aggiornato della playlist sorgente
      * preservando la traccia corrente, cosi' un annullamento non interrompe ne'
      * fa saltare l'audio in corso.

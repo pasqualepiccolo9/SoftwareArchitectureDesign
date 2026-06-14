@@ -253,6 +253,51 @@ class PlayerTest {
         assertFalse(audioPlayer.isPlaying());
     }
 
+    @Test
+    void seekDuranteRiproduzioneAggiornaTempoEPosizioneDelMotoreAudio() {
+        Track track = PlayerTestFixtures.trackWithDuration(120);
+        player.play(track);
+
+        player.seekTo(45);
+
+        assertEquals(45, player.getCurrentTime());
+        assertEquals(1, audioPlayer.getSeekCalls());
+        assertEquals(45, audioPlayer.getSeekPositionSeconds());
+        assertEquals(PlayerState.IN_RIPRODUZIONE, player.getState());
+        assertTrue(audioPlayer.isPlaying());
+    }
+
+    @Test
+    void seekInPausaAggiornaTempoSenzaRiprendereLaRiproduzione() {
+        Track track = PlayerTestFixtures.trackWithDuration(120);
+        player.play(track);
+        player.pause();
+
+        player.seekTo(30);
+
+        assertEquals(30, player.getCurrentTime());
+        assertEquals(1, audioPlayer.getSeekCalls());
+        assertEquals(30, audioPlayer.getSeekPositionSeconds());
+        assertEquals(PlayerState.IN_PAUSA, player.getState());
+        assertFalse(audioPlayer.isPlaying());
+    }
+
+    @Test
+    void seekLimitaLaPosizioneDentroLaDurataDelBrano() {
+        Track track = PlayerTestFixtures.trackWithDuration(60);
+        player.play(track);
+
+        player.seekTo(90);
+
+        assertEquals(60, player.getCurrentTime());
+        assertEquals(60, audioPlayer.getSeekPositionSeconds());
+
+        player.seekTo(-10);
+
+        assertEquals(0, player.getCurrentTime());
+        assertEquals(0, audioPlayer.getSeekPositionSeconds());
+    }
+
     private void waitUntilClockAdvances() throws InterruptedException {
         long deadline = System.currentTimeMillis() + 2500;
         while (System.currentTimeMillis() < deadline && player.getCurrentTime() < 1) {
@@ -276,6 +321,7 @@ class PlayerTest {
         @Override public void play() { throw new RuntimeException("motore audio non disponibile"); }
         @Override public void pause() { }
         @Override public void resume() { }
+        @Override public void seekTo(int seconds) { }
         @Override public void stop() { }
         @Override public void setOnEndOfTrack(Runnable onEndOfTrack) { }
     }

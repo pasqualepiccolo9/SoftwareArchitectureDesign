@@ -215,6 +215,31 @@ public class Player implements Subject {
     }
 
     /**
+     * Sposta la traccia corrente alla posizione indicata dalla Player Bar.
+     *
+     * Il valore viene limitato dentro l'intervallo valido [0, durata]. Se il
+     * brano e' in riproduzione o in pausa, il seek viene delegato anche al
+     * motore audio reale; se invece non c'e' una traccia caricata, l'operazione
+     * viene ignorata.
+     *
+     * @param seconds posizione richiesta in secondi dall'inizio del brano
+     */
+    public synchronized void seekTo(int seconds) {
+        if (currentTrack == null || getDuration() <= 0) {
+            return;
+        }
+
+        int duration = getDuration();
+        int targetTime = Math.max(0, Math.min(seconds, duration));
+        this.currentTime = targetTime;
+
+        if (state == PlayerState.IN_RIPRODUZIONE || state == PlayerState.IN_PAUSA) {
+            audioPlayer.seekTo(targetTime);
+        }
+        notifyObservers();
+    }
+
+    /**
      * US9 - Registra l'azione da eseguire quando la traccia termina naturalmente.
      *
      * Serve come punto di integrazione per la coda nelle card successive, senza

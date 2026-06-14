@@ -72,9 +72,11 @@ public class LibraryController implements Observer {
     @FXML private Slider playerProgressSlider;
     
     // I due bottoni del nuovo design
-    @FXML private Button playButton; 
+    @FXML private Button playButton;
     @FXML private Button stopButton;
     @FXML private Button undoBtn;
+    @FXML private Button previousButton;
+    @FXML private Button nextButton;
 
     public LibraryController(TrackLibrary library, TrackController trackController,
                              PlaylistManager playlistManager,
@@ -358,6 +360,9 @@ public class LibraryController implements Observer {
     private void initializePlayerBar() {
         if (player == null) return;
         player.attach(playerObserver);
+        if (seqController != null) {
+            seqController.attach(playerObserver);
+        }
         resetProgressSlider();
         refreshPlayerBar();
     }
@@ -448,6 +453,7 @@ public class LibraryController implements Observer {
 
     /**
      * Gestisce l'abilitazione e il cambio icona dinamico del pulsante Play [INT-C]
+     * e aggiorna i pulsanti Previous/Next (US12) in base alla sequenza corrente.
      */
     private void updatePlayerButtons(Player.PlayerState state, boolean hasAudio) {
         if (playButton == null || stopButton == null) return;
@@ -456,17 +462,24 @@ public class LibraryController implements Observer {
 
         switch (state) {
             case IN_RIPRODUZIONE:
-                playButton.setText("⏸"); // Cambia dinamicamente
+                playButton.setText("⏸");
                 stopButton.setDisable(false);
                 break;
             case IN_PAUSA:
-                playButton.setText("▶");  // Torna in Play per fare Resume
+                playButton.setText("▶");
                 stopButton.setDisable(false);
                 break;
             case FERMO:
                 playButton.setText("▶");
-                stopButton.setDisable(true);   // Lo Stop non serve da fermo
+                stopButton.setDisable(true);
                 break;
+        }
+
+        if (previousButton != null) {
+            previousButton.setDisable(seqController == null || !seqController.hasPreviousTrack());
+        }
+        if (nextButton != null) {
+            nextButton.setDisable(seqController == null || !seqController.hasNextTrack());
         }
     }
 
@@ -538,6 +551,32 @@ public class LibraryController implements Observer {
             }
         }
         requestPlayerBarRefresh(); 
+    }
+
+    /**
+     * US12 - Salta al brano successivo nella sequenza di riproduzione.
+     */
+    @FXML
+    private void onNextTrack() {
+        if (seqController == null || player == null) return;
+        Track next = seqController.goToNextTrack();
+        if (next != null) {
+            player.play(next);
+        }
+        requestPlayerBarRefresh();
+    }
+
+    /**
+     * US12 - Torna al brano precedente nella sequenza di riproduzione.
+     */
+    @FXML
+    private void onPreviousTrack() {
+        if (seqController == null || player == null) return;
+        Track prev = seqController.goToPreviousTrack();
+        if (prev != null) {
+            player.play(prev);
+        }
+        requestPlayerBarRefresh();
     }
 
     /**

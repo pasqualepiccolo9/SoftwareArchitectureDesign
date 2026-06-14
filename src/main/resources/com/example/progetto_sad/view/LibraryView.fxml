@@ -103,9 +103,10 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <HBox alignment="CENTER" spacing="18">
+                <Button fx:id="previousButton" text="⏮" styleClass="player-btn" onAction="#onPreviousTrack"/>
                 <Button fx:id="stopButton" text="⏹" styleClass="player-btn" onAction="#onStopPlayer"/>
                 <Button fx:id="playButton" text="▶" styleClass="player-btn-main" onAction="#handlePlayPauseAction"/>
-            
+                <Button fx:id="nextButton" text="⏭" styleClass="player-btn" onAction="#onNextTrack"/>
             </HBox>
 
             <Region HBox.hgrow="ALWAYS"/>

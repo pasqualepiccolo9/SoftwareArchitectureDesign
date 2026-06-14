@@ -71,6 +71,7 @@ public class LibraryController implements Observer {
     @FXML private Label currentTimeLabel;
     @FXML private Label durationLabel;
     @FXML private Slider playerProgressSlider;
+    @FXML private Button sequentialModeButton;
     
     // I due bottoni del nuovo design
     @FXML private Button playButton;
@@ -543,6 +544,10 @@ public class LibraryController implements Observer {
         }
         if (skipPlaylistButton != null) {
             skipPlaylistButton.setDisable(seqController == null || !seqController.canSkipPlaylist());
+        }
+        // US17 - il pulsante modalità sequenziale è sempre visibile e abilitato
+        if (sequentialModeButton != null) {
+            sequentialModeButton.setDisable(false);
         }
     }
 

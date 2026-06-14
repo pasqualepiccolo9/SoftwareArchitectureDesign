@@ -113,6 +113,7 @@
             <Region HBox.hgrow="ALWAYS"/>
 
             <HBox alignment="CENTER_RIGHT" spacing="12" minWidth="280">
+                <Button fx:id="sequentialModeButton" text="➡" styleClass="player-btn"/>
                 <Label fx:id="currentTimeLabel" text="0:00" styleClass="player-meta"/>
                 <Slider fx:id="playerProgressSlider" prefWidth="150" focusTraversable="false"/>
                 <Label fx:id="durationLabel" text="0:00" styleClass="player-meta"/>

@@ -467,6 +467,16 @@ public class PlaylistSequenceController implements Subject, Observer {
         return playModeContext != null;
     }
 
+    /**
+     * US17-INT - Imposta esplicitamente la modalità di riproduzione sequenziale,
+     * sostituendo la strategia attiva nel contesto con una nuova {@link SequentialModeStrategy}.
+     * Notifica gli observer affinché la UI rifletta il cambio di modalità.
+     */
+    public void setSequentialMode() {
+        playModeContext.setStrategy(new SequentialModeStrategy());
+        notifyObservers();
+    }
+
     private void detachSourcePlaylist() {
         if (sourcePlaylist != null) {
             sourcePlaylist.detach(this);

@@ -662,6 +662,16 @@ public class LibraryController implements Observer {
     }
 
     /**
+     * US17-INT - Imposta esplicitamente la modalità di riproduzione sequenziale.
+     */
+    @FXML
+    private void onSequentialMode() {
+        if (seqController == null) return;
+        seqController.setSequentialMode();
+        requestPlayerBarRefresh();
+    }
+
+    /**
      * Tasto reset: arresta l'audio e riporta il timer a 00:00
      */
     @FXML

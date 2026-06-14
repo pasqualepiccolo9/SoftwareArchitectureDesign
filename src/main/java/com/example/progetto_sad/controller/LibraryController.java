@@ -321,6 +321,13 @@ public class LibraryController implements Observer {
         queueController.setSequenceController(seqController);
         queueController.setTrackLibrary(library);
         queueController.setPlaylistManager(playlistManager);
+        // US12 - doppio click su una traccia della coda: sposta la sequenza e avvia la riproduzione
+        queueController.setOnPlayTrackAction(track -> {
+            Track resolved = seqController.goToTrack(track);
+            if (resolved != null) {
+                player.play(resolved);
+            }
+        });
         Parent queueRoot = QueueView.load(queueController, () -> {
             queueController.setSequenceController(null);
             scene.setRoot(libraryRoot);

@@ -200,6 +200,26 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * US12 - Sposta la sequenza sulla traccia indicata usando {@link PlaylistSequence#advanceTo(Track)},
+     * notifica gli observer e restituisce la traccia corrente aggiornata.
+     * Restituisce {@code null} se la sequenza non è attiva, la traccia è null o non è presente.
+     *
+     * @param track la traccia di destinazione
+     * @return la nuova traccia corrente, oppure {@code null} se lo spostamento non è possibile
+     */
+    public Track goToTrack(Track track) {
+        if (sequence == null || track == null) {
+            return null;
+        }
+        boolean moved = sequence.advanceTo(track);
+        if (moved) {
+            notifyObservers();
+            return sequence.getCurrentTrack();
+        }
+        return null;
+    }
+
+    /**
      * Aggiunge un singolo brano alla fine della sequenza di riproduzione senza
      * interrompere la traccia corrente. Se nessuna sequenza e' attiva, ne crea una
      * vuota e vi inserisce il brano come primo elemento. Se {@code track} e' null,

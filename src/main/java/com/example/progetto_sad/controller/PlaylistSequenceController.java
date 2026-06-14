@@ -308,6 +308,34 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * US13 - Indica se il comando "Skip Playlist" può essere abilitato.
+     * Restituisce {@code true} solo quando:
+     * <ul>
+     *   <li>esiste una sequenza attiva non terminata;</li>
+     *   <li>esiste una playlist sorgente identificabile;</li>
+     *   <li>la traccia corrente appartiene ancora alla parte della sequenza
+     *       proveniente dalla playlist sorgente (indice &lt; sourceTrackCount);</li>
+     *   <li>la sequenza contiene almeno una traccia accodata dopo la playlist sorgente.</li>
+     * </ul>
+     * Questo metodo non esegue lo skip: valuta soltanto la disponibilità del comando.
+     *
+     * @return {@code true} se lo skip della playlist avrebbe una destinazione valida
+     */
+    public boolean canSkipPlaylist() {
+        if (sequence == null || sequence.isFinished()) {
+            return false;
+        }
+        if (sourcePlaylist == null) {
+            return false;
+        }
+        int currentIdx = sequence.getCurrentIndex();
+        if (currentIdx >= sourceTrackCount) {
+            return false;
+        }
+        return sequence.getTracks().size() > sourceTrackCount;
+    }
+
+    /**
      * US17 - Imposta il contesto Strategy da usare per le modalità di riproduzione.
      *
      * @param playModeContext contesto Strategy; non può essere null

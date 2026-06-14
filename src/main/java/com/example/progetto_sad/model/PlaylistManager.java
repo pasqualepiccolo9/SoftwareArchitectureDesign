@@ -1,15 +1,20 @@
 package com.example.progetto_sad.model;
 
+import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.observer.Subject;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PlaylistManager {
+public class PlaylistManager implements Subject {
 
     private final List<Playlist> playlists;
+    private final List<Observer> observers;
     
     public PlaylistManager() {
         this.playlists = new ArrayList<>();
+        this.observers = new ArrayList<>();
     }
     
     /**
@@ -28,6 +33,7 @@ public class PlaylistManager {
         }
         Playlist playlist = new Playlist(name);
         playlists.add(playlist);
+        notifyObservers();
         return playlist;
     }
 
@@ -61,6 +67,7 @@ public class PlaylistManager {
             t.removePlaylist(p);
         }
         playlists.remove(p);
+        notifyObservers();
     }
 
     /**
@@ -91,6 +98,7 @@ public class PlaylistManager {
         for (Track t : p.getTracks()) {
             t.addPlaylist(p);
         }
+        notifyObservers();
     }
     
     /**
@@ -99,5 +107,24 @@ public class PlaylistManager {
      */
     public List<Playlist> getPlaylists() {
         return new ArrayList<>(playlists);
+    }
+
+    @Override
+    public void attach(Observer o) {
+        if (o != null && !observers.contains(o)) {
+            observers.add(o);
+        }
+    }
+
+    @Override
+    public void detach(Observer o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update();
+        }
     }
 }

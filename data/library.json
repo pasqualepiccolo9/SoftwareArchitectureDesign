@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "tracks": [
+    {
+      "id": 1,
+      "title": "A me me piace o blue",
+      "author": "Pino Daniele",
+      "genre": "Colonna sonora",
+      "year": 2014,
+      "duration": 182,
+      "filePath": "C:\\Users\\Gabbo\\Desktop\\SOFTWARE ARCHITECTURE DESIGN\\File_MP3\\A Me Me Piace O Blues (Remastered 2014).mp3"
+    },
+    {
+      "id": 2,
+      "title": "Jailhouse Rock",
+      "author": "Elvis Presley",
+      "genre": "Rock",
+      "year": 2011,
+      "duration": 156,
+      "filePath": "C:\\Users\\Gabbo\\Desktop\\SOFTWARE ARCHITECTURE DESIGN\\File_MP3\\Elvis Presley - Jailhouse Rock (Official Audio).mp3"
+    }
+  ],
+  "playlists": [
+    {
+      "name": "Rock",
+      "trackIds": [
+        2
+      ]
+    },
+    {
+      "name": "Elvis",
+      "trackIds": []
+    }
+  ]
+}

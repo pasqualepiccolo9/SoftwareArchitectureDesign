@@ -5,7 +5,6 @@ import com.example.progetto_sad.command.CreatePlaylistCommand;
 import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
-import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
@@ -61,6 +60,8 @@ public class LibraryController implements Observer {
     private Track selectedTrack;
     private final Observer playerObserver;
     private final AtomicBoolean playerBarRefreshScheduled;
+    private boolean updatingProgressSlider;
+    private boolean userSeekingProgress;
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
@@ -110,6 +111,8 @@ public class LibraryController implements Observer {
         this.commandManager = commandManager;
         this.playerObserver = this::requestPlayerBarRefresh;
         this.playerBarRefreshScheduled = new AtomicBoolean(false);
+        this.updatingProgressSlider = false;
+        this.userSeekingProgress = false;
     }
 
     /**
@@ -383,6 +386,7 @@ public class LibraryController implements Observer {
         if (seqController != null) {
             seqController.attach(playerObserver);
         }
+        configureProgressSlider();
         resetProgressSlider();
         refreshPlayerBar();
     }
@@ -429,7 +433,9 @@ public class LibraryController implements Observer {
         int currentTime = player.getCurrentTime();
         int duration = currentTrack != null ? player.getDuration()
                 : (displayedTrack != null ? Math.max(0, displayedTrack.getDuration()) : 0);
-        updateProgress(currentTime, duration);
+        boolean canSeek = currentTrack != null && duration > 0
+                && (state == Player.PlayerState.IN_RIPRODUZIONE || state == Player.PlayerState.IN_PAUSA);
+        updateProgress(currentTime, duration, canSeek);
         
         // Sincronizza lo stato dei bottoni dinamici
         updatePlayerButtons(state, hasPlayableAudio(displayedTrack));
@@ -437,7 +443,7 @@ public class LibraryController implements Observer {
 
     private void resetPlayerBar() {
         setPlayerText("—", "Seleziona una traccia");
-        updateProgress(0, 0);
+        updateProgress(0, 0, false);
         updatePlayerButtons(Player.PlayerState.FERMO, false);
     }
 
@@ -460,15 +466,49 @@ public class LibraryController implements Observer {
         if (playerMetaLabel != null) playerMetaLabel.setText(meta);
     }
 
-    private void updateProgress(int currentTime, int duration) {
+    private void updateProgress(int currentTime, int duration, boolean canSeek) {
         int safeCurrentTime = Math.max(0, currentTime);
         int safeDuration = Math.max(0, duration);
         if (currentTimeLabel != null) currentTimeLabel.setText(formatDuration(safeCurrentTime));
         if (durationLabel != null) durationLabel.setText(formatDuration(safeDuration));
         if (playerProgressSlider != null) {
+            updatingProgressSlider = true;
+            playerProgressSlider.setDisable(!canSeek);
             playerProgressSlider.setMax(safeDuration > 0 ? safeDuration : 1);
-            playerProgressSlider.setValue(Math.min(safeCurrentTime, safeDuration));
+            if (!userSeekingProgress) {
+                playerProgressSlider.setValue(Math.min(safeCurrentTime, safeDuration));
+            }
+            updatingProgressSlider = false;
         }
+    }
+
+    private void configureProgressSlider() {
+        if (playerProgressSlider == null) return;
+        playerProgressSlider.setFocusTraversable(false);
+        playerProgressSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {
+            userSeekingProgress = isChanging;
+            if (!isChanging) {
+                seekToSliderValue();
+            }
+        });
+        playerProgressSlider.setOnMousePressed(event -> userSeekingProgress = true);
+        playerProgressSlider.setOnMouseReleased(event -> {
+            userSeekingProgress = false;
+            seekToSliderValue();
+        });
+        playerProgressSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (!updatingProgressSlider && userSeekingProgress && currentTimeLabel != null) {
+                currentTimeLabel.setText(formatDuration(newValue.intValue()));
+            }
+        });
+    }
+
+    private void seekToSliderValue() {
+        if (player == null || playerProgressSlider == null || playerProgressSlider.isDisabled()) {
+            return;
+        }
+        player.seekTo((int) Math.round(playerProgressSlider.getValue()));
+        requestPlayerBarRefresh();
     }
 
     /**
@@ -518,6 +558,7 @@ public class LibraryController implements Observer {
             playerProgressSlider.setMin(0);
             playerProgressSlider.setMax(1);
             playerProgressSlider.setValue(0);
+            playerProgressSlider.setDisable(true);
         }
     }
 

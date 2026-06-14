@@ -14,6 +14,8 @@ public class FakeAudioPlayer implements AudioPlayer {
     private Runnable onEndOfTrack;
     private boolean playing;
     private int stopCalls;
+    private int seekCalls;
+    private int seekPositionSeconds;
 
     @Override
     public void load(String filePath) {
@@ -33,6 +35,12 @@ public class FakeAudioPlayer implements AudioPlayer {
     public void stop() {
         this.playing = false;
         this.stopCalls++;
+    }
+
+    @Override
+    public void seekTo(int seconds) {
+        this.seekPositionSeconds = Math.max(0, seconds);
+        this.seekCalls++;
     }
 
     @Override
@@ -62,22 +70,30 @@ public class FakeAudioPlayer implements AudioPlayer {
         return stopCalls;
     }
 
+    public int getSeekCalls() {
+        return seekCalls;
+    }
+
+    public int getSeekPositionSeconds() {
+        return seekPositionSeconds;
+    }
+
     public void reset() {
         loadedPath = null;
         onEndOfTrack = null;
         playing = false;
         stopCalls = 0;
+        seekCalls = 0;
+        seekPositionSeconds = 0;
     }
     
+    @Override
     public void pause() {
-        
         this.playing = false;
     }
 
-    
+    @Override
     public void resume() {
         this.playing = true;
     }
-
-    
 }

@@ -2,6 +2,7 @@ package com.example.progetto_sad.audio;
 
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.util.Duration;
 
 import java.io.File;
 
@@ -102,6 +103,13 @@ public class JavaFxAudioPlayer implements AudioPlayer {
     public void resume() {
         if (mediaPlayer != null) {
             mediaPlayer.play(); 
+        }
+    }
+
+    @Override
+    public void seekTo(int seconds) {
+        if (mediaPlayer != null) {
+            mediaPlayer.seek(Duration.seconds(Math.max(0, seconds)));
         }
     }
 }

@@ -220,6 +220,23 @@ public class PlaylistSequence {
     }
 
     /**
+     * US13 - Sposta la posizione corrente all'indice assoluto indicato, senza modificare
+     * la lista né notificare observer. Usato per saltare direttamente a una posizione
+     * nota (es. prima traccia accodata dopo la playlist sorgente) evitando il rischio
+     * di posizionarsi sull'occorrenza sbagliata in presenza di tracce duplicate.
+     *
+     * @param index indice zero-based di destinazione
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} se l'indice non è valido
+     */
+    public boolean moveToIndex(int index) {
+        if (index < 0 || index >= tracks.size()) {
+            return false;
+        }
+        currentIndex = index;
+        return true;
+    }
+
+    /**
      * US22 - Riallinea la sequenza al contenuto aggiornato della playlist sorgente
      * preservando la traccia corrente, cosi' un annullamento non interrompe ne'
      * fa saltare l'audio in corso.

@@ -358,6 +358,32 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * US13 - Salta la parte rimanente della playlist sorgente e sposta la sequenza
+     * alla prima traccia accodata dopo di essa.
+     *
+     * Lo spostamento avviene direttamente per indice ({@code sourceTrackCount}) tramite
+     * {@link PlaylistSequence#moveToIndex(int)}, evitando il rischio di posizionarsi
+     * sull'occorrenza sbagliata in presenza di tracce duplicate tra playlist e coda.
+     *
+     * Non avvia audio e non conosce {@code Player}: restituisce la nuova traccia corrente
+     * affinche' il chiamante possa avviarla se necessario.
+     *
+     * @return la prima traccia accodata dopo la playlist sorgente, oppure {@code null}
+     *         se {@link #canSkipPlaylist()} restituisce {@code false}
+     */
+    public Track skipPlaylist() {
+        if (!canSkipPlaylist()) {
+            return null;
+        }
+        boolean moved = sequence.moveToIndex(sourceTrackCount);
+        if (!moved) {
+            return null;
+        }
+        notifyObservers();
+        return sequence.getCurrentTrack();
+    }
+
+    /**
      * US17 - Imposta il contesto Strategy da usare per le modalità di riproduzione.
      *
      * @param playModeContext contesto Strategy; non può essere null

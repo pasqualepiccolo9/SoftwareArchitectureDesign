@@ -287,6 +287,25 @@ public class PlaylistSequence {
     }
 
     /**
+     * Rimuove il brano attualmente in riproduzione dalla sequenza.
+     * Dopo la rimozione, l'indice corrente punta al brano che era immediatamente
+     * successivo (o la sequenza risulta terminata se non ne esistono altri).
+     *
+     * @return la nuova traccia corrente dopo la rimozione, oppure {@code null} se
+     *         la sequenza era terminata o non rimangono brani
+     */
+    public Track removeCurrentTrack() {
+        if (isFinished()) {
+            return null;
+        }
+        tracks.remove(currentIndex);
+        if (isFinished()) {
+            return null;
+        }
+        return tracks.get(currentIndex);
+    }
+
+    /**
      * Rimuove un brano successivo a quello corrente usando un indice relativo alla
      * lista restituita da {@link #getNextTracks()}. La traccia corrente e la sua
      * posizione non vengono modificate.

@@ -327,6 +327,18 @@ public class LibraryController implements Observer {
             if (resolved != null) {
                 player.play(resolved);
             }
+            requestPlayerBarRefresh();
+        });
+        // X sulla riga "In riproduzione": rimuove la traccia corrente dalla sequenza.
+        // Se esiste una successiva, la avvia; altrimenti ferma il Player.
+        queueController.setOnRemoveCurrentTrackAction(() -> {
+            Track next = seqController.removeCurrentTrack();
+            if (next != null) {
+                player.play(next);
+            } else {
+                player.stop();
+            }
+            requestPlayerBarRefresh();
         });
         Parent queueRoot = QueueView.load(queueController, () -> {
             queueController.setSequenceController(null);

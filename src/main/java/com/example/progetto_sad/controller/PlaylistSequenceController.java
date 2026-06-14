@@ -281,6 +281,28 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * Rimuove il brano attualmente in riproduzione dalla sequenza e notifica gli observer.
+     * Se dopo la rimozione esiste un brano successivo, questo diventa il nuovo brano corrente
+     * e viene restituito al chiamante affinche' il Player possa avviarlo.
+     * Se la sequenza risulta terminata, restituisce {@code null}.
+     * Aggiorna {@code sourceTrackCount} se il brano rimosso apparteneva alla playlist sorgente.
+     *
+     * @return la nuova traccia corrente dopo la rimozione, oppure {@code null} se
+     *         la sequenza e' terminata o non era attiva
+     */
+    public Track removeCurrentTrack() {
+        if (sequence == null || sequence.isFinished()) {
+            return null;
+        }
+        if (sequence.getCurrentIndex() < sourceTrackCount) {
+            sourceTrackCount = Math.max(0, sourceTrackCount - 1);
+        }
+        Track next = sequence.removeCurrentTrack();
+        notifyObservers();
+        return next;
+    }
+
+    /**
      * US22 - Sincronizza la sequenza quando la playlist in riproduzione cambia
      * per effetto di un comando di annullamento. La sincronizzazione non controlla
      * il Player: aggiorna solo il modello della sequenza e lascia intatto l'audio.

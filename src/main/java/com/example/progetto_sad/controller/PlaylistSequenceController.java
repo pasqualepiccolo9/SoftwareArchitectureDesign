@@ -24,10 +24,28 @@ import java.util.List;
  */
 public class PlaylistSequenceController implements Subject, Observer {
 
+    /** US13 - Rappresenta il range [start, end) di una playlist nella sequenza. */
+    private static final class PlaylistSegment {
+        int start;
+        int end; // exclusive
+
+        PlaylistSegment(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        boolean contains(int index) {
+            return index >= start && index < end;
+        }
+    }
+
     private PlaylistSequence sequence;
     private Playlist sourcePlaylist;
     private int sourceTrackCount;
     private final List<Observer> observers;
+
+    /** US13 - Segmenti playlist registrati nella sequenza, in ordine di inserimento. */
+    private final List<PlaylistSegment> playlistSegments;
 
     /** US17 - Contesto Strategy usato per delegare la scelta del prossimo brano. */
     private PlayModeContext playModeContext;
@@ -41,6 +59,7 @@ public class PlaylistSequenceController implements Subject, Observer {
         this.sourcePlaylist = null;
         this.sourceTrackCount = 0;
         this.observers = new ArrayList<>();
+        this.playlistSegments = new ArrayList<>();
         this.playModeContext = new PlayModeContext(new SequentialModeStrategy());
     }
 
@@ -60,6 +79,10 @@ public class PlaylistSequenceController implements Subject, Observer {
         }
         sequence = PlaylistSequence.from(playlist);
         sourceTrackCount = sequence.getTracks().size();
+        playlistSegments.clear();
+        if (sourceTrackCount > 0) {
+            playlistSegments.add(new PlaylistSegment(0, sourceTrackCount));
+        }
         notifyObservers();
     }
 
@@ -255,10 +278,28 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (tracks.isEmpty()) {
             return;
         }
+
+        // Se la sequenza è vuota e non esiste ancora una playlist sorgente,
+        // la prima playlist aggiunta diventa la sorgente: sourcePlaylist e
+        // sourceTrackCount vengono impostati PRIMA di addTracks, così
+        // canSkipPlaylist() può distinguere le tracce sorgente da quelle in coda.
+        boolean isFirstPlaylist = sourcePlaylist == null && (sequence == null || sequence.isEmpty());
+
         if (sequence == null) {
             sequence = PlaylistSequence.empty();
         }
+
+        int startIndex = sequence.getTracks().size();
         sequence.addTracks(tracks);
+        int endIndex = sequence.getTracks().size();
+        playlistSegments.add(new PlaylistSegment(startIndex, endIndex));
+
+        if (isFirstPlaylist) {
+            sourcePlaylist = playlist;
+            sourcePlaylist.attach(this);
+            sourceTrackCount = endIndex;
+        }
+
         notifyObservers();
     }
 
@@ -341,20 +382,27 @@ public class PlaylistSequenceController implements Subject, Observer {
      * </ul>
      * Questo metodo non esegue lo skip: valuta soltanto la disponibilità del comando.
      *
-     * @return {@code true} se lo skip della playlist avrebbe una destinazione valida
+     * @return {@code tr1ue} se lo skip della playlist avrebbe una destinazione valida
      */
     public boolean canSkipPlaylist() {
         if (sequence == null || sequence.isFinished()) {
             return false;
         }
-        if (sourcePlaylist == null) {
-            return false;
-        }
         int currentIdx = sequence.getCurrentIndex();
-        if (currentIdx >= sourceTrackCount) {
+        PlaylistSegment segment = findSegmentContaining(currentIdx);
+        if (segment == null) {
             return false;
         }
-        return sequence.getTracks().size() > sourceTrackCount;
+        return segment.end < sequence.getTracks().size();
+    }
+
+    private PlaylistSegment findSegmentContaining(int index) {
+        for (PlaylistSegment segment : playlistSegments) {
+            if (segment.contains(index)) {
+                return segment;
+            }
+        }
+        return null;
     }
 
     /**
@@ -375,7 +423,12 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (!canSkipPlaylist()) {
             return null;
         }
-        boolean moved = sequence.moveToIndex(sourceTrackCount);
+        int currentIdx = sequence.getCurrentIndex();
+        PlaylistSegment segment = findSegmentContaining(currentIdx);
+        if (segment == null) {
+            return null;
+        }
+        boolean moved = sequence.moveToIndex(segment.end);
         if (!moved) {
             return null;
         }

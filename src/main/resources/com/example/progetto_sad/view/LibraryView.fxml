@@ -107,6 +107,7 @@
                 <Button fx:id="stopButton" text="⏹" styleClass="player-btn" onAction="#onStopPlayer"/>
                 <Button fx:id="playButton" text="▶" styleClass="player-btn-main" onAction="#handlePlayPauseAction"/>
                 <Button fx:id="nextButton" text="⏭" styleClass="player-btn" onAction="#onNextTrack"/>
+                <Button fx:id="skipPlaylistButton" text="⏭ Playlist" styleClass="player-btn" onAction="#onSkipPlaylist"/>
             </HBox>
 
             <Region HBox.hgrow="ALWAYS"/>

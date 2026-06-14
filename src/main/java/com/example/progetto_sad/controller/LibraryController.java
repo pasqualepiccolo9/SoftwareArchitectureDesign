@@ -77,6 +77,7 @@ public class LibraryController implements Observer {
     @FXML private Button undoBtn;
     @FXML private Button previousButton;
     @FXML private Button nextButton;
+    @FXML private Button skipPlaylistButton;
 
     public LibraryController(TrackLibrary library, TrackController trackController,
                              PlaylistManager playlistManager,
@@ -500,6 +501,9 @@ public class LibraryController implements Observer {
         if (nextButton != null) {
             nextButton.setDisable(seqController == null || !seqController.hasNextTrack());
         }
+        if (skipPlaylistButton != null) {
+            skipPlaylistButton.setDisable(seqController == null || !seqController.canSkipPlaylist());
+        }
     }
 
     private boolean hasPlayableAudio(Track track) {
@@ -594,6 +598,19 @@ public class LibraryController implements Observer {
         Track prev = seqController.goToPreviousTrack();
         if (prev != null) {
             player.play(prev);
+        }
+        requestPlayerBarRefresh();
+    }
+
+    /**
+     * US13 - Salta la parte rimanente della playlist sorgente e avvia la prima traccia accodata.
+     */
+    @FXML
+    private void onSkipPlaylist() {
+        if (seqController == null || player == null) return;
+        Track next = seqController.skipPlaylist();
+        if (next != null) {
+            player.play(next);
         }
         requestPlayerBarRefresh();
     }

@@ -174,6 +174,69 @@ public class PlaylistSequence {
     }
 
     /**
+     * US12 - Indica se esiste un brano successivo a quello attualmente in riproduzione.
+     * Restituisce {@code false} se la sequenza è terminata o se il brano corrente è l'ultimo.
+     *
+     * @return {@code true} se ci sono brani dopo quello corrente e la sequenza non è terminata
+     */
+    public boolean hasNextTrack() {
+        return !isFinished() && currentIndex + 1 < tracks.size();
+    }
+
+    /**
+     * US12 - Indica se esiste un brano precedente a quello attualmente in riproduzione.
+     * Restituisce {@code false} se la sequenza è terminata o se il brano corrente è il primo.
+     *
+     * @return {@code true} se ci sono brani prima di quello corrente e la sequenza non è terminata
+     */
+    public boolean hasPreviousTrack() {
+        return !isFinished() && currentIndex > 0;
+    }
+
+    /**
+     * US12 - Sposta la posizione corrente al brano successivo.
+     *
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} se non esiste un brano successivo
+     */
+    public boolean moveToNextTrack() {
+        if (!hasNextTrack()) {
+            return false;
+        }
+        currentIndex++;
+        return true;
+    }
+
+    /**
+     * US12 - Sposta la posizione corrente al brano precedente.
+     *
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} se non esiste un brano precedente
+     */
+    public boolean moveToPreviousTrack() {
+        if (!hasPreviousTrack()) {
+            return false;
+        }
+        currentIndex--;
+        return true;
+    }
+
+    /**
+     * US13 - Sposta la posizione corrente all'indice assoluto indicato, senza modificare
+     * la lista né notificare observer. Usato per saltare direttamente a una posizione
+     * nota (es. prima traccia accodata dopo la playlist sorgente) evitando il rischio
+     * di posizionarsi sull'occorrenza sbagliata in presenza di tracce duplicate.
+     *
+     * @param index indice zero-based di destinazione
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} se l'indice non è valido
+     */
+    public boolean moveToIndex(int index) {
+        if (index < 0 || index >= tracks.size()) {
+            return false;
+        }
+        currentIndex = index;
+        return true;
+    }
+
+    /**
      * US22 - Riallinea la sequenza al contenuto aggiornato della playlist sorgente
      * preservando la traccia corrente, cosi' un annullamento non interrompe ne'
      * fa saltare l'audio in corso.
@@ -238,6 +301,25 @@ public class PlaylistSequence {
         for (Track track : tracksToAdd) {
             addTrack(track);
         }
+    }
+
+    /**
+     * Rimuove il brano attualmente in riproduzione dalla sequenza.
+     * Dopo la rimozione, l'indice corrente punta al brano che era immediatamente
+     * successivo (o la sequenza risulta terminata se non ne esistono altri).
+     *
+     * @return la nuova traccia corrente dopo la rimozione, oppure {@code null} se
+     *         la sequenza era terminata o non rimangono brani
+     */
+    public Track removeCurrentTrack() {
+        if (isFinished()) {
+            return null;
+        }
+        tracks.remove(currentIndex);
+        if (isFinished()) {
+            return null;
+        }
+        return tracks.get(currentIndex);
     }
 
     /**

@@ -24,10 +24,28 @@ import java.util.List;
  */
 public class PlaylistSequenceController implements Subject, Observer {
 
+    /** US13 - Rappresenta il range [start, end) di una playlist nella sequenza. */
+    private static final class PlaylistSegment {
+        int start;
+        int end; // exclusive
+
+        PlaylistSegment(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        boolean contains(int index) {
+            return index >= start && index < end;
+        }
+    }
+
     private PlaylistSequence sequence;
     private Playlist sourcePlaylist;
     private int sourceTrackCount;
     private final List<Observer> observers;
+
+    /** US13 - Segmenti playlist registrati nella sequenza, in ordine di inserimento. */
+    private final List<PlaylistSegment> playlistSegments;
 
     /** US17 - Contesto Strategy usato per delegare la scelta del prossimo brano. */
     private PlayModeContext playModeContext;
@@ -41,6 +59,7 @@ public class PlaylistSequenceController implements Subject, Observer {
         this.sourcePlaylist = null;
         this.sourceTrackCount = 0;
         this.observers = new ArrayList<>();
+        this.playlistSegments = new ArrayList<>();
         this.playModeContext = new PlayModeContext(new SequentialModeStrategy());
     }
 
@@ -60,6 +79,10 @@ public class PlaylistSequenceController implements Subject, Observer {
         }
         sequence = PlaylistSequence.from(playlist);
         sourceTrackCount = sequence.getTracks().size();
+        playlistSegments.clear();
+        if (sourceTrackCount > 0) {
+            playlistSegments.add(new PlaylistSegment(0, sourceTrackCount));
+        }
         notifyObservers();
     }
 
@@ -138,6 +161,88 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * US12 - Indica se esiste un brano successivo a quello attualmente in riproduzione.
+     * Restituisce {@code false} se nessuna sequenza è attiva.
+     *
+     * @return {@code true} se esiste un brano successivo nella sequenza corrente
+     */
+    public boolean hasNextTrack() {
+        if (sequence == null) {
+            return false;
+        }
+        return sequence.hasNextTrack();
+    }
+
+    /**
+     * US12 - Indica se esiste un brano precedente a quello attualmente in riproduzione.
+     * Restituisce {@code false} se nessuna sequenza è attiva.
+     *
+     * @return {@code true} se esiste un brano precedente nella sequenza corrente
+     */
+    public boolean hasPreviousTrack() {
+        if (sequence == null) {
+            return false;
+        }
+        return sequence.hasPreviousTrack();
+    }
+
+    /**
+     * US12 - Sposta la sequenza al brano successivo e notifica gli observer.
+     * Restituisce la nuova traccia corrente se lo spostamento riesce, {@code null} altrimenti.
+     *
+     * @return la nuova traccia corrente, oppure {@code null} se lo spostamento non è possibile
+     */
+    public Track goToNextTrack() {
+        if (sequence == null) {
+            return null;
+        }
+        boolean moved = sequence.moveToNextTrack();
+        if (moved) {
+            notifyObservers();
+            return sequence.getCurrentTrack();
+        }
+        return null;
+    }
+
+    /**
+     * US12 - Sposta la sequenza al brano precedente e notifica gli observer.
+     * Restituisce la nuova traccia corrente se lo spostamento riesce, {@code null} altrimenti.
+     *
+     * @return la nuova traccia corrente, oppure {@code null} se lo spostamento non è possibile
+     */
+    public Track goToPreviousTrack() {
+        if (sequence == null) {
+            return null;
+        }
+        boolean moved = sequence.moveToPreviousTrack();
+        if (moved) {
+            notifyObservers();
+            return sequence.getCurrentTrack();
+        }
+        return null;
+    }
+
+    /**
+     * US12 - Sposta la sequenza sulla traccia indicata usando {@link PlaylistSequence#advanceTo(Track)},
+     * notifica gli observer e restituisce la traccia corrente aggiornata.
+     * Restituisce {@code null} se la sequenza non è attiva, la traccia è null o non è presente.
+     *
+     * @param track la traccia di destinazione
+     * @return la nuova traccia corrente, oppure {@code null} se lo spostamento non è possibile
+     */
+    public Track goToTrack(Track track) {
+        if (sequence == null || track == null) {
+            return null;
+        }
+        boolean moved = sequence.advanceTo(track);
+        if (moved) {
+            notifyObservers();
+            return sequence.getCurrentTrack();
+        }
+        return null;
+    }
+
+    /**
      * Aggiunge un singolo brano alla fine della sequenza di riproduzione senza
      * interrompere la traccia corrente. Se nessuna sequenza e' attiva, ne crea una
      * vuota e vi inserisce il brano come primo elemento. Se {@code track} e' null,
@@ -173,10 +278,28 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (tracks.isEmpty()) {
             return;
         }
+
+        // Se la sequenza è vuota e non esiste ancora una playlist sorgente,
+        // la prima playlist aggiunta diventa la sorgente: sourcePlaylist e
+        // sourceTrackCount vengono impostati PRIMA di addTracks, così
+        // canSkipPlaylist() può distinguere le tracce sorgente da quelle in coda.
+        boolean isFirstPlaylist = sourcePlaylist == null && (sequence == null || sequence.isEmpty());
+
         if (sequence == null) {
             sequence = PlaylistSequence.empty();
         }
+
+        int startIndex = sequence.getTracks().size();
         sequence.addTracks(tracks);
+        int endIndex = sequence.getTracks().size();
+        playlistSegments.add(new PlaylistSegment(startIndex, endIndex));
+
+        if (isFirstPlaylist) {
+            sourcePlaylist = playlist;
+            sourcePlaylist.attach(this);
+            sourceTrackCount = endIndex;
+        }
+
         notifyObservers();
     }
 
@@ -196,6 +319,28 @@ public class PlaylistSequenceController implements Subject, Observer {
             notifyObservers();
         }
         return removed;
+    }
+
+    /**
+     * Rimuove il brano attualmente in riproduzione dalla sequenza e notifica gli observer.
+     * Se dopo la rimozione esiste un brano successivo, questo diventa il nuovo brano corrente
+     * e viene restituito al chiamante affinche' il Player possa avviarlo.
+     * Se la sequenza risulta terminata, restituisce {@code null}.
+     * Aggiorna {@code sourceTrackCount} se il brano rimosso apparteneva alla playlist sorgente.
+     *
+     * @return la nuova traccia corrente dopo la rimozione, oppure {@code null} se
+     *         la sequenza e' terminata o non era attiva
+     */
+    public Track removeCurrentTrack() {
+        if (sequence == null || sequence.isFinished()) {
+            return null;
+        }
+        if (sequence.getCurrentIndex() < sourceTrackCount) {
+            sourceTrackCount = Math.max(0, sourceTrackCount - 1);
+        }
+        Track next = sequence.removeCurrentTrack();
+        notifyObservers();
+        return next;
     }
 
     /**
@@ -223,6 +368,72 @@ public class PlaylistSequenceController implements Subject, Observer {
         int tailStart = Math.min(Math.max(sourceTrackCount, 0), currentTracks.size());
         mergedTracks.addAll(currentTracks.subList(tailStart, currentTracks.size()));
         return mergedTracks;
+    }
+
+    /**
+     * US13 - Indica se il comando "Skip Playlist" può essere abilitato.
+     * Restituisce {@code true} solo quando:
+     * <ul>
+     *   <li>esiste una sequenza attiva non terminata;</li>
+     *   <li>esiste una playlist sorgente identificabile;</li>
+     *   <li>la traccia corrente appartiene ancora alla parte della sequenza
+     *       proveniente dalla playlist sorgente (indice &lt; sourceTrackCount);</li>
+     *   <li>la sequenza contiene almeno una traccia accodata dopo la playlist sorgente.</li>
+     * </ul>
+     * Questo metodo non esegue lo skip: valuta soltanto la disponibilità del comando.
+     *
+     * @return {@code tr1ue} se lo skip della playlist avrebbe una destinazione valida
+     */
+    public boolean canSkipPlaylist() {
+        if (sequence == null || sequence.isFinished()) {
+            return false;
+        }
+        int currentIdx = sequence.getCurrentIndex();
+        PlaylistSegment segment = findSegmentContaining(currentIdx);
+        if (segment == null) {
+            return false;
+        }
+        return segment.end < sequence.getTracks().size();
+    }
+
+    private PlaylistSegment findSegmentContaining(int index) {
+        for (PlaylistSegment segment : playlistSegments) {
+            if (segment.contains(index)) {
+                return segment;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * US13 - Salta la parte rimanente della playlist sorgente e sposta la sequenza
+     * alla prima traccia accodata dopo di essa.
+     *
+     * Lo spostamento avviene direttamente per indice ({@code sourceTrackCount}) tramite
+     * {@link PlaylistSequence#moveToIndex(int)}, evitando il rischio di posizionarsi
+     * sull'occorrenza sbagliata in presenza di tracce duplicate tra playlist e coda.
+     *
+     * Non avvia audio e non conosce {@code Player}: restituisce la nuova traccia corrente
+     * affinche' il chiamante possa avviarla se necessario.
+     *
+     * @return la prima traccia accodata dopo la playlist sorgente, oppure {@code null}
+     *         se {@link #canSkipPlaylist()} restituisce {@code false}
+     */
+    public Track skipPlaylist() {
+        if (!canSkipPlaylist()) {
+            return null;
+        }
+        int currentIdx = sequence.getCurrentIndex();
+        PlaylistSegment segment = findSegmentContaining(currentIdx);
+        if (segment == null) {
+            return null;
+        }
+        boolean moved = sequence.moveToIndex(segment.end);
+        if (!moved) {
+            return null;
+        }
+        notifyObservers();
+        return sequence.getCurrentTrack();
     }
 
     /**

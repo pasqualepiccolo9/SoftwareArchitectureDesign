@@ -4,13 +4,16 @@ import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
+import java.util.function.Consumer;
 import com.example.progetto_sad.view.AddPlaylistDialogView;
 import com.example.progetto_sad.view.AddTrackDialogView;
 import javafx.application.Platform;
+import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
@@ -35,6 +38,8 @@ import java.util.List;
 public class QueueController implements Observer {
 
     private Runnable onBackAction;
+    private Consumer<Track> onPlayTrackAction;
+    private Runnable onRemoveCurrentTrackAction;
     private PlaylistSequenceController seqController;
     private TrackLibrary trackLibrary;
     private PlaylistManager playlistManager;
@@ -55,6 +60,28 @@ public class QueueController implements Observer {
      */
     public void setOnBackAction(Runnable action) {
         this.onBackAction = action;
+    }
+
+    /**
+     * US12 - Imposta il callback da invocare quando l'utente fa doppio click su una traccia.
+     * Il callback riceve la traccia selezionata e delega la riproduzione al chiamante,
+     * che conosce Player.
+     *
+     * @param action callback che riceve la traccia su cui è avvenuto il doppio click
+     */
+    public void setOnPlayTrackAction(Consumer<Track> action) {
+        this.onPlayTrackAction = action;
+    }
+
+    /**
+     * Imposta il callback da invocare quando l'utente clicca la X sulla riga
+     * "In riproduzione". Il chiamante e' responsabile di rimuovere la traccia corrente
+     * dalla sequenza e di aggiornare il Player di conseguenza.
+     *
+     * @param action il callback di rimozione della traccia corrente
+     */
+    public void setOnRemoveCurrentTrackAction(Runnable action) {
+        this.onRemoveCurrentTrackAction = action;
     }
 
     @FXML
@@ -225,13 +252,52 @@ public class QueueController implements Observer {
         setTrackCount(totale);
         setCurrentTrack(current.getTitle(), current.getAuthor(), formatDuration(current.getDuration()));
 
+        // Aggiunge (o aggiorna) il bottone X sulla riga "In riproduzione".
+        // I figli statici della riga sono definiti in FXML (play indicator, info VBox,
+        // duration label): rimuoviamo qualsiasi Button aggiunto nelle iterazioni precedenti
+        // e aggiungiamo quello aggiornato col callback corrente.
+        if (currentTrackRow != null) {
+            currentTrackRow.getChildren().removeIf(n -> n instanceof Button);
+            if (onRemoveCurrentTrackAction != null) {
+                Button removeCurrentBtn = new Button("✕");
+                removeCurrentBtn.getStyleClass().add("remove-btn");
+                removeCurrentBtn.setOnAction(e -> onRemoveCurrentTrackAction.run());
+                // Consuma il mouse click per evitare che l'evento bubbli alla riga
+                removeCurrentBtn.setOnMouseClicked(Event::consume);
+                currentTrackRow.getChildren().add(removeCurrentBtn);
+            }
+
+            // US12 - doppio click sulla riga "In riproduzione" per riavviare il brano corrente.
+            // Guard: ignora se l'evento proviene da un ButtonBase (es. click sulla X).
+            if (onPlayTrackAction != null) {
+                final Track currentRef = current;
+                currentTrackRow.setOnMouseClicked(e -> {
+                    if (e.getClickCount() == 2 && !(e.getTarget() instanceof ButtonBase)) {
+                        onPlayTrackAction.accept(currentRef);
+                    }
+                });
+            } else {
+                currentTrackRow.setOnMouseClicked(null);
+            }
+        }
+
         if (nextTracksVBox != null) {
             nextTracksVBox.getChildren().clear();
         }
         for (int i = 0; i < next.size(); i++) {
             Track t = next.get(i);
-            nextTracksVBox.getChildren().add(buildNextTrackRow(
-                    i + 1, t.getTitle(), t.getAuthor(), formatDuration(t.getDuration()), i));
+            HBox row = buildNextTrackRow(i + 1, t.getTitle(), t.getAuthor(), formatDuration(t.getDuration()), i);
+            // US12 - doppio click per avviare il brano successivo selezionato.
+            // Guard: ignora se l'evento proviene da un ButtonBase (es. click sulla X).
+            if (onPlayTrackAction != null) {
+                final Track trackRef = t;
+                row.setOnMouseClicked(e -> {
+                    if (e.getClickCount() == 2 && !(e.getTarget() instanceof ButtonBase)) {
+                        onPlayTrackAction.accept(trackRef);
+                    }
+                });
+            }
+            nextTracksVBox.getChildren().add(row);
         }
     }
 
@@ -266,6 +332,9 @@ public class QueueController implements Observer {
             removeBtn.setDisable(true);
         } else {
             removeBtn.setOnAction(e -> seqController.removeNextTrackAt(nextIndex));
+            // Consuma il mouse click per evitare che l'evento bubbli alla riga
+            // e venga interpretato come doppio click sulla riga stessa.
+            removeBtn.setOnMouseClicked(Event::consume);
         }
 
         HBox row = new HBox(12, numLabel, info, durationLabel, removeBtn);

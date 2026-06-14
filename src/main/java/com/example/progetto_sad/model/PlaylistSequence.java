@@ -174,6 +174,26 @@ public class PlaylistSequence {
     }
 
     /**
+     * US12 - Indica se esiste un brano successivo a quello attualmente in riproduzione.
+     * Restituisce {@code false} se la sequenza è terminata o se il brano corrente è l'ultimo.
+     *
+     * @return {@code true} se ci sono brani dopo quello corrente e la sequenza non è terminata
+     */
+    public boolean hasNextTrack() {
+        return !isFinished() && currentIndex + 1 < tracks.size();
+    }
+
+    /**
+     * US12 - Indica se esiste un brano precedente a quello attualmente in riproduzione.
+     * Restituisce {@code false} se la sequenza è terminata o se il brano corrente è il primo.
+     *
+     * @return {@code true} se ci sono brani prima di quello corrente e la sequenza non è terminata
+     */
+    public boolean hasPreviousTrack() {
+        return !isFinished() && currentIndex > 0;
+    }
+
+    /**
      * US22 - Riallinea la sequenza al contenuto aggiornato della playlist sorgente
      * preservando la traccia corrente, cosi' un annullamento non interrompe ne'
      * fa saltare l'audio in corso.

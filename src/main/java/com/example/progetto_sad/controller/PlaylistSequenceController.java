@@ -138,6 +138,32 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
+     * US12 - Indica se esiste un brano successivo a quello attualmente in riproduzione.
+     * Restituisce {@code false} se nessuna sequenza è attiva.
+     *
+     * @return {@code true} se esiste un brano successivo nella sequenza corrente
+     */
+    public boolean hasNextTrack() {
+        if (sequence == null) {
+            return false;
+        }
+        return sequence.hasNextTrack();
+    }
+
+    /**
+     * US12 - Indica se esiste un brano precedente a quello attualmente in riproduzione.
+     * Restituisce {@code false} se nessuna sequenza è attiva.
+     *
+     * @return {@code true} se esiste un brano precedente nella sequenza corrente
+     */
+    public boolean hasPreviousTrack() {
+        if (sequence == null) {
+            return false;
+        }
+        return sequence.hasPreviousTrack();
+    }
+
+    /**
      * Aggiunge un singolo brano alla fine della sequenza di riproduzione senza
      * interrompere la traccia corrente. Se nessuna sequenza e' attiva, ne crea una
      * vuota e vi inserisce il brano come primo elemento. Se {@code track} e' null,

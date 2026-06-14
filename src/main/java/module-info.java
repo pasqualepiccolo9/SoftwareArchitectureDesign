@@ -3,11 +3,13 @@ module com.example.progetto_sad {
     requires javafx.fxml;
     requires javafx.media;
     requires jaudiotagger;
+    requires com.google.gson;
     requires java.logging;
 
 
     opens com.example.progetto_sad to javafx.fxml;
     opens com.example.progetto_sad.controller to javafx.fxml;
+    opens com.example.progetto_sad.persistence to com.google.gson;
     exports com.example.progetto_sad;
     // view aperto a javafx.graphics: il launcher JavaFX istanzia per reflection le
     // Application annidate (AddTrackPreview$App, ModificaTrackView$App, PlaylistView$App).

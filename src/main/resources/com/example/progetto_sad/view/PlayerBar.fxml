@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.progetto_sad.controller.PlayerBarController"
+      alignment="CENTER_LEFT"
+      spacing="20"
+      styleClass="player-bar"
+      stylesheets="@PlayerBar.css">
+    <padding>
+        <Insets top="12" right="24" bottom="12" left="24"/>
+    </padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="12" minWidth="240">
+        <Label text="♪" styleClass="player-cover"/>
+        <VBox spacing="2">
+            <Label fx:id="playerTitleLabel" text="—" styleClass="player-title"/>
+            <Label fx:id="playerMetaLabel" text="Seleziona una traccia" styleClass="player-meta"/>
+        </VBox>
+    </HBox>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <HBox alignment="CENTER" spacing="18">
+        <Button fx:id="previousButton" text="⏮" styleClass="player-btn" onAction="#onPreviousTrack"/>
+        <Button fx:id="stopButton" text="⏹" styleClass="player-btn" onAction="#onStopPlayer"/>
+        <Button fx:id="playButton" text="▶" styleClass="player-btn-main" onAction="#handlePlayPauseAction"/>
+        <Button fx:id="nextButton" text="⏭" styleClass="player-btn" onAction="#onNextTrack"/>
+        <Button fx:id="skipPlaylistButton" text="⏭ Playlist" styleClass="player-btn" onAction="#onSkipPlaylist"/>
+    </HBox>
+
+    <Region HBox.hgrow="ALWAYS"/>
+
+    <HBox alignment="CENTER_RIGHT" spacing="12" minWidth="280">
+        <Button fx:id="sequentialModeButton" text="→" styleClass="play-mode-btn" onAction="#onSequentialMode" minWidth="42" prefWidth="42" style="-fx-font-size: 14px;"/>
+        <Button fx:id="shuffleModeButton" text="⇄" styleClass="play-mode-btn" onAction="#onShuffleMode" minWidth="42" prefWidth="42"/>
+        <Button fx:id="loopModeButton" text="↻" styleClass="play-mode-btn" onAction="#onLoopMode" minWidth="42" prefWidth="42"/>
+        <Label fx:id="currentTimeLabel" text="0:00" styleClass="player-meta"/>
+        <Slider fx:id="playerProgressSlider" prefWidth="150" focusTraversable="false"/>
+        <Label fx:id="durationLabel" text="0:00" styleClass="player-meta"/>
+    </HBox>
+</HBox>

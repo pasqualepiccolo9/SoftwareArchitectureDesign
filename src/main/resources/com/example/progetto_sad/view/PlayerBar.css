@@ -1,0 +1,87 @@
+/* ===== PLAYER BAR ===== */
+.player-bar {
+    -fx-background-color: #0f0f12;
+    -fx-border-color: #2a2b2f transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.player-cover {
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 20px;
+    -fx-background-color: #1d1e22;
+    -fx-padding: 8 12 8 12;
+    -fx-background-radius: 6;
+}
+
+.player-title {
+    -fx-text-fill: #f5f5f7;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+}
+
+.player-meta {
+    -fx-text-fill: #6c6c72;
+    -fx-font-size: 12px;
+}
+
+.player-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+}
+
+.player-btn:hover {
+    -fx-text-fill: #f5f5f7;
+}
+
+.player-btn:disabled {
+    -fx-opacity: 0.35;
+    -fx-cursor: default;
+}
+
+.player-btn-main {
+    -fx-background-color: #f5f5f7;
+    -fx-text-fill: #141417;
+    -fx-font-size: 16px;
+    -fx-background-radius: 20;
+    -fx-min-width: 40;
+    -fx-min-height: 40;
+    -fx-cursor: hand;
+}
+
+.player-btn-main:disabled {
+    -fx-opacity: 0.35;
+    -fx-cursor: default;
+}
+
+.player-icon-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6c6c72;
+    -fx-font-size: 15px;
+    -fx-cursor: hand;
+}
+
+.player-icon-btn:hover {
+    -fx-text-fill: #f5f5f7;
+}
+
+/* ===== PULSANTI MODALITA' DI RIPRODUZIONE ===== */
+.play-mode-btn {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6c6c72;
+    -fx-font-size: 16px;
+    -fx-cursor: hand;
+    -fx-padding: 4 8 2 8;
+    -fx-border-color: transparent transparent transparent transparent;
+    -fx-border-width: 0 0 2 0;
+}
+
+.play-mode-btn:hover {
+    -fx-text-fill: #c2c2c7;
+}
+
+.play-mode-btn-active {
+    -fx-text-fill: #f5f5f7;
+    -fx-border-color: transparent transparent #4a9eff transparent;
+}

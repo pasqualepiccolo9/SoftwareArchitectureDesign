@@ -31,7 +31,16 @@ public class QueueView {
     public static Parent load(QueueController controller, Runnable onBackAction) {
         try {
             FXMLLoader loader = new FXMLLoader(QueueView.class.getResource("QueueView.fxml"));
-            loader.setControllerFactory(type -> controller);
+            loader.setControllerFactory(type -> {
+                if (type == QueueController.class) {
+                    return controller;
+                }
+                try {
+                    return type.getDeclaredConstructor().newInstance();
+                } catch (ReflectiveOperationException e) {
+                    throw new IllegalStateException("Impossibile creare il controller " + type.getName(), e);
+                }
+            });
             Parent root = loader.load();
             controller.setOnBackAction(onBackAction);
             return root;

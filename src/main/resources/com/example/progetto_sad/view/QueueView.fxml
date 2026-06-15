@@ -83,4 +83,6 @@
         </VBox>
     </ScrollPane>
 
+    <fx:include fx:id="playerBar" source="PlayerBar.fxml"/>
+
 </VBox>

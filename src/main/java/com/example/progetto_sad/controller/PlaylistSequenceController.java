@@ -258,8 +258,14 @@ public class PlaylistSequenceController implements Subject, Observer {
      * US12 - Sposta la sequenza sulla traccia indicata (selezione manuale / doppio click dalla coda),
      * notifica gli observer e restituisce la traccia corrente aggiornata.
      * Usa {@link PlaylistSequence#moveUpcomingTrackNext(Track)} per preservare le tracce
-     * intermedie non ancora riprodotte: la traccia scelta viene portata subito dopo quella
-     * corrente e la sequenza avanza di un passo, senza far sparire B in [A,B,C,D] → scelto C.
+     * intermedie non ancora riprodotte: una traccia singola scelta viene portata
+     * subito dopo quella corrente e la sequenza avanza di un passo, senza far
+     * sparire B in [A,B,C,D] → scelto C. Se invece la traccia appartiene a un
+     * blocco playlist, viene aggiornato solo l'indice corrente, cosi' i confini
+     * del blocco restano coerenti per lo skip playlist.
+     * Se la traccia scelta e' gia' quella corrente della sequenza, viene restituita
+     * senza spostare l'indice: questo copre il caso in cui la coda e' pronta sul primo
+     * brano accodato, ma il Player sta ancora riproducendo una traccia esterna.
      * Restituisce {@code null} se la sequenza non è attiva, la traccia è null o non è presente.
      *
      * @param track la traccia di destinazione
@@ -269,7 +275,19 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (sequence == null || track == null) {
             return null;
         }
-        boolean moved = sequence.moveUpcomingTrackNext(track);
+        Track currentTrack = sequence.getCurrentTrack();
+        if (currentTrack == track) {
+            return currentTrack;
+        }
+        int targetIndex = findUpcomingTrackIndex(track);
+        if (targetIndex < 0) {
+            return null;
+        }
+
+        PlaylistSegment targetSegment = findSegmentContaining(targetIndex);
+        boolean moved = targetSegment != null
+                ? sequence.advanceTo(track)
+                : moveUpcomingTrackNextPreservingSegments(track, targetIndex);
         if (moved) {
             notifyObservers();
             return sequence.getCurrentTrack();
@@ -428,6 +446,65 @@ public class PlaylistSequenceController implements Subject, Observer {
         int tailStart = Math.min(Math.max(sourceTrackCount, 0), currentTracks.size());
         mergedTracks.addAll(currentTracks.subList(tailStart, currentTracks.size()));
         return mergedTracks;
+    }
+
+    private int findUpcomingTrackIndex(Track track) {
+        if (sequence == null || track == null || sequence.isFinished()) {
+            return -1;
+        }
+        List<Track> tracks = sequence.getTracks();
+        for (int i = sequence.getCurrentIndex() + 1; i < tracks.size(); i++) {
+            if (tracks.get(i).equals(track)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private boolean moveUpcomingTrackNextPreservingSegments(Track track, int targetIndex) {
+        List<Playlist> owners = buildPlaylistOwners();
+        int insertIndex = sequence.getCurrentIndex() + 1;
+        Playlist movedOwner = owners.remove(targetIndex);
+        owners.add(insertIndex, movedOwner);
+
+        boolean moved = sequence.moveUpcomingTrackNext(track);
+        if (moved) {
+            rebuildPlaylistSegments(owners);
+        }
+        return moved;
+    }
+
+    private List<Playlist> buildPlaylistOwners() {
+        int size = sequence.getTracks().size();
+        List<Playlist> owners = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            owners.add(null);
+        }
+        for (PlaylistSegment segment : playlistSegments) {
+            int start = Math.max(0, segment.start);
+            int end = Math.min(segment.end, size);
+            for (int i = start; i < end; i++) {
+                owners.set(i, segment.playlist);
+            }
+        }
+        return owners;
+    }
+
+    private void rebuildPlaylistSegments(List<Playlist> owners) {
+        playlistSegments.clear();
+        int index = 0;
+        while (index < owners.size()) {
+            Playlist owner = owners.get(index);
+            if (owner == null) {
+                index++;
+                continue;
+            }
+            int start = index;
+            while (index < owners.size() && owners.get(index) == owner) {
+                index++;
+            }
+            playlistSegments.add(new PlaylistSegment(owner, start, index));
+        }
     }
 
     private void registerRemovedIndex(int removedIndex) {
@@ -611,6 +688,7 @@ public class PlaylistSequenceController implements Subject, Observer {
      */
     public void setShuffleMode() {
         playModeContext.setStrategy(new ShuffleModeStrategy());
+        currentPlayMode = PlayMode.SHUFFLE;
         resetActiveShuffleStrategy();
         notifyObservers();
     }
@@ -623,8 +701,6 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (playModeContext.getStrategy() instanceof ShuffleModeStrategy shuffle && sequence != null) {
             shuffle.reset(sequence.getTracks().size(), sequence.getCurrentIndex());
         }
-        currentPlayMode = PlayMode.SHUFFLE;
-        notifyObservers();
     }
 
     /** US18-UI - Indica se la modalità sequenziale è quella attiva. */

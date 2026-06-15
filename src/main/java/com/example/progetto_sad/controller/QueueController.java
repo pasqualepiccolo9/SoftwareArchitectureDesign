@@ -57,6 +57,12 @@ public class QueueController implements Observer {
     @FXML private Label currentDurationLabel;
     @FXML private Label nextSectionLabel;
     @FXML private VBox nextTracksVBox;
+    @FXML private PlayerBarController playerBarController;
+
+    @FXML
+    private void initialize() {
+        bindPlayerBar();
+    }
 
     /**
      * Imposta l'azione da eseguire alla pressione del pulsante "← Indietro".
@@ -181,6 +187,7 @@ public class QueueController implements Observer {
         if (this.seqController != null) {
             this.seqController.attach(this);
         }
+        bindPlayerBar();
     }
 
     /**
@@ -197,6 +204,7 @@ public class QueueController implements Observer {
         if (this.player != null) {
             this.player.attach(this);
         }
+        bindPlayerBar();
     }
 
     /**
@@ -216,6 +224,13 @@ public class QueueController implements Observer {
      */
     public void setPlaylistManager(PlaylistManager manager) {
         this.playlistManager = manager;
+    }
+
+    private void bindPlayerBar() {
+        if (playerBarController != null) {
+            playerBarController.bind(player, seqController, () -> null,
+                    () -> seqController != null ? seqController.getCurrentTrack() : null);
+        }
     }
 
     @FXML

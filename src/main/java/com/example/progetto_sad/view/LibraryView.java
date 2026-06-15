@@ -57,9 +57,17 @@ public class LibraryView {
                               Player player, CommandManager commandManager) {
         try {
             FXMLLoader loader = new FXMLLoader(LibraryView.class.getResource("LibraryView.fxml"));
-            loader.setControllerFactory(type ->
-                    new LibraryController(library, trackController, playlistManager, seqController,
-                            player, commandManager));
+            loader.setControllerFactory(type -> {
+                if (type == LibraryController.class) {
+                    return new LibraryController(library, trackController, playlistManager, seqController,
+                            player, commandManager);
+                }
+                try {
+                    return type.getDeclaredConstructor().newInstance();
+                } catch (ReflectiveOperationException e) {
+                    throw new IllegalStateException("Impossibile creare il controller " + type.getName(), e);
+                }
+            });
             return loader.load();
         } catch (IOException e) {
             throw new IllegalStateException("Impossibile caricare LibraryView.fxml", e);

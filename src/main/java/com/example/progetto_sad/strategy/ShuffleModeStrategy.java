@@ -15,13 +15,13 @@ import java.util.Random;
  * non sono stati riprodotti tutti gli altri brani disponibili nel ciclo;
  * al termine del ciclo o al cambio coda/playlist il mescolamento viene resettato.
  *
- * La selezione avviene per indice di posizione nella coda, così le tracce
- * duplicate (stesso oggetto accodato più volte) restano distinte.
+ * La selezione mantiene le occorrenze ancora disponibili, così anche tracce
+ * duplicate presenti più volte in coda partecipano al ciclo casuale.
  */
 public class ShuffleModeStrategy implements PlayModeStrategy {
 
     private final Random random;
-    private final List<Integer> remainingIndices = new ArrayList<>();
+    private final List<Track> remainingTracks = new ArrayList<>();
     private int trackedQueueSize = -1;
 
     public ShuffleModeStrategy() {
@@ -45,17 +45,7 @@ public class ShuffleModeStrategy implements PlayModeStrategy {
      */
     public void reset(int queueSize, int currentIndex) {
         trackedQueueSize = queueSize;
-        remainingIndices.clear();
-        if (queueSize <= 1) {
-            return;
-        }
-        int safeCurrent = Math.max(0, Math.min(currentIndex, queueSize - 1));
-        for (int i = 0; i < queueSize; i++) {
-            if (i != safeCurrent) {
-                remainingIndices.add(i);
-            }
-        }
-        Collections.shuffle(remainingIndices, random);
+        remainingTracks.clear();
     }
 
     /**
@@ -85,18 +75,33 @@ public class ShuffleModeStrategy implements PlayModeStrategy {
             reset(tracks.size(), currentIndex);
         }
 
-        if (remainingIndices.isEmpty()) {
-            reset(tracks.size(), currentIndex);
+        if (remainingTracks.isEmpty()) {
+            refillRemainingTracks(tracks, currentIndex);
         }
-        if (remainingIndices.isEmpty()) {
+        if (remainingTracks.isEmpty()) {
             return null;
         }
 
-        int pick = random.nextInt(remainingIndices.size());
-        int nextIndex = remainingIndices.remove(pick);
-        if (nextIndex < 0 || nextIndex >= tracks.size()) {
+        int pick = random.nextInt(remainingTracks.size());
+        Track nextTrack = remainingTracks.remove(pick);
+        if (nextTrack == null || !tracks.contains(nextTrack)) {
             return null;
         }
-        return tracks.get(nextIndex);
+        return nextTrack;
+    }
+
+    private void refillRemainingTracks(List<Track> tracks, int currentIndex) {
+        remainingTracks.clear();
+        if (tracks == null || tracks.size() <= 1 || currentIndex < 0 || currentIndex >= tracks.size()) {
+            trackedQueueSize = tracks == null ? 0 : tracks.size();
+            return;
+        }
+        trackedQueueSize = tracks.size();
+        for (int i = 0; i < tracks.size(); i++) {
+            if (i != currentIndex) {
+                remainingTracks.add(tracks.get(i));
+            }
+        }
+        Collections.shuffle(remainingTracks, random);
     }
 }

@@ -22,7 +22,6 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
 import javafx.scene.control.TextInputDialog;
@@ -35,7 +34,6 @@ import javafx.stage.Window;
 import javafx.util.Duration;
 
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * US3/US4/US9 - Controller della schermata principale (home / "Libreria tracce").
@@ -58,30 +56,12 @@ public class LibraryController implements Observer {
     private final CommandManager commandManager;
 
     private Track selectedTrack;
-    private final Observer playerObserver;
-    private final AtomicBoolean playerBarRefreshScheduled;
-    private boolean updatingProgressSlider;
-    private boolean userSeekingProgress;
 
     @FXML private VBox trackListVBox;
     @FXML private VBox playlistListVBox;
     @FXML private TextField searchField;
-    @FXML private Label playerTitleLabel;
-    @FXML private Label playerMetaLabel;
-    @FXML private Label currentTimeLabel;
-    @FXML private Label durationLabel;
-    @FXML private Slider playerProgressSlider;
-    @FXML private Button sequentialModeButton;
-    @FXML private Button shuffleModeButton;
-    @FXML private Button loopModeButton;
-
-    // I due bottoni del nuovo design
-    @FXML private Button playButton;
-    @FXML private Button stopButton;
     @FXML private Button undoBtn;
-    @FXML private Button previousButton;
-    @FXML private Button nextButton;
-    @FXML private Button skipPlaylistButton;
+    @FXML private PlayerBarController playerBarController;
 
     public LibraryController(TrackLibrary library, TrackController trackController,
                              PlaylistManager playlistManager,
@@ -112,10 +92,6 @@ public class LibraryController implements Observer {
         this.seqController = seqController;
         this.player = player;
         this.commandManager = commandManager;
-        this.playerObserver = this::requestPlayerBarRefresh;
-        this.playerBarRefreshScheduled = new AtomicBoolean(false);
-        this.updatingProgressSlider = false;
-        this.userSeekingProgress = false;
     }
 
     /**
@@ -387,14 +363,9 @@ public class LibraryController implements Observer {
     /* ===== US9 - Player Bar ===== */
 
     private void initializePlayerBar() {
-        if (player == null) return;
-        player.attach(playerObserver);
-        if (seqController != null) {
-            seqController.attach(playerObserver);
+        if (playerBarController != null) {
+            playerBarController.bind(player, seqController, () -> selectedTrack);
         }
-        configureProgressSlider();
-        resetProgressSlider();
-        refreshPlayerBar();
     }
 
     private void selectTrack(Track track) {
@@ -404,53 +375,9 @@ public class LibraryController implements Observer {
     }
 
     private void requestPlayerBarRefresh() {
-        if (!playerBarRefreshScheduled.compareAndSet(false, true)) {
-            return;
+        if (playerBarController != null) {
+            playerBarController.requestRefresh();
         }
-        Platform.runLater(() -> {
-            playerBarRefreshScheduled.set(false);
-            refreshPlayerBar();
-        });
-    }
-
-    private void refreshPlayerBar() {
-        if (player == null) return;
-        
-        Track currentTrack = player.getCurrentTrack();
-        Track displayedTrack = currentTrack != null ? currentTrack : selectedTrack;
-        Player.PlayerState state = player.getState();
-        boolean isPlaying = state == Player.PlayerState.IN_RIPRODUZIONE;
-
-        if (displayedTrack == null) {
-            resetPlayerBar();
-            return;
-        } else if (isPlaying && currentTrack != null) {
-            setPlayerText(currentTrack.getTitle(), currentTrack.getAuthor() + " • In riproduzione");
-        } else if (!hasPlayableAudio(displayedTrack)) {
-            setPlayerText(displayedTrack.getTitle(), displayedTrack.getAuthor() + " • File audio non disponibile");
-        } else if (state == Player.PlayerState.IN_PAUSA) {
-            setPlayerText(currentTrack.getTitle(), currentTrack.getAuthor() + " • In pausa");
-        } else if (currentTrack != null) {
-            setPlayerText(currentTrack.getTitle(), currentTrack.getAuthor() + " • Fermata");
-        } else {
-            setPlayerText(displayedTrack.getTitle(), displayedTrack.getAuthor() + " • Pronta");
-        }
-
-        int currentTime = player.getCurrentTime();
-        int duration = currentTrack != null ? player.getDuration()
-                : (displayedTrack != null ? Math.max(0, displayedTrack.getDuration()) : 0);
-        boolean canSeek = currentTrack != null && duration > 0
-                && (state == Player.PlayerState.IN_RIPRODUZIONE || state == Player.PlayerState.IN_PAUSA);
-        updateProgress(currentTime, duration, canSeek);
-        
-        // Sincronizza lo stato dei bottoni dinamici
-        updatePlayerButtons(state, hasPlayableAudio(displayedTrack));
-    }
-
-    private void resetPlayerBar() {
-        setPlayerText("—", "Seleziona una traccia");
-        updateProgress(0, 0, false);
-        updatePlayerButtons(Player.PlayerState.FERMO, false);
     }
 
     private void syncPlayerBarWithLibrary() {
@@ -470,129 +397,6 @@ public class LibraryController implements Observer {
     private void syncQueueWithLibrary() {
         if (seqController != null) {
             seqController.removeTracksNotInLibrary(trackController.getTracks());
-        }
-    }
-
-    private void setPlayerText(String title, String meta) {
-        if (playerTitleLabel != null) playerTitleLabel.setText(title);
-        if (playerMetaLabel != null) playerMetaLabel.setText(meta);
-    }
-
-    private void updateProgress(int currentTime, int duration, boolean canSeek) {
-        int safeCurrentTime = Math.max(0, currentTime);
-        int safeDuration = Math.max(0, duration);
-        if (currentTimeLabel != null) currentTimeLabel.setText(formatDuration(safeCurrentTime));
-        if (durationLabel != null) durationLabel.setText(formatDuration(safeDuration));
-        if (playerProgressSlider != null) {
-            updatingProgressSlider = true;
-            playerProgressSlider.setDisable(!canSeek);
-            playerProgressSlider.setMax(safeDuration > 0 ? safeDuration : 1);
-            if (!userSeekingProgress) {
-                playerProgressSlider.setValue(Math.min(safeCurrentTime, safeDuration));
-            }
-            updatingProgressSlider = false;
-        }
-    }
-
-    private void configureProgressSlider() {
-        if (playerProgressSlider == null) return;
-        playerProgressSlider.setFocusTraversable(false);
-        playerProgressSlider.valueChangingProperty().addListener((observable, wasChanging, isChanging) -> {
-            userSeekingProgress = isChanging;
-            if (!isChanging) {
-                seekToSliderValue();
-            }
-        });
-        playerProgressSlider.setOnMousePressed(event -> userSeekingProgress = true);
-        playerProgressSlider.setOnMouseReleased(event -> {
-            userSeekingProgress = false;
-            seekToSliderValue();
-        });
-        playerProgressSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-            if (!updatingProgressSlider && userSeekingProgress && currentTimeLabel != null) {
-                currentTimeLabel.setText(formatDuration(newValue.intValue()));
-            }
-        });
-    }
-
-    private void seekToSliderValue() {
-        if (player == null || playerProgressSlider == null || playerProgressSlider.isDisabled()) {
-            return;
-        }
-        player.seekTo((int) Math.round(playerProgressSlider.getValue()));
-        requestPlayerBarRefresh();
-    }
-
-    /**
-     * Gestisce l'abilitazione e il cambio icona dinamico del pulsante Play [INT-C]
-     * e aggiorna i pulsanti Previous/Next (US12) in base alla sequenza corrente.
-     */
-    private void updatePlayerButtons(Player.PlayerState state, boolean hasAudio) {
-        if (playButton == null || stopButton == null) return;
-
-        playButton.setDisable(!hasAudio);
-
-        switch (state) {
-            case IN_RIPRODUZIONE:
-                playButton.setText("⏸");
-                stopButton.setDisable(false);
-                break;
-            case IN_PAUSA:
-                playButton.setText("▶");
-                stopButton.setDisable(false);
-                break;
-            case FERMO:
-                playButton.setText("▶");
-                stopButton.setDisable(true);
-                break;
-        }
-
-        if (previousButton != null) {
-            previousButton.setDisable(seqController == null || !seqController.hasPreviousTrack());
-        }
-        if (nextButton != null) {
-            nextButton.setDisable(seqController == null || !seqController.hasNextTrack());
-        }
-        if (skipPlaylistButton != null) {
-            skipPlaylistButton.setDisable(seqController == null || !seqController.canSkipPlaylist());
-        }
-        // US18-UI - la modalità attiva è indicata dalla style class play-mode-btn-active
-        if (sequentialModeButton != null) {
-            sequentialModeButton.setDisable(false);
-            sequentialModeButton.getStyleClass().remove("play-mode-btn-active");
-            if (seqController != null && seqController.isSequentialMode()) {
-                sequentialModeButton.getStyleClass().add("play-mode-btn-active");
-            }
-        }
-        if (shuffleModeButton != null) {
-            shuffleModeButton.setDisable(false);
-            shuffleModeButton.getStyleClass().remove("play-mode-btn-active");
-            if (seqController != null && seqController.isShuffleMode()) {
-                shuffleModeButton.getStyleClass().add("play-mode-btn-active");
-            }
-        }
-        if (loopModeButton != null) {
-            loopModeButton.setDisable(false);
-            loopModeButton.getStyleClass().remove("play-mode-btn-active");
-            if (seqController != null && seqController.isLoopMode()) {
-                loopModeButton.getStyleClass().add("play-mode-btn-active");
-            }
-        }
-    }
-
-    private boolean hasPlayableAudio(Track track) {
-        return track != null
-                && track.getDuration() > 0
-                && track.getFilePath() != null
-                && !track.getFilePath().isBlank();
-    }
-
-    private void resetProgressSlider() {
-        if (playerProgressSlider != null) {
-            playerProgressSlider.setMin(0);
-            playerProgressSlider.setMax(1);
-            playerProgressSlider.setValue(0);
-            playerProgressSlider.setDisable(true);
         }
     }
 
@@ -621,112 +425,5 @@ public class LibraryController implements Observer {
             return (newText.length() <= maxLength || newText.length() < change.getControlText().length())
                     ? change : null;
         }));
-    }
-    
-
-    
-    /**
-     * Tasto dinamico: alterna Play, Pausa e Resume a seconda dello stato.
-     */
-    @FXML
-    private void handlePlayPauseAction() {
-        if (player == null) return;
-
-        // Se l'utente clicca su una traccia diversa, azzera la pausa e fa partire la nuova
-        if (selectedTrack != null && selectedTrack != player.getCurrentTrack()) {
-            player.play(selectedTrack);
-        } 
-        else if (player.getState() == Player.PlayerState.IN_RIPRODUZIONE) {
-            player.pause();
-        } 
-        else if (player.getState() == Player.PlayerState.IN_PAUSA) {
-            player.resume(); 
-        } 
-        else if (player.getState() == Player.PlayerState.FERMO) {
-            Track trackToPlay = selectedTrack != null ? selectedTrack : seqController.getCurrentTrack();
-            if (trackToPlay != null) {
-                player.play(trackToPlay);
-            }
-        }
-        requestPlayerBarRefresh(); 
-    }
-
-    /**
-     * US12 - Salta al brano successivo nella sequenza di riproduzione.
-     */
-    @FXML
-    private void onNextTrack() {
-        if (seqController == null || player == null) return;
-        Track next = seqController.goToNextTrack();
-        if (next != null) {
-            player.play(next);
-        }
-        requestPlayerBarRefresh();
-    }
-
-    /**
-     * US12 - Torna al brano precedente nella sequenza di riproduzione.
-     */
-    @FXML
-    private void onPreviousTrack() {
-        if (seqController == null || player == null) return;
-        Track prev = seqController.goToPreviousTrack();
-        if (prev != null) {
-            player.play(prev);
-        }
-        requestPlayerBarRefresh();
-    }
-
-    /**
-     * US13 - Salta la parte rimanente della playlist sorgente e avvia la prima traccia accodata.
-     */
-    @FXML
-    private void onSkipPlaylist() {
-        if (seqController == null || player == null) return;
-        Track next = seqController.skipPlaylist();
-        if (next != null) {
-            player.play(next);
-        }
-        requestPlayerBarRefresh();
-    }
-
-    /**
-     * US17-INT - Imposta esplicitamente la modalità di riproduzione sequenziale.
-     */
-    @FXML
-    private void onSequentialMode() {
-        if (seqController == null) return;
-        seqController.setSequentialMode();
-        requestPlayerBarRefresh();
-    }
-
-    /**
-     * US18-INT - Imposta la modalità di riproduzione casuale (shuffle).
-     */
-    @FXML
-    private void onShuffleMode() {
-        if (seqController == null) return;
-        seqController.setShuffleMode();
-        requestPlayerBarRefresh();
-    }
-
-    /**
-     * US19-UI - Imposta la modalità di riproduzione loop.
-     */
-    @FXML
-    private void onLoopMode() {
-        if (seqController == null) return;
-        seqController.setLoopMode();
-        requestPlayerBarRefresh();
-    }
-
-    /**
-     * Tasto reset: arresta l'audio e riporta il timer a 00:00
-     */
-    @FXML
-    private void onStopPlayer() {
-        if (player == null) return;
-        player.stop(); 
-        requestPlayerBarRefresh();
     }
 }

@@ -233,6 +233,20 @@ class PlaylistSequenceControllerTest {
     }
 
     @Test
+    void goToTrackReturnsCurrentTrackWhenSelectedQueueHeadIsAlreadySequenceCurrent() {
+        controller.addToQueue(track1);
+        int[] notifications = {0};
+        controller.attach(() -> notifications[0]++);
+        notifications[0] = 0;
+
+        Track resolved = controller.goToTrack(track1);
+
+        assertEquals(track1, resolved);
+        assertEquals(track1, controller.getCurrentTrack());
+        assertEquals(0, notifications[0]);
+    }
+
+    @Test
     void addPlaylistToQueueDoesNotModifySourcePlaylist() {
         controller.addToQueue(new Track("Queued Song", "Queued Artist", "Soul", 2023, null, 210));
 

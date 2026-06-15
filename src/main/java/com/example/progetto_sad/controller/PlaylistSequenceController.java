@@ -51,6 +51,10 @@ public class PlaylistSequenceController implements Subject, Observer {
     /** US17 - Contesto Strategy usato per delegare la scelta del prossimo brano. */
     private PlayModeContext playModeContext;
 
+    /** US18-UI - Modalità di riproduzione corrente, usata solo per la visualizzazione UI. */
+    private enum PlayMode { SEQUENTIAL, SHUFFLE }
+    private PlayMode currentPlayMode;
+
     /**
      * Crea il controller senza alcuna sequenza attiva.
      * Inizializza il contesto Strategy con la modalità sequenziale come default.
@@ -62,6 +66,7 @@ public class PlaylistSequenceController implements Subject, Observer {
         this.observers = new ArrayList<>();
         this.playlistSegments = new ArrayList<>();
         this.playModeContext = new PlayModeContext(new SequentialModeStrategy());
+        this.currentPlayMode = PlayMode.SEQUENTIAL;
     }
 
     /**
@@ -514,6 +519,7 @@ public class PlaylistSequenceController implements Subject, Observer {
      */
     public void setSequentialMode() {
         playModeContext.setStrategy(new SequentialModeStrategy());
+        currentPlayMode = PlayMode.SEQUENTIAL;
         notifyObservers();
     }
 
@@ -524,7 +530,18 @@ public class PlaylistSequenceController implements Subject, Observer {
      */
     public void setShuffleMode() {
         playModeContext.setStrategy(new ShuffleModeStrategy());
+        currentPlayMode = PlayMode.SHUFFLE;
         notifyObservers();
+    }
+
+    /** US18-UI - Indica se la modalità sequenziale è quella attiva. */
+    public boolean isSequentialMode() {
+        return currentPlayMode == PlayMode.SEQUENTIAL;
+    }
+
+    /** US18-UI - Indica se la modalità shuffle è quella attiva. */
+    public boolean isShuffleMode() {
+        return currentPlayMode == PlayMode.SHUFFLE;
     }
 
     private void detachSourcePlaylist() {

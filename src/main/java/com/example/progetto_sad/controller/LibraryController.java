@@ -555,12 +555,20 @@ public class LibraryController implements Observer {
         if (skipPlaylistButton != null) {
             skipPlaylistButton.setDisable(seqController == null || !seqController.canSkipPlaylist());
         }
-        // US17/US18 - i pulsanti modalità sequenziale e shuffle sono sempre visibili e abilitati
+        // US18-UI - la modalità attiva è indicata dalla style class play-mode-btn-active
         if (sequentialModeButton != null) {
             sequentialModeButton.setDisable(false);
+            sequentialModeButton.getStyleClass().remove("play-mode-btn-active");
+            if (seqController != null && seqController.isSequentialMode()) {
+                sequentialModeButton.getStyleClass().add("play-mode-btn-active");
+            }
         }
         if (shuffleModeButton != null) {
             shuffleModeButton.setDisable(false);
+            shuffleModeButton.getStyleClass().remove("play-mode-btn-active");
+            if (seqController != null && seqController.isShuffleMode()) {
+                shuffleModeButton.getStyleClass().add("play-mode-btn-active");
+            }
         }
     }
 

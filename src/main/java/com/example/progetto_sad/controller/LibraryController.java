@@ -72,7 +72,8 @@ public class LibraryController implements Observer {
     @FXML private Label durationLabel;
     @FXML private Slider playerProgressSlider;
     @FXML private Button sequentialModeButton;
-    
+    @FXML private Button shuffleModeButton;
+
     // I due bottoni del nuovo design
     @FXML private Button playButton;
     @FXML private Button stopButton;
@@ -554,9 +555,12 @@ public class LibraryController implements Observer {
         if (skipPlaylistButton != null) {
             skipPlaylistButton.setDisable(seqController == null || !seqController.canSkipPlaylist());
         }
-        // US17 - il pulsante modalità sequenziale è sempre visibile e abilitato
+        // US17/US18 - i pulsanti modalità sequenziale e shuffle sono sempre visibili e abilitati
         if (sequentialModeButton != null) {
             sequentialModeButton.setDisable(false);
+        }
+        if (shuffleModeButton != null) {
+            shuffleModeButton.setDisable(false);
         }
     }
 
@@ -677,6 +681,16 @@ public class LibraryController implements Observer {
     private void onSequentialMode() {
         if (seqController == null) return;
         seqController.setSequentialMode();
+        requestPlayerBarRefresh();
+    }
+
+    /**
+     * US18-INT - Imposta la modalità di riproduzione casuale (shuffle).
+     */
+    @FXML
+    private void onShuffleMode() {
+        if (seqController == null) return;
+        seqController.setShuffleMode();
         requestPlayerBarRefresh();
     }
 

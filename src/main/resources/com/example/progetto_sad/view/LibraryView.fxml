@@ -115,6 +115,7 @@
             <HBox alignment="CENTER_RIGHT" spacing="12" minWidth="280">
                 <Button fx:id="sequentialModeButton" text="→" styleClass="play-mode-btn" onAction="#onSequentialMode" minWidth="42" prefWidth="42" style="-fx-font-size: 14px;"/>
                 <Button fx:id="shuffleModeButton" text="⇄" styleClass="play-mode-btn" onAction="#onShuffleMode" minWidth="42" prefWidth="42"/>
+                <Button fx:id="loopModeButton" text="↻" styleClass="play-mode-btn" onAction="#onLoopMode" minWidth="42" prefWidth="42"/>
                 <Label fx:id="currentTimeLabel" text="0:00" styleClass="player-meta"/>
                 <Slider fx:id="playerProgressSlider" prefWidth="150" focusTraversable="false"/>
                 <Label fx:id="durationLabel" text="0:00" styleClass="player-meta"/>

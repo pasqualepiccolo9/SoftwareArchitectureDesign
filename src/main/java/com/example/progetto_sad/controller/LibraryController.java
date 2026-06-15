@@ -73,6 +73,7 @@ public class LibraryController implements Observer {
     @FXML private Slider playerProgressSlider;
     @FXML private Button sequentialModeButton;
     @FXML private Button shuffleModeButton;
+    @FXML private Button loopModeButton;
 
     // I due bottoni del nuovo design
     @FXML private Button playButton;
@@ -570,6 +571,13 @@ public class LibraryController implements Observer {
                 shuffleModeButton.getStyleClass().add("play-mode-btn-active");
             }
         }
+        if (loopModeButton != null) {
+            loopModeButton.setDisable(false);
+            loopModeButton.getStyleClass().remove("play-mode-btn-active");
+            if (seqController != null && seqController.isLoopMode()) {
+                loopModeButton.getStyleClass().add("play-mode-btn-active");
+            }
+        }
     }
 
     private boolean hasPlayableAudio(Track track) {
@@ -699,6 +707,16 @@ public class LibraryController implements Observer {
     private void onShuffleMode() {
         if (seqController == null) return;
         seqController.setShuffleMode();
+        requestPlayerBarRefresh();
+    }
+
+    /**
+     * US19-UI - Imposta la modalità di riproduzione loop.
+     */
+    @FXML
+    private void onLoopMode() {
+        if (seqController == null) return;
+        seqController.setLoopMode();
         requestPlayerBarRefresh();
     }
 

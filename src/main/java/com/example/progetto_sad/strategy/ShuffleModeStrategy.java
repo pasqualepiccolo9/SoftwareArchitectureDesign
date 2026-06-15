@@ -62,7 +62,7 @@ public class ShuffleModeStrategy implements PlayModeStrategy {
      * US18 - Restituisce il prossimo brano in ordine casuale senza ripetizioni
      * immediate finché restano indici disponibili nel ciclo corrente.
      *
-     * @param tracks       lista ordinata dei brani della sequenza; può essere null
+     * @param tracks       lista dei brani nella sequenza corrente; non deve essere null
      * @param currentIndex indice zero-based del brano attualmente in riproduzione
      * @return il prossimo {@link Track}, oppure {@code null} se la coda è vuota,
      *         contiene un solo brano o l'indice corrente non è valido

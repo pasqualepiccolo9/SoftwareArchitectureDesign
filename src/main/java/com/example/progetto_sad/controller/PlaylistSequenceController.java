@@ -5,6 +5,7 @@ import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.observer.Subject;
+import com.example.progetto_sad.strategy.LoopModeStrategy;
 import com.example.progetto_sad.strategy.PlayModeContext;
 import com.example.progetto_sad.strategy.SequentialModeStrategy;
 import com.example.progetto_sad.strategy.ShuffleModeStrategy;
@@ -53,6 +54,10 @@ public class PlaylistSequenceController implements Subject, Observer {
     /** US17 - Contesto Strategy usato per delegare la scelta del prossimo brano. */
     private PlayModeContext playModeContext;
 
+    /** US18-UI/US19 - Modalità di riproduzione corrente, usata solo per la visualizzazione UI. */
+    private enum PlayMode { SEQUENTIAL, SHUFFLE, LOOP }
+    private PlayMode currentPlayMode;
+
     /**
      * Crea il controller senza alcuna sequenza attiva.
      * Inizializza il contesto Strategy con la modalità sequenziale come default.
@@ -64,6 +69,7 @@ public class PlaylistSequenceController implements Subject, Observer {
         this.observers = new ArrayList<>();
         this.playlistSegments = new ArrayList<>();
         this.playModeContext = new PlayModeContext(new SequentialModeStrategy());
+        this.currentPlayMode = PlayMode.SEQUENTIAL;
     }
 
     /**
@@ -125,8 +131,15 @@ public class PlaylistSequenceController implements Subject, Observer {
         }
         Track next = playModeContext.getNextTrack(sequence.getTracks(), sequence.getCurrentIndex());
         if (next != null) {
-            sequence.advanceTo(next);
+            if (isShuffleMode()) {
+                sequence.moveShuffledTrackNext(next);
+            } else if (isLoopMode()) {
+                sequence.advanceLooping();
+            } else {
+                sequence.advanceTo(next);
+            }
         } else {
+            // null in qualsiasi modalità = nessuna traccia futura: avanza allo stato terminato.
             sequence.advance();
         }
         notifyObservers();
@@ -174,6 +187,9 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (sequence == null) {
             return false;
         }
+        if (isLoopMode()) {
+            return sequence.getTracks().size() > 0;
+        }
         return sequence.hasNextTrack();
     }
 
@@ -191,7 +207,9 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
-     * US12 - Sposta la sequenza al brano successivo e notifica gli observer.
+     * US12/US18 - Sposta la sequenza al brano successivo secondo la modalità attiva e notifica gli observer.
+     * In modalità sequenziale avanza di una posizione; in modalità shuffle sceglie una traccia casuale
+     * tramite {@link PlayModeContext}, coerentemente con {@link #onTrackFinished()}.
      * Restituisce la nuova traccia corrente se lo spostamento riesce, {@code null} altrimenti.
      *
      * @return la nuova traccia corrente, oppure {@code null} se lo spostamento non è possibile
@@ -200,8 +218,18 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (sequence == null) {
             return null;
         }
-        boolean moved = sequence.moveToNextTrack();
-        if (moved) {
+        if (isLoopMode()) {
+            sequence.advanceLooping();
+            notifyObservers();
+            return sequence.getCurrentTrack();
+        }
+        Track next = playModeContext.getNextTrack(sequence.getTracks(), sequence.getCurrentIndex());
+        if (next != null) {
+            if (isShuffleMode()) {
+                sequence.moveShuffledTrackNext(next);
+            } else {
+                sequence.advanceTo(next);
+            }
             notifyObservers();
             return sequence.getCurrentTrack();
         }
@@ -227,8 +255,11 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
-     * US12 - Sposta la sequenza sulla traccia indicata usando {@link PlaylistSequence#advanceTo(Track)},
+     * US12 - Sposta la sequenza sulla traccia indicata (selezione manuale / doppio click dalla coda),
      * notifica gli observer e restituisce la traccia corrente aggiornata.
+     * Usa {@link PlaylistSequence#moveUpcomingTrackNext(Track)} per preservare le tracce
+     * intermedie non ancora riprodotte: la traccia scelta viene portata subito dopo quella
+     * corrente e la sequenza avanza di un passo, senza far sparire B in [A,B,C,D] → scelto C.
      * Restituisce {@code null} se la sequenza non è attiva, la traccia è null o non è presente.
      *
      * @param track la traccia di destinazione
@@ -238,7 +269,7 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (sequence == null || track == null) {
             return null;
         }
-        boolean moved = sequence.advanceTo(track);
+        boolean moved = sequence.moveUpcomingTrackNext(track);
         if (moved) {
             notifyObservers();
             return sequence.getCurrentTrack();
@@ -569,6 +600,7 @@ public class PlaylistSequenceController implements Subject, Observer {
      */
     public void setSequentialMode() {
         playModeContext.setStrategy(new SequentialModeStrategy());
+        currentPlayMode = PlayMode.SEQUENTIAL;
         notifyObservers();
     }
 
@@ -591,6 +623,34 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (playModeContext.getStrategy() instanceof ShuffleModeStrategy shuffle && sequence != null) {
             shuffle.reset(sequence.getTracks().size(), sequence.getCurrentIndex());
         }
+        currentPlayMode = PlayMode.SHUFFLE;
+        notifyObservers();
+    }
+
+    /** US18-UI - Indica se la modalità sequenziale è quella attiva. */
+    public boolean isSequentialMode() {
+        return currentPlayMode == PlayMode.SEQUENTIAL;
+    }
+
+    /** US18-UI - Indica se la modalità shuffle è quella attiva. */
+    public boolean isShuffleMode() {
+        return currentPlayMode == PlayMode.SHUFFLE;
+    }
+
+    /**
+     * US19 - Imposta la modalità di riproduzione loop (rotazione infinita della coda),
+     * sostituendo la strategia attiva con una nuova {@link LoopModeStrategy}.
+     * Notifica gli observer affinché la UI rifletta il cambio di modalità.
+     */
+    public void setLoopMode() {
+        playModeContext.setStrategy(new LoopModeStrategy());
+        currentPlayMode = PlayMode.LOOP;
+        notifyObservers();
+    }
+
+    /** US19 - Indica se la modalità loop è quella attiva. */
+    public boolean isLoopMode() {
+        return currentPlayMode == PlayMode.LOOP;
     }
 
     private void detachSourcePlaylist() {

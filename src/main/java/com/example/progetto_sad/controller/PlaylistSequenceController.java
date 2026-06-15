@@ -27,10 +27,12 @@ public class PlaylistSequenceController implements Subject, Observer {
 
     /** US13 - Rappresenta il range [start, end) di una playlist nella sequenza. */
     private static final class PlaylistSegment {
+        private final Playlist playlist;
         int start;
         int end; // exclusive
 
-        PlaylistSegment(int start, int end) {
+        PlaylistSegment(Playlist playlist, int start, int end) {
+            this.playlist = playlist;
             this.start = start;
             this.end = end;
         }
@@ -82,8 +84,9 @@ public class PlaylistSequenceController implements Subject, Observer {
         sourceTrackCount = sequence.getTracks().size();
         playlistSegments.clear();
         if (sourceTrackCount > 0) {
-            playlistSegments.add(new PlaylistSegment(0, sourceTrackCount));
+            playlistSegments.add(new PlaylistSegment(playlist, 0, sourceTrackCount));
         }
+        resetActiveShuffleStrategy();
         notifyObservers();
     }
 
@@ -259,6 +262,7 @@ public class PlaylistSequenceController implements Subject, Observer {
             sequence = PlaylistSequence.empty();
         }
         sequence.addTrack(track);
+        resetActiveShuffleStrategy();
         notifyObservers();
     }
 
@@ -293,7 +297,7 @@ public class PlaylistSequenceController implements Subject, Observer {
         int startIndex = sequence.getTracks().size();
         sequence.addTracks(tracks);
         int endIndex = sequence.getTracks().size();
-        playlistSegments.add(new PlaylistSegment(startIndex, endIndex));
+        playlistSegments.add(new PlaylistSegment(playlist, startIndex, endIndex));
 
         if (isFirstPlaylist) {
             sourcePlaylist = playlist;
@@ -301,6 +305,7 @@ public class PlaylistSequenceController implements Subject, Observer {
             sourceTrackCount = endIndex;
         }
 
+        resetActiveShuffleStrategy();
         notifyObservers();
     }
 
@@ -415,14 +420,12 @@ public class PlaylistSequenceController implements Subject, Observer {
      * Restituisce {@code true} solo quando:
      * <ul>
      *   <li>esiste una sequenza attiva non terminata;</li>
-     *   <li>esiste una playlist sorgente identificabile;</li>
-     *   <li>la traccia corrente appartiene ancora alla parte della sequenza
-     *       proveniente dalla playlist sorgente (indice &lt; sourceTrackCount);</li>
-     *   <li>la sequenza contiene almeno una traccia accodata dopo la playlist sorgente.</li>
+     *   <li>la traccia corrente appartiene a un blocco playlist registrato;</li>
+     *   <li>dopo il blocco esistono altri brani in coda.</li>
      * </ul>
      * Questo metodo non esegue lo skip: valuta soltanto la disponibilità del comando.
      *
-     * @return {@code tr1ue} se lo skip della playlist avrebbe una destinazione valida
+     * @return {@code true} se lo skip della playlist avrebbe una destinazione valida
      */
     public boolean canSkipPlaylist() {
         if (sequence == null || sequence.isFinished()) {
@@ -446,8 +449,60 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
-     * US13 - Salta la parte rimanente della playlist sorgente e sposta la sequenza
-     * alla prima traccia accodata dopo di essa.
+     * US13 - Indica se la traccia corrente appartiene a un blocco playlist nella coda.
+     *
+     * @return {@code true} se l'indice corrente ricade in un segmento playlist registrato
+     */
+    public boolean isCurrentTrackInPlaylistSegment() {
+        if (sequence == null || sequence.isFinished()) {
+            return false;
+        }
+        return findSegmentContaining(sequence.getCurrentIndex()) != null;
+    }
+
+    /**
+     * US13 - Restituisce la playlist del blocco attualmente in riproduzione.
+     *
+     * @return la playlist del segmento corrente, oppure {@code null} se si sta riproducendo
+     *         un brano singolo accodato o la sequenza non è attiva
+     */
+    public Playlist getCurrentPlaylist() {
+        if (sequence == null || sequence.isFinished()) {
+            return null;
+        }
+        PlaylistSegment segment = findSegmentContaining(sequence.getCurrentIndex());
+        return segment != null ? segment.playlist : null;
+    }
+
+    /**
+     * US13 - Indice iniziale (inclusivo) del blocco playlist corrente nella sequenza.
+     *
+     * @return l'indice di inizio del segmento, oppure {@code -1} se assente
+     */
+    public int getCurrentPlaylistSegmentStart() {
+        if (sequence == null || sequence.isFinished()) {
+            return -1;
+        }
+        PlaylistSegment segment = findSegmentContaining(sequence.getCurrentIndex());
+        return segment != null ? segment.start : -1;
+    }
+
+    /**
+     * US13 - Indice finale (esclusivo) del blocco playlist corrente nella sequenza.
+     *
+     * @return l'indice di fine del segmento, oppure {@code -1} se assente
+     */
+    public int getCurrentPlaylistSegmentEnd() {
+        if (sequence == null || sequence.isFinished()) {
+            return -1;
+        }
+        PlaylistSegment segment = findSegmentContaining(sequence.getCurrentIndex());
+        return segment != null ? segment.end : -1;
+    }
+
+    /**
+     * US13 - Salta i brani rimanenti del blocco playlist corrente e sposta la sequenza
+     * al primo elemento successivo al blocco.
      *
      * Lo spostamento avviene direttamente per indice ({@code sourceTrackCount}) tramite
      * {@link PlaylistSequence#moveToIndex(int)}, evitando il rischio di posizionarsi
@@ -524,7 +579,18 @@ public class PlaylistSequenceController implements Subject, Observer {
      */
     public void setShuffleMode() {
         playModeContext.setStrategy(new ShuffleModeStrategy());
+        resetActiveShuffleStrategy();
         notifyObservers();
+    }
+
+    /**
+     * US18-INT - Reinizializza lo stato interno della strategia shuffle quando la coda
+     * o la playlist corrente cambiano, così il mescolamento resta coerente.
+     */
+    private void resetActiveShuffleStrategy() {
+        if (playModeContext.getStrategy() instanceof ShuffleModeStrategy shuffle && sequence != null) {
+            shuffle.reset(sequence.getTracks().size(), sequence.getCurrentIndex());
+        }
     }
 
     private void detachSourcePlaylist() {

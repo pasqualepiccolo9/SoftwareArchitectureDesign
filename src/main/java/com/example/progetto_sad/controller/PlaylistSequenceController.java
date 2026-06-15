@@ -5,6 +5,7 @@ import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.observer.Subject;
+import com.example.progetto_sad.strategy.LoopModeStrategy;
 import com.example.progetto_sad.strategy.PlayModeContext;
 import com.example.progetto_sad.strategy.SequentialModeStrategy;
 import com.example.progetto_sad.strategy.ShuffleModeStrategy;
@@ -51,8 +52,8 @@ public class PlaylistSequenceController implements Subject, Observer {
     /** US17 - Contesto Strategy usato per delegare la scelta del prossimo brano. */
     private PlayModeContext playModeContext;
 
-    /** US18-UI - Modalità di riproduzione corrente, usata solo per la visualizzazione UI. */
-    private enum PlayMode { SEQUENTIAL, SHUFFLE }
+    /** US18-UI/US19 - Modalità di riproduzione corrente, usata solo per la visualizzazione UI. */
+    private enum PlayMode { SEQUENTIAL, SHUFFLE, LOOP }
     private PlayMode currentPlayMode;
 
     /**
@@ -129,6 +130,8 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (next != null) {
             if (isShuffleMode()) {
                 sequence.moveShuffledTrackNext(next);
+            } else if (isLoopMode()) {
+                sequence.advanceLooping();
             } else {
                 sequence.advanceTo(next);
             }
@@ -181,6 +184,9 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (sequence == null) {
             return false;
         }
+        if (isLoopMode()) {
+            return sequence.getTracks().size() > 0;
+        }
         return sequence.hasNextTrack();
     }
 
@@ -208,6 +214,11 @@ public class PlaylistSequenceController implements Subject, Observer {
     public Track goToNextTrack() {
         if (sequence == null) {
             return null;
+        }
+        if (isLoopMode()) {
+            sequence.advanceLooping();
+            notifyObservers();
+            return sequence.getCurrentTrack();
         }
         Track next = playModeContext.getNextTrack(sequence.getTracks(), sequence.getCurrentIndex());
         if (next != null) {
@@ -557,6 +568,22 @@ public class PlaylistSequenceController implements Subject, Observer {
     /** US18-UI - Indica se la modalità shuffle è quella attiva. */
     public boolean isShuffleMode() {
         return currentPlayMode == PlayMode.SHUFFLE;
+    }
+
+    /**
+     * US19 - Imposta la modalità di riproduzione loop (rotazione infinita della coda),
+     * sostituendo la strategia attiva con una nuova {@link LoopModeStrategy}.
+     * Notifica gli observer affinché la UI rifletta il cambio di modalità.
+     */
+    public void setLoopMode() {
+        playModeContext.setStrategy(new LoopModeStrategy());
+        currentPlayMode = PlayMode.LOOP;
+        notifyObservers();
+    }
+
+    /** US19 - Indica se la modalità loop è quella attiva. */
+    public boolean isLoopMode() {
+        return currentPlayMode == PlayMode.LOOP;
     }
 
     private void detachSourcePlaylist() {

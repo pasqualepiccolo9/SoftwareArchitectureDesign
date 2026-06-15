@@ -271,6 +271,36 @@ public class PlaylistSequence {
     }
 
     /**
+     * US19 - Ruota la coda per la modalità loop: sposta la traccia corrente in fondo
+     * alla lista e lascia che la successiva diventi corrente (currentIndex invariato
+     * dopo lo scorrimento). Usato sia alla fine naturale del brano sia per lo skip
+     * manuale in modalità loop.
+     *
+     * Esempio: tracks=[A,B,C], currentIndex=0
+     *   → rimuovi A → [B,C]
+     *   → currentIndex=0 (invariato, ora punta a B)
+     *   → aggiungi A in fondo → [B,C,A]
+     *   → currentTrack=B
+     *
+     * @return {@code true} se la rotazione è avvenuta o la sequenza ha una sola
+     *         traccia (il playback continua); {@code false} se la sequenza è vuota
+     */
+    public boolean advanceLooping() {
+        if (tracks.isEmpty()) {
+            return false;
+        }
+        if (tracks.size() == 1) {
+            return true;
+        }
+        Track current = tracks.remove(currentIndex);
+        if (currentIndex >= tracks.size()) {
+            currentIndex = 0;
+        }
+        tracks.add(current);
+        return true;
+    }
+
+    /**
      * US13 - Sposta la posizione corrente all'indice assoluto indicato, senza modificare
      * la lista né notificare observer. Usato per saltare direttamente a una posizione
      * nota (es. prima traccia accodata dopo la playlist sorgente) evitando il rischio

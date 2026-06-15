@@ -220,6 +220,57 @@ public class PlaylistSequence {
     }
 
     /**
+     * US18/US12 - Sposta una traccia futura (dopo la corrente) immediatamente dopo la posizione
+     * corrente e avanza su di essa, preservando tutte le altre tracce non ancora riprodotte.
+     *
+     * A differenza di {@link #advanceTo(Track)}, che salta direttamente all'indice originale
+     * della traccia (facendo "sparire" le tracce intermedie dalla coda), questo metodo
+     * rimuove la traccia dalla sua posizione, la reinserisce subito dopo la corrente e poi
+     * avanza di un passo.
+     *
+     * Esempio: tracks=[A,B,C,D], currentIndex=0, nextTrack=C
+     *   → rimuovi C  → [A,B,D]
+     *   → inserisci C a posizione 1 → [A,C,B,D]
+     *   → avanza → currentIndex=1, currentTrack=C, nextTracks=[B,D]
+     *
+     * Usato sia dalla strategia shuffle che dalla selezione manuale dalla coda (doppio click).
+     *
+     * @param nextTrack la traccia da portare in prima posizione; deve essere presente
+     *                  nella sequenza dopo la posizione corrente
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} altrimenti
+     */
+    public boolean moveUpcomingTrackNext(Track nextTrack) {
+        if (nextTrack == null || isFinished()) {
+            return false;
+        }
+        int targetIndex = -1;
+        for (int i = currentIndex + 1; i < tracks.size(); i++) {
+            if (tracks.get(i).equals(nextTrack)) {
+                targetIndex = i;
+                break;
+            }
+        }
+        if (targetIndex < 0) {
+            return false;
+        }
+        tracks.remove(targetIndex);
+        tracks.add(currentIndex + 1, nextTrack);
+        currentIndex++;
+        return true;
+    }
+
+    /**
+     * US18 - Alias di {@link #moveUpcomingTrackNext(Track)} per la strategia shuffle.
+     * Delega interamente al metodo generico senza duplicare la logica.
+     *
+     * @param nextTrack la traccia scelta dalla strategia shuffle
+     * @return {@code true} se lo spostamento è avvenuto, {@code false} altrimenti
+     */
+    public boolean moveShuffledTrackNext(Track nextTrack) {
+        return moveUpcomingTrackNext(nextTrack);
+    }
+
+    /**
      * US13 - Sposta la posizione corrente all'indice assoluto indicato, senza modificare
      * la lista né notificare observer. Usato per saltare direttamente a una posizione
      * nota (es. prima traccia accodata dopo la playlist sorgente) evitando il rischio

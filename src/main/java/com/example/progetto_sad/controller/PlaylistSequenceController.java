@@ -127,8 +127,13 @@ public class PlaylistSequenceController implements Subject, Observer {
         }
         Track next = playModeContext.getNextTrack(sequence.getTracks(), sequence.getCurrentIndex());
         if (next != null) {
-            sequence.advanceTo(next);
+            if (isShuffleMode()) {
+                sequence.moveShuffledTrackNext(next);
+            } else {
+                sequence.advanceTo(next);
+            }
         } else {
+            // null in qualsiasi modalità = nessuna traccia futura: avanza allo stato terminato.
             sequence.advance();
         }
         notifyObservers();
@@ -168,7 +173,6 @@ public class PlaylistSequenceController implements Subject, Observer {
 
     /**
      * US12 - Indica se esiste un brano successivo a quello attualmente in riproduzione.
-     * In modalità shuffle considera disponibile qualsiasi traccia purché ce ne siano almeno due.
      * Restituisce {@code false} se nessuna sequenza è attiva.
      *
      * @return {@code true} se esiste un brano successivo nella sequenza corrente
@@ -176,9 +180,6 @@ public class PlaylistSequenceController implements Subject, Observer {
     public boolean hasNextTrack() {
         if (sequence == null) {
             return false;
-        }
-        if (isShuffleMode()) {
-            return sequence.getTracks().size() >= 2;
         }
         return sequence.hasNextTrack();
     }
@@ -210,7 +211,11 @@ public class PlaylistSequenceController implements Subject, Observer {
         }
         Track next = playModeContext.getNextTrack(sequence.getTracks(), sequence.getCurrentIndex());
         if (next != null) {
-            sequence.advanceTo(next);
+            if (isShuffleMode()) {
+                sequence.moveShuffledTrackNext(next);
+            } else {
+                sequence.advanceTo(next);
+            }
             notifyObservers();
             return sequence.getCurrentTrack();
         }
@@ -236,8 +241,11 @@ public class PlaylistSequenceController implements Subject, Observer {
     }
 
     /**
-     * US12 - Sposta la sequenza sulla traccia indicata usando {@link PlaylistSequence#advanceTo(Track)},
+     * US12 - Sposta la sequenza sulla traccia indicata (selezione manuale / doppio click dalla coda),
      * notifica gli observer e restituisce la traccia corrente aggiornata.
+     * Usa {@link PlaylistSequence#moveUpcomingTrackNext(Track)} per preservare le tracce
+     * intermedie non ancora riprodotte: la traccia scelta viene portata subito dopo quella
+     * corrente e la sequenza avanza di un passo, senza far sparire B in [A,B,C,D] → scelto C.
      * Restituisce {@code null} se la sequenza non è attiva, la traccia è null o non è presente.
      *
      * @param track la traccia di destinazione
@@ -247,7 +255,7 @@ public class PlaylistSequenceController implements Subject, Observer {
         if (sequence == null || track == null) {
             return null;
         }
-        boolean moved = sequence.advanceTo(track);
+        boolean moved = sequence.moveUpcomingTrackNext(track);
         if (moved) {
             notifyObservers();
             return sequence.getCurrentTrack();

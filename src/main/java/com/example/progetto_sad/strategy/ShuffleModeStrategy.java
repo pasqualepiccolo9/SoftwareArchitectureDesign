@@ -2,19 +2,19 @@ package com.example.progetto_sad.strategy;
 
 import com.example.progetto_sad.model.Track;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
 /**
  * US18 - Pattern Strategy: modalità di riproduzione casuale (shuffle).
  *
- * ConcreteStrategy che seleziona il prossimo brano scegliendo casualmente
- * un indice diverso da quello corrente tra tutti i brani disponibili nella
- * sequenza. La riproduzione non termina finché sono presenti almeno due
- * brani, poiché ogni chiamata restituisce sempre un brano valido.
- *
- * Restituisce {@code null} solo se la lista è vuota o contiene un solo brano,
- * coerentemente con la convenzione stabilita da {@link SequentialModeStrategy}.
+ * Sceglie casualmente una traccia tra quelle future nella sequenza (dopo currentIndex).
+ * Non mantiene stato interno: la posizione nella sequenza è l'unica fonte di verità
+ * su cosa è già stato riprodotto. Questo garantisce che:
+ *   - tracce già riprodotte (a currentIndex o prima) non vengano mai riproposte;
+ *   - tracce aggiunte nuovamente alla coda siano automaticamente candidate;
+ *   - la sessione termini naturalmente quando non esistono tracce future.
  */
 public class ShuffleModeStrategy implements PlayModeStrategy {
 
@@ -25,26 +25,23 @@ public class ShuffleModeStrategy implements PlayModeStrategy {
     }
 
     /**
-     * Restituisce una traccia scelta casualmente dalla lista, diversa da quella
-     * all'indice {@code currentIndex}.
+     * Restituisce una traccia scelta casualmente tra quelle presenti dopo currentIndex.
+     * Restituisce {@code null} se non esistono tracce future nella lista ricevuta.
      *
-     * @param tracks       lista ordinata dei brani della sequenza; può essere null
+     * @param tracks       lista dei brani nella sequenza corrente; non deve essere null
      * @param currentIndex indice zero-based del brano attualmente in riproduzione
-     * @return una traccia casuale diversa da quella corrente, oppure {@code null}
-     *         se la lista è vuota o contiene un solo brano
+     * @return una traccia futura casuale, oppure {@code null} se non ce ne sono
      */
     @Override
     public Track getNextTrack(List<Track> tracks, int currentIndex) {
         if (tracks == null || tracks.isEmpty()) {
             return null;
         }
-        if (tracks.size() == 1) {
+        int start = currentIndex + 1;
+        if (start >= tracks.size()) {
             return null;
         }
-        int nextIndex;
-        do {
-            nextIndex = random.nextInt(tracks.size());
-        } while (nextIndex == currentIndex);
-        return tracks.get(nextIndex);
+        List<Track> candidates = new ArrayList<>(tracks.subList(start, tracks.size()));
+        return candidates.get(random.nextInt(candidates.size()));
     }
 }

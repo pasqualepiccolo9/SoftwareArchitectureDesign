@@ -72,7 +72,9 @@ public class LibraryController implements Observer {
     @FXML private Label durationLabel;
     @FXML private Slider playerProgressSlider;
     @FXML private Button sequentialModeButton;
-    
+    @FXML private Button shuffleModeButton;
+    @FXML private Button loopModeButton;
+
     // I due bottoni del nuovo design
     @FXML private Button playButton;
     @FXML private Button stopButton;
@@ -554,9 +556,27 @@ public class LibraryController implements Observer {
         if (skipPlaylistButton != null) {
             skipPlaylistButton.setDisable(seqController == null || !seqController.canSkipPlaylist());
         }
-        // US17 - il pulsante modalità sequenziale è sempre visibile e abilitato
+        // US18-UI - la modalità attiva è indicata dalla style class play-mode-btn-active
         if (sequentialModeButton != null) {
             sequentialModeButton.setDisable(false);
+            sequentialModeButton.getStyleClass().remove("play-mode-btn-active");
+            if (seqController != null && seqController.isSequentialMode()) {
+                sequentialModeButton.getStyleClass().add("play-mode-btn-active");
+            }
+        }
+        if (shuffleModeButton != null) {
+            shuffleModeButton.setDisable(false);
+            shuffleModeButton.getStyleClass().remove("play-mode-btn-active");
+            if (seqController != null && seqController.isShuffleMode()) {
+                shuffleModeButton.getStyleClass().add("play-mode-btn-active");
+            }
+        }
+        if (loopModeButton != null) {
+            loopModeButton.setDisable(false);
+            loopModeButton.getStyleClass().remove("play-mode-btn-active");
+            if (seqController != null && seqController.isLoopMode()) {
+                loopModeButton.getStyleClass().add("play-mode-btn-active");
+            }
         }
     }
 
@@ -677,6 +697,26 @@ public class LibraryController implements Observer {
     private void onSequentialMode() {
         if (seqController == null) return;
         seqController.setSequentialMode();
+        requestPlayerBarRefresh();
+    }
+
+    /**
+     * US18-INT - Imposta la modalità di riproduzione casuale (shuffle).
+     */
+    @FXML
+    private void onShuffleMode() {
+        if (seqController == null) return;
+        seqController.setShuffleMode();
+        requestPlayerBarRefresh();
+    }
+
+    /**
+     * US19-UI - Imposta la modalità di riproduzione loop.
+     */
+    @FXML
+    private void onLoopMode() {
+        if (seqController == null) return;
+        seqController.setLoopMode();
         requestPlayerBarRefresh();
     }
 

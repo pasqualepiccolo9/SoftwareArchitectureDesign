@@ -84,7 +84,6 @@ public class GeneratePlaylistDialogView {
         previewHeader.getStyleClass().add("form-label");
 
         statusLabel = new Label("");
-        statusLabel.getStyleClass().add("form-label");
         statusLabel.setVisible(false);
         statusLabel.setManaged(false);
 
@@ -98,8 +97,17 @@ public class GeneratePlaylistDialogView {
         nameField.getStyleClass().add("year-field");
         nameField.setMaxWidth(Double.MAX_VALUE);
         nameField.setTextFormatter(new TextFormatter<>(change ->
-                change.getControlNewText().length() <= 40 ? change : null));
-        nameField.textProperty().addListener((obs, old, val) -> updateGenerateButton());
+                change.getControlNewText().length() <= 20 ? change : null));
+        nameField.textProperty().addListener((obs, old, val) -> {
+            if (!old.isBlank() && val.isBlank() && !currentTracks.isEmpty()) {
+                showError("Il nome della playlist non può essere vuoto.");
+            } else if (!val.isBlank() && (
+                    "Il nome della playlist non può essere vuoto.".equals(statusLabel.getText()) ||
+                    "Nome playlist già in uso.".equals(statusLabel.getText()))) {
+                clearStatus();
+            }
+            updateGenerateButton();
+        });
 
         yearField = new TextField();
         yearField.setPromptText("es. 2024");
@@ -204,27 +212,20 @@ public class GeneratePlaylistDialogView {
     private void onYearChanged(String text) {
         clearStatus();
 
-        if (text == null || text.isBlank()) {
+        if (text == null || text.isBlank() || text.length() < 4) {
             currentTracks = List.of();
             updatePreview(false);
             updateGenerateButton();
             return;
         }
 
-        int year;
-        try {
-            year = Integer.parseInt(text);
-        } catch (NumberFormatException e) {
-            currentTracks = List.of();
-            updatePreview(false);
-            updateGenerateButton();
-            return;
-        }
-
+        // text.length() == 4, solo cifre garantito dal TextFormatter
+        int year = Integer.parseInt(text);
         int currentYear = Year.now().getValue();
         if (year < MIN_YEAR || year > currentYear) {
             currentTracks = List.of();
             updatePreview(false);
+            showError("Inserisci un anno compreso tra " + MIN_YEAR + " e " + currentYear + ".");
             updateGenerateButton();
             return;
         }
@@ -241,7 +242,7 @@ public class GeneratePlaylistDialogView {
         if (currentTracks.isEmpty()) {
             previewHeader.setText("Anteprima tracce trovate (0)");
             if (showNoTracksLabel) {
-                Label emptyLabel = new Label("Nessuna traccia trovata per questo anno");
+                Label emptyLabel = new Label("Nessuna traccia trovata per questo anno.");
                 emptyLabel.getStyleClass().add("form-label");
                 emptyLabel.setPadding(new Insets(8, 12, 8, 12));
                 previewListBox.getChildren().add(emptyLabel);
@@ -308,14 +309,20 @@ public class GeneratePlaylistDialogView {
             }
             stage.close();
         } catch (IllegalArgumentException e) {
-            statusLabel.setText(e.getMessage());
-            statusLabel.setVisible(true);
-            statusLabel.setManaged(true);
+            showError("Nome playlist già in uso.");
         }
+    }
+
+    private void showError(String message) {
+        statusLabel.setText(message);
+        statusLabel.setStyle("-fx-text-fill: #f06a6a; -fx-font-size: 12px; -fx-font-weight: bold;");
+        statusLabel.setVisible(true);
+        statusLabel.setManaged(true);
     }
 
     private void clearStatus() {
         statusLabel.setText("");
+        statusLabel.setStyle("");
         statusLabel.setVisible(false);
         statusLabel.setManaged(false);
     }

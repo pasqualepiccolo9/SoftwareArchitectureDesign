@@ -109,6 +109,26 @@ public class PlaylistManager implements Subject {
         return new ArrayList<>(playlists);
     }
 
+    /**
+     * US26 - Costruisce una nuova Playlist con il nome e le tracce fornite,
+     * senza registrarla nel manager. Restituisce null se la lista e' null o vuota.
+     * L'aggiunta al manager e il collegamento con la libreria sono delegati al task INT.
+     *
+     * @param name   nome da assegnare alla playlist
+     * @param tracks tracce da inserire, nell'ordine ricevuto
+     * @return la playlist costruita, oppure null se tracks e' null o vuota
+     */
+    public Playlist buildPlaylistFromTracks(String name, List<Track> tracks) {
+        if (tracks == null || tracks.isEmpty()) {
+            return null;
+        }
+        Playlist playlist = new Playlist(name);
+        for (Track t : tracks) {
+            playlist.addTrack(t);
+        }
+        return playlist;
+    }
+
     @Override
     public void attach(Observer o) {
         if (o != null && !observers.contains(o)) {

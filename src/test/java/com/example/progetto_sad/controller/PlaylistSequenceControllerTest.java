@@ -484,4 +484,152 @@ class PlaylistSequenceControllerTest {
         
         assertEquals(List.of(track2, track3, track1, track1), controller.getNextTracks());
     }
+    
+    // US20-INT - Verifica coerenza: la modifica della playlist sorgente durante
+    // la riproduzione non deve interrompere la traccia corrente ma solo aggiornare la coda.
+    @Test
+    void playlistUpdatePreservesCurrentTrackAndSyncsSequence() {
+        controller.startPlaylist(playlist);
+        
+        controller.onTrackFinished(); 
+        assertEquals(track2, controller.getCurrentTrack());
+        
+        playlist.removeTrack(track3);
+        
+
+        controller.update(); 
+
+        assertEquals(track2, controller.getCurrentTrack());
+                
+        assertTrue(controller.getNextTracks().isEmpty());
+        
+        assertEquals(List.of(track1, track2), controller.getSequence().getTracks());
+    }
+    
+    @Test
+    void goToNextTrackAdvancesToNextTrackInSequence() {
+        controller.startPlaylist(playlist);
+        
+        Track next = controller.goToNextTrack();
+        
+        assertEquals(track2, next);
+        assertEquals(track2, controller.getCurrentTrack());
+    }
+
+    @Test
+    void goToPreviousTrackReturnsToPreviousTrackInSequence() {
+        controller.startPlaylist(playlist);
+        controller.goToNextTrack(); 
+        
+        Track prev = controller.goToPreviousTrack();
+        
+        assertEquals(track1, prev);
+        assertEquals(track1, controller.getCurrentTrack());
+    }
+
+    @Test
+    void goToPreviousTrackOnFirstTrackReturnsNullAndDoesNotChangeState() {
+        controller.startPlaylist(playlist); 
+        
+        Track prev = controller.goToPreviousTrack();
+        
+
+        assertNull(prev);
+        assertEquals(track1, controller.getCurrentTrack());
+    }
+
+    @Test
+    void goToNextTrackOnLastTrackReturnsNullInSequentialMode() {
+        controller.startPlaylist(playlist);
+        controller.goToNextTrack(); 
+        controller.goToNextTrack(); 
+        
+        Track next = controller.goToNextTrack();
+        
+        assertNull(next);
+        assertEquals(track3, controller.getCurrentTrack());
+    }
+
+    @Test
+    void hasNextAndPreviousTrackReturnCorrectAvailability() {
+        controller.startPlaylist(playlist); 
+        
+        assertFalse(controller.hasPreviousTrack());
+        assertTrue(controller.hasNextTrack());
+        
+        controller.goToNextTrack();
+        
+        assertTrue(controller.hasPreviousTrack());
+        assertTrue(controller.hasNextTrack());
+        
+        controller.goToNextTrack(); 
+        
+        
+        assertTrue(controller.hasPreviousTrack());
+        assertFalse(controller.hasNextTrack());
+    }
+    
+    @Test
+    void goToNextTrackWithoutActiveSequenceReturnsNullAndDoesNotCrash() {
+        // Nessuna playlist o coda è stata avviata nel setup per questo controller "vergine"
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToNextTrack();
+            assertNull(result);
+        });
+        assertNull(controller.getCurrentTrack());
+    }
+
+    @Test
+    void goToPreviousTrackWithoutActiveSequenceReturnsNullAndDoesNotCrash() {
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToPreviousTrack();
+            assertNull(result);
+        });
+        assertNull(controller.getCurrentTrack());
+    }
+
+    @Test
+    void goToNextTrackOnEmptyPlaylistReturnsNullAndMaintainsState() {
+        Playlist emptyPlaylist = new Playlist("Empty");
+        controller.startPlaylist(emptyPlaylist); 
+
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToNextTrack();
+            assertNull(result);
+        });
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    }
+
+    @Test
+    void goToPreviousTrackOnEmptyPlaylistReturnsNullAndMaintainsState() {
+        Playlist emptyPlaylist = new Playlist("Empty");
+        controller.startPlaylist(emptyPlaylist);
+
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToPreviousTrack();
+            assertNull(result);
+        });
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    }
+
+    @Test
+    void navigationOnFinishedSequenceMaintainsFinishedStateAndReturnsNull() {
+        controller.startPlaylist(playlist);
+        controller.onTrackFinished();
+        controller.onTrackFinished();
+        controller.onTrackFinished();
+        
+        assertTrue(controller.isSequenceFinished());
+        
+       
+        assertDoesNotThrow(() -> {
+            assertNull(controller.goToNextTrack());
+            assertNull(controller.goToPreviousTrack());
+        });
+        
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    }
 }

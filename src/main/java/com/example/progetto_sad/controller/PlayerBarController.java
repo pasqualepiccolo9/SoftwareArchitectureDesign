@@ -250,18 +250,26 @@ public class PlayerBarController implements Observer {
                 break;
         }
 
+        
         if (previousButton != null) {
-            previousButton.setDisable(seqController == null || !seqController.hasPreviousTrack());
+            previousButton.setDisable(seqController == null || !seqController.hasActiveSequence());
         }
+        
+        
         if (nextButton != null) {
-            nextButton.setDisable(seqController == null || !seqController.hasNextTrack());
+            boolean canGoNext = seqController != null && seqController.hasActiveSequence() 
+                    && (seqController.hasNextTrack() || seqController.isLoopMode());
+            nextButton.setDisable(!canGoNext);
         }
+        
         if (skipPlaylistButton != null) {
             skipPlaylistButton.setDisable(seqController == null || !seqController.canSkipPlaylist());
         }
+        
         updatePlayModeButton(sequentialModeButton, seqController != null && seqController.isSequentialMode());
         updatePlayModeButton(shuffleModeButton, seqController != null && seqController.isShuffleMode());
         updatePlayModeButton(loopModeButton, seqController != null && seqController.isLoopMode());
+    
     }
 
     private void updatePlayModeButton(Button button, boolean active) {
@@ -317,9 +325,13 @@ public class PlayerBarController implements Observer {
     @FXML
     private void onNextTrack() {
         if (seqController == null || player == null) return;
+        if (!seqController.hasActiveSequence()) return; 
+
         Track next = seqController.goToNextTrack();
         if (next != null) {
             player.play(next);
+        } else {
+            player.stop();
         }
         requestRefresh();
     }
@@ -327,9 +339,21 @@ public class PlayerBarController implements Observer {
     @FXML
     private void onPreviousTrack() {
         if (seqController == null || player == null) return;
+        if (!seqController.hasActiveSequence()) return; 
+
+        if (player.getCurrentTime() > 3) {
+            player.stop();
+            player.play(); // Riavvia la stessa traccia
+            requestRefresh();
+            return;
+        }
+
         Track previous = seqController.goToPreviousTrack();
         if (previous != null) {
             player.play(previous);
+        } else {
+            player.stop();
+            player.play();
         }
         requestRefresh();
     }

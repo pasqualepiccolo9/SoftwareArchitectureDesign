@@ -34,6 +34,24 @@
     -fx-text-fill: #f5f5f7;
 }
 
+.close-button {
+    -fx-background-color: transparent;
+    -fx-padding: 5;
+    -fx-cursor: hand;
+}
+
+.close-button:hover {
+    -fx-background-color: #34353b;
+    -fx-background-radius: 6;
+}
+
+.close-icon {
+    -fx-fill: transparent;
+    -fx-stroke: #b8b8bd;
+    -fx-stroke-width: 1.6;
+    -fx-stroke-line-cap: round;
+}
+
 /* FILTRO */
 .filter-bar {
     -fx-background-color: #1d1e22;
@@ -171,4 +189,32 @@
 
 .add-btn:disabled {
     -fx-opacity: 0.4;
+}
+
+/* US26 - dialog genera playlist */
+.form-label {
+    -fx-text-fill: #c2c2c7;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 0 2 0;
+}
+
+.year-field {
+    -fx-background-color: #1d1e22;
+    -fx-text-fill: #f5f5f7;
+    -fx-prompt-text-fill: #6c6c72;
+    -fx-border-color: #3a3b41;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 7 12 7 12;
+    -fx-font-size: 14px;
+}
+
+.active-pill-btn {
+    -fx-background-color: #4a9eff;
+    -fx-text-fill: #ffffff;
+    -fx-background-radius: 8;
+    -fx-padding: 6 16 6 16;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
 }

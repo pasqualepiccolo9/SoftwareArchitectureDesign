@@ -40,6 +40,8 @@
                 <VBox fx:id="playlistListVBox" styleClass="playlist-list" spacing="2"/>
             </ScrollPane>
 
+            <Button text="✦ Genera playlist" styleClass="new-playlist-btn"
+                    maxWidth="Infinity" onAction="#onGeneratePlaylist"/>
             <Button text="+ Nuova playlist" styleClass="new-playlist-btn"
                     maxWidth="Infinity" onAction="#onNewPlaylist"/>
         </VBox>

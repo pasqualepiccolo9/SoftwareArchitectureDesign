@@ -8,6 +8,7 @@ import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.view.GeneratePlaylistDialogView;
 import com.example.progetto_sad.view.PlaylistView;
 import com.example.progetto_sad.view.QueueView;
 import javafx.animation.PauseTransition;
@@ -260,6 +261,17 @@ public class LibraryController implements Observer {
         } catch (IOException e) {
             showError("Impossibile aprire il form: " + e.getMessage());
         }
+    }
+
+    @FXML
+    private void onGeneratePlaylist() {
+        PlaylistController playlistController = new PlaylistController(playlistManager, commandManager);
+        GeneratePlaylistDialogView dialog = new GeneratePlaylistDialogView();
+        dialog.init(library, playlistController, currentWindow(), () -> {
+            refreshPlaylists();
+            refreshUndoButton();
+        });
+        dialog.show();
     }
 
     @FXML

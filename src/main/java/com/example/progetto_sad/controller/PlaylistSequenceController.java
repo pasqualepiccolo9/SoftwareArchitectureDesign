@@ -523,6 +523,16 @@ public class PlaylistSequenceController implements Subject, Observer {
         playlistSegments.removeIf(segment -> segment.start >= segment.end);
     }
 
+    private void discardPlayedPrefix() {
+        if (sequence == null) {
+            return;
+        }
+        int removedCount = sequence.discardTracksBeforeCurrent();
+        for (int i = 0; i < removedCount; i++) {
+            registerRemovedIndex(0);
+        }
+    }
+
     /**
      * US13 - Indica se il comando "Skip Playlist" può essere abilitato.
      * Restituisce {@code true} solo quando:
@@ -715,10 +725,15 @@ public class PlaylistSequenceController implements Subject, Observer {
 
     /**
      * US19 - Imposta la modalità di riproduzione loop (rotazione infinita della coda),
-     * sostituendo la strategia attiva con una nuova {@link LoopModeStrategy}.
+     * sostituendo la strategia attiva con una nuova {@link LoopModeStrategy}. Quando
+     * si entra nel loop da un'altra modalità, la rotazione deve riguardare solo la
+     * coda ancora attiva: traccia corrente e brani successivi.
      * Notifica gli observer affinché la UI rifletta il cambio di modalità.
      */
     public void setLoopMode() {
+        if (!isLoopMode()) {
+            discardPlayedPrefix();
+        }
         playModeContext.setStrategy(new LoopModeStrategy());
         currentPlayMode = PlayMode.LOOP;
         notifyObservers();

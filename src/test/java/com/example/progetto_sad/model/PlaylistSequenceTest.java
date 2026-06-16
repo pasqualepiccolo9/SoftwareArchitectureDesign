@@ -219,6 +219,21 @@ class PlaylistSequenceTest {
     }
 
     @Test
+    void discardTracksBeforeCurrentKeepsCurrentAndFutureTracksOnly() {
+        PlaylistSequence sequence = PlaylistSequence.from(playlist);
+        sequence.advance();
+        sequence.advance();
+
+        int removedCount = sequence.discardTracksBeforeCurrent();
+
+        assertEquals(2, removedCount);
+        assertEquals(0, sequence.getCurrentIndex());
+        assertEquals(track3, sequence.getCurrentTrack());
+        assertEquals(List.of(track3), sequence.getTracks());
+        assertTrue(sequence.getNextTracks().isEmpty());
+    }
+
+    @Test
     void removeNextTrackAtRemovesFirstNextTrackWithoutChangingCurrent() {
         PlaylistSequence sequence = PlaylistSequence.from(playlist);
 

@@ -256,6 +256,30 @@ class PlaylistSequenceControllerTest {
     }
 
     @Test
+    void setLoopModeDoesNotRestoreAlreadyConsumedQueueTracks() {
+        Track track4 = new Track("Song D", "Artist D", "Soul", 2023, null, 210);
+        controller.addToQueue(track1);
+        controller.addToQueue(track2);
+        controller.addToQueue(track3);
+        controller.addToQueue(track4);
+
+        controller.goToTrack(track4);
+        controller.goToTrack(track3);
+        controller.goToTrack(track2);
+
+        assertEquals(track2, controller.getCurrentTrack());
+        assertTrue(controller.getNextTracks().isEmpty());
+
+        controller.setLoopMode();
+        Track next = controller.goToNextTrack();
+
+        assertEquals(track2, next);
+        assertEquals(track2, controller.getCurrentTrack());
+        assertEquals(List.of(track2), controller.getSequence().getTracks());
+        assertTrue(controller.getNextTracks().isEmpty());
+    }
+
+    @Test
     void addPlaylistToQueueNotifiesObserversOnceWhenPlaylistIsAdded() {
         int[] notifications = {0};
         controller.attach(() -> notifications[0]++);

@@ -174,6 +174,23 @@ public class PlaylistSequence {
     }
 
     /**
+     * Rimuove dalla sequenza lo storico dei brani gia' superati, mantenendo come
+     * primo elemento la traccia corrente e lasciando invariati i brani successivi.
+     *
+     * @return numero di brani rimossi prima della traccia corrente
+     */
+    public int discardTracksBeforeCurrent() {
+        if (isFinished() || currentIndex <= 0) {
+            return 0;
+        }
+
+        int removedCount = Math.min(currentIndex, tracks.size());
+        tracks.subList(0, removedCount).clear();
+        currentIndex = 0;
+        return removedCount;
+    }
+
+    /**
      * US12 - Indica se esiste un brano successivo a quello attualmente in riproduzione.
      * Restituisce {@code false} se la sequenza è terminata o se il brano corrente è l'ultimo.
      *

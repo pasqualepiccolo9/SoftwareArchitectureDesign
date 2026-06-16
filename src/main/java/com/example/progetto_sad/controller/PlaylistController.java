@@ -204,9 +204,9 @@ public class PlaylistController implements Observer {
         if (tracks.isEmpty()) {
             return null;
         }
-        Playlist playlist = manager.buildPlaylistFromTracks(name, tracks);
-        manager.registerPlaylist(playlist);
-        return playlist;
+        CreatePlaylistCommand command = new CreatePlaylistCommand(manager, name, tracks);
+        commandManager.executeCommand(command);
+        return command.getCreatedPlaylist();
     }
 
     /* ===== US8 - controller FXML della vista ===== */

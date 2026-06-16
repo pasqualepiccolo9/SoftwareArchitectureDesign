@@ -1,5 +1,6 @@
 package com.example.progetto_sad.controller;
 
+import com.example.progetto_sad.command.CommandManager;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
@@ -101,6 +102,43 @@ class PlaylistByYearGenerationTest {
         assertEquals("Brani 2022", generated.getName());
         assertEquals(1, manager.getPlaylists().size());
         assertEquals(generated, manager.getPlaylists().get(0));
+    }
+
+    @Test
+    void generatedPlaylistCanBeUndoneThroughCommandManager() {
+        CommandManager commandManager = new CommandManager();
+        controller = new PlaylistController(manager, commandManager);
+        Track first = track("First", 2024);
+        Track second = track("Second", 2024);
+        library.addTrack(first);
+        library.addTrack(second);
+
+        Playlist generated = controller.createPlaylistByYear(2024, "Anno 2024", library);
+
+        assertNotNull(generated);
+        assertTrue(commandManager.canUndo());
+        assertTrue(first.getPlaylists().contains(generated));
+        assertTrue(second.getPlaylists().contains(generated));
+
+        commandManager.undo();
+
+        assertTrue(manager.getPlaylists().isEmpty());
+        assertFalse(first.getPlaylists().contains(generated));
+        assertFalse(second.getPlaylists().contains(generated));
+        assertFalse(commandManager.canUndo());
+    }
+
+    @Test
+    void generationWithoutMatchingTracksDoesNotEnableUndo() {
+        CommandManager commandManager = new CommandManager();
+        controller = new PlaylistController(manager, commandManager);
+        library.addTrack(track("Other", 2023));
+
+        Playlist generated = controller.createPlaylistByYear(2024, "Anno 2024", library);
+
+        assertNull(generated);
+        assertTrue(manager.getPlaylists().isEmpty());
+        assertFalse(commandManager.canUndo());
     }
 
     private static Track track(String title, int year) {

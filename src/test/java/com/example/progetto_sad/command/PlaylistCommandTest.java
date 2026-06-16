@@ -49,6 +49,25 @@ class PlaylistCommandTest {
     }
 
     @Test
+    void createPlaylistWithInitialTracksCanBeUndone() {
+        CreatePlaylistCommand command = new CreatePlaylistCommand(manager, "Anno 2020", List.of(track1, track2));
+
+        command.execute();
+        Playlist created = command.getCreatedPlaylist();
+
+        assertEquals(1, manager.getPlaylists().size());
+        assertEquals(List.of(track1, track2), created.getTracks());
+        assertTrue(track1.getPlaylists().contains(created));
+        assertTrue(track2.getPlaylists().contains(created));
+
+        command.unexecute();
+
+        assertTrue(manager.getPlaylists().isEmpty());
+        assertFalse(track1.getPlaylists().contains(created));
+        assertFalse(track2.getPlaylists().contains(created));
+    }
+
+    @Test
     void createPlaylistUnexecuteIgnoresAlreadyRemovedPlaylist() {
         CreatePlaylistCommand command = new CreatePlaylistCommand(manager, "Preferiti");
         command.execute();
@@ -64,6 +83,9 @@ class PlaylistCommandTest {
     void createPlaylistRejectsNullArguments() {
         assertThrows(IllegalArgumentException.class, () -> new CreatePlaylistCommand(null, "Preferiti"));
         assertThrows(IllegalArgumentException.class, () -> new CreatePlaylistCommand(manager, null));
+        assertThrows(IllegalArgumentException.class, () -> new CreatePlaylistCommand(manager, "Preferiti", null));
+        assertThrows(IllegalArgumentException.class,
+                () -> new CreatePlaylistCommand(manager, "Preferiti", List.of(track1, track1)));
     }
 
     @Test

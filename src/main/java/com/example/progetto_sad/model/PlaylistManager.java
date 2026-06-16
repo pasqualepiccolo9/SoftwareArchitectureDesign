@@ -110,6 +110,25 @@ public class PlaylistManager implements Subject {
     }
 
     /**
+     * US26 - Registra nel sistema una playlist gia' costruita (es. generata automaticamente
+     * per anno), notificando gli observer. Il nome deve essere univoco, come per
+     * {@link #createPlaylist(String)}.
+     *
+     * @param playlist la playlist da registrare
+     * @throws IllegalArgumentException se la playlist e' null o il suo nome e' gia' presente
+     */
+    public void registerPlaylist(Playlist playlist) {
+        if (playlist == null) {
+            throw new IllegalArgumentException("La playlist non puo' essere null");
+        }
+        if (existsByName(playlist.getName())) {
+            throw new IllegalArgumentException("Esiste gia' una playlist con questo nome");
+        }
+        playlists.add(playlist);
+        notifyObservers();
+    }
+
+    /**
      * US26 - Costruisce una nuova Playlist con il nome e le tracce fornite,
      * senza registrarla nel manager. Restituisce null se la lista e' null o vuota.
      * L'aggiunta al manager e il collegamento con la libreria sono delegati al task INT.

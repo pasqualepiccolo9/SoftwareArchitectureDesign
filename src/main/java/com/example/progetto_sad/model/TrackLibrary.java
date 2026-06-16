@@ -65,6 +65,23 @@ public class TrackLibrary implements Subject {
         return tracks.contains(t);
     }
 
+    /**
+     * US26 - Restituisce tutte le tracce della libreria pubblicate nell'anno indicato,
+     * mantenendo l'ordine originale. La lista interna non viene modificata.
+     *
+     * @param year anno di pubblicazione da cercare
+     * @return nuova lista (possibilmente vuota) con le tracce dell'anno
+     */
+    public List<Track> getTracksByYear(int year) {
+        List<Track> result = new ArrayList<>();
+        for (Track t : tracks) {
+            if (t.getYear() == year) {
+                result.add(t);
+            }
+        }
+        return result;
+    }
+
     // US2/US4 - notifica gli observer dopo modifica metadati di una traccia gia' in libreria
     public void trackUpdated() {
         notifyObservers();

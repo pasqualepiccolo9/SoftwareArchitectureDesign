@@ -8,6 +8,7 @@ import com.example.progetto_sad.command.RemoveTrackFromPlaylistCommand;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
+import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
 import com.example.progetto_sad.view.AddTrackDialogView;
 import javafx.application.Platform;
@@ -175,6 +176,37 @@ public class PlaylistController implements Observer {
      */
     public boolean isPlaylistEmpty(Playlist playlist) {
         return playlist == null || playlist.getTracks().isEmpty();
+    }
+
+    /* ===== US26 - generazione automatica playlist per anno ===== */
+
+    /**
+     * US26 - Genera una playlist con nome default "Brani <anno>".
+     * Delega all'overload con nome personalizzato.
+     */
+    public Playlist createPlaylistByYear(int year, TrackLibrary library) {
+        return createPlaylistByYear(year, "Brani " + year, library);
+    }
+
+    /**
+     * US26 - Genera una playlist con il nome indicato contenente tutte le tracce
+     * della libreria pubblicate nell'anno indicato e la registra nel sistema.
+     * Restituisce null se non esistono tracce per quell'anno; lancia
+     * IllegalArgumentException se esiste gia' una playlist con lo stesso nome.
+     *
+     * @param year    anno di pubblicazione da usare come filtro
+     * @param name    nome da assegnare alla playlist
+     * @param library la libreria da cui recuperare le tracce
+     * @return la playlist generata e registrata, oppure null se nessuna traccia corrisponde
+     */
+    public Playlist createPlaylistByYear(int year, String name, TrackLibrary library) {
+        List<Track> tracks = library.getTracksByYear(year);
+        if (tracks.isEmpty()) {
+            return null;
+        }
+        Playlist playlist = manager.buildPlaylistFromTracks(name, tracks);
+        manager.registerPlaylist(playlist);
+        return playlist;
     }
 
     /* ===== US8 - controller FXML della vista ===== */

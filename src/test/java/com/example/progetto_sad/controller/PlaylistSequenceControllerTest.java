@@ -508,4 +508,267 @@ class PlaylistSequenceControllerTest {
         
         assertEquals(List.of(track2, track3, track1, track1), controller.getNextTracks());
     }
+    
+    // US20-INT - Verifica coerenza: la modifica della playlist sorgente durante
+    // la riproduzione non deve interrompere la traccia corrente ma solo aggiornare la coda.
+    @Test
+    void playlistUpdatePreservesCurrentTrackAndSyncsSequence() {
+        controller.startPlaylist(playlist);
+        
+        controller.onTrackFinished(); 
+        assertEquals(track2, controller.getCurrentTrack());
+        
+        playlist.removeTrack(track3);
+        
+
+        controller.update(); 
+
+        assertEquals(track2, controller.getCurrentTrack());
+                
+        assertTrue(controller.getNextTracks().isEmpty());
+        
+        assertEquals(List.of(track1, track2), controller.getSequence().getTracks());
+    }
+    
+    // US12-T - Test JUnit su navigazione Next/Previous
+    @Test
+    void goToNextTrackAdvancesToNextTrackInSequence() {
+        controller.startPlaylist(playlist);
+        
+        Track next = controller.goToNextTrack();
+        
+        assertEquals(track2, next);
+        assertEquals(track2, controller.getCurrentTrack());
+    }
+
+    // US12-T - Test JUnit su navigazione Next/Previous
+    @Test
+    void goToPreviousTrackReturnsToPreviousTrackInSequence() {
+        controller.startPlaylist(playlist);
+        controller.goToNextTrack(); 
+        
+        Track prev = controller.goToPreviousTrack();
+        
+        assertEquals(track1, prev);
+        assertEquals(track1, controller.getCurrentTrack());
+    }
+
+    // US12-T - Test JUnit su navigazione (Primo brano)
+    @Test
+    void goToPreviousTrackOnFirstTrackReturnsNullAndDoesNotChangeState() {
+        controller.startPlaylist(playlist); 
+        
+        Track prev = controller.goToPreviousTrack();
+        
+
+        assertNull(prev);
+        assertEquals(track1, controller.getCurrentTrack());
+    }
+    
+    // US12-T - Test JUnit su navigazione (Ultimo brano)
+    @Test
+    void goToNextTrackOnLastTrackReturnsNullInSequentialMode() {
+        controller.startPlaylist(playlist);
+        controller.goToNextTrack(); 
+        controller.goToNextTrack(); 
+        
+        Track next = controller.goToNextTrack();
+        
+        assertNull(next);
+        assertEquals(track3, controller.getCurrentTrack());
+    }
+
+    // US12-T - Verifica disponibilità Next/Previous
+    @Test
+    void hasNextAndPreviousTrackReturnCorrectAvailability() {
+        controller.startPlaylist(playlist); 
+        
+        assertFalse(controller.hasPreviousTrack());
+        assertTrue(controller.hasNextTrack());
+        
+        controller.goToNextTrack();
+        
+        assertTrue(controller.hasPreviousTrack());
+        assertTrue(controller.hasNextTrack());
+        
+        controller.goToNextTrack(); 
+        
+        
+        assertTrue(controller.hasPreviousTrack());
+        assertFalse(controller.hasNextTrack());
+    }
+    
+    // US12-T - Casi limite skip brano (Coda non inizializzata)
+    @Test
+    void goToNextTrackWithoutActiveSequenceReturnsNullAndDoesNotCrash() {
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToNextTrack();
+            assertNull(result);
+        });
+        assertNull(controller.getCurrentTrack());
+    }
+    
+    // US12-T - Casi limite skip brano (Coda non inizializzata)
+    @Test
+    void goToPreviousTrackWithoutActiveSequenceReturnsNullAndDoesNotCrash() {
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToPreviousTrack();
+            assertNull(result);
+        });
+        assertNull(controller.getCurrentTrack());
+    }
+    
+    // US12-T - Casi limite skip brano (Playlist vuota)
+    @Test
+    void goToNextTrackOnEmptyPlaylistReturnsNullAndMaintainsState() {
+        Playlist emptyPlaylist = new Playlist("Empty");
+        controller.startPlaylist(emptyPlaylist); 
+
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToNextTrack();
+            assertNull(result);
+        });
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    }
+    
+    
+    // US12-T - Casi limite skip brano (Playlist vuota)
+    @Test
+    void goToPreviousTrackOnEmptyPlaylistReturnsNullAndMaintainsState() {
+        Playlist emptyPlaylist = new Playlist("Empty");
+        controller.startPlaylist(emptyPlaylist);
+
+        assertDoesNotThrow(() -> {
+            Track result = controller.goToPreviousTrack();
+            assertNull(result);
+        });
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    }
+    
+    // US12-T - Casi limite skip brano (Termine riproduzione)
+    @Test
+    void navigationOnFinishedSequenceMaintainsFinishedStateAndReturnsNull() {
+        controller.startPlaylist(playlist);
+        controller.onTrackFinished();
+        controller.onTrackFinished();
+        controller.onTrackFinished();
+        
+        assertTrue(controller.isSequenceFinished());
+        
+       
+        assertDoesNotThrow(() -> {
+            assertNull(controller.goToNextTrack());
+            assertNull(controller.goToPreviousTrack());
+        });
+        
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    }
+    
+    // US17-T - Test JUnit su termine modalità sequenziale
+    @Test
+    void sequentialModeTerminationKeepsSystemStable() {
+
+        controller.startPlaylist(playlist);
+        controller.setSequentialMode();
+        
+
+        controller.onTrackFinished(); 
+        controller.onTrackFinished(); 
+        
+        assertEquals(track3, controller.getCurrentTrack());
+        assertFalse(controller.isSequenceFinished());
+
+        controller.onTrackFinished(); 
+        
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+        
+        assertDoesNotThrow(() -> {
+            controller.onTrackFinished();
+            controller.goToNextTrack();
+            controller.goToNextTrack();
+        });
+        
+        assertTrue(controller.isSequenceFinished());
+        assertNull(controller.getCurrentTrack());
+    
+    }
+    
+    // US19-T - Test JUnit su cambio loop durante riproduzione
+    @Test
+    void togglingLoopModeDuringPlaybackDoesNotInterruptCurrentTrack() {
+        controller.startPlaylist(playlist);
+        controller.onTrackFinished(); 
+        
+        assertEquals(track2, controller.getCurrentTrack());
+
+        controller.setLoopMode();
+        
+        assertEquals(track2, controller.getCurrentTrack());
+        assertTrue(controller.isLoopMode());
+
+        controller.setSequentialMode();
+        
+        assertEquals(track2, controller.getCurrentTrack());
+        assertFalse(controller.isLoopMode());
+    }
+    
+   // US19-T - Test JUnit su cambio loop durante riproduzione (Al limite coda)
+   @Test
+    void disablingLoopModeRestoresSequentialBehaviorAtBoundary() {
+        controller.startPlaylist(playlist);
+        
+     
+        controller.goToNextTrack(); 
+        controller.goToNextTrack(); 
+        assertEquals(track3, controller.getCurrentTrack());
+
+        controller.setLoopMode();
+        controller.setSequentialMode();
+
+        Track next = controller.goToNextTrack();
+        
+        assertNull(next);
+        assertEquals(track3, controller.getCurrentTrack());
+        assertFalse(controller.isLoopMode());
+    }
+    
+    //US20-T - Test modifica playlist durante riproduzione (Aggiunta)
+    @Test
+    void addingTrackToSourcePlaylistUpdatesSequenceWithoutInterruptingCurrent() {
+        controller.startPlaylist(playlist);
+        controller.goToNextTrack(); 
+        
+        assertEquals(track2, controller.getCurrentTrack());
+
+        Track newTrack = new Track("Song D", "Artist D", "Pop", 2023, null, 210);
+        playlist.addTrack(newTrack);
+        
+        controller.update(); 
+
+        assertEquals(track2, controller.getCurrentTrack());
+        assertEquals(List.of(track3, newTrack), controller.getNextTracks());
+        assertEquals(List.of(track1, track2, track3, newTrack), controller.getSequence().getTracks());
+    }
+
+    //US20-T - Test modifica playlist durante riproduzione (Rimozione)
+    @Test
+    void removingPreviousTrackFromSourcePlaylistPreservesCurrentTrack() {
+        controller.startPlaylist(playlist);
+        controller.goToNextTrack(); 
+        
+        assertEquals(track2, controller.getCurrentTrack());
+
+        playlist.removeTrack(track1);
+        
+        controller.update(); 
+
+        assertEquals(track2, controller.getCurrentTrack());
+        assertEquals(List.of(track3), controller.getNextTracks());
+        assertEquals(List.of(track2, track3), controller.getSequence().getTracks());
+    }
+    
 }

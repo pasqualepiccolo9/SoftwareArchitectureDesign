@@ -3,10 +3,12 @@ package com.example.progetto_sad.controller;
 import com.example.progetto_sad.util.AudioDurationExtractor;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TextFormatter;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.Window;
@@ -25,6 +27,12 @@ import java.io.File;
 public class AddTrackController {
 
     private final TrackController trackController;
+
+    private Runnable onBack;
+    private Runnable onSuccess;
+
+    @FXML private Button closeButton;
+    @FXML private VBox dialogCard;
 
     @FXML
     private TextField audioFileField;
@@ -48,6 +56,20 @@ public class AddTrackController {
      */
     public AddTrackController(TrackController trackController) {
         this.trackController = trackController;
+    }
+
+    public void setInlineMode(Runnable onBack, Runnable onSuccess) {
+        this.onBack = onBack;
+        this.onSuccess = onSuccess;
+        if (closeButton != null) {
+            closeButton.setVisible(false);
+            closeButton.setManaged(false);
+        }
+        if (dialogCard != null) {
+            dialogCard.setMaxWidth(Double.MAX_VALUE);
+            dialogCard.setMaxHeight(Double.MAX_VALUE);
+            dialogCard.setStyle("-fx-effect: null; -fx-background-radius: 12;");
+        }
     }
 
     // US1 - limiti di input: Titolo/Autore max 20 caratteri, Anno solo 4 cifre.
@@ -117,8 +139,11 @@ public class AddTrackController {
             showInfo("Traccia aggiunta",
                     safeTitle(title) + " e' stata aggiunta alla libreria. Tracce totali: "
                             + trackController.getTracks().size());
-            // US1 - dopo la conferma si torna alla schermata precedente chiudendo il form.
-            closeWindow();
+            if (onSuccess != null) {
+                onSuccess.run();
+            } else {
+                closeWindow();
+            }
         } catch (IllegalArgumentException ex) {
             showError(ex.getMessage());
         }
@@ -179,7 +204,9 @@ public class AddTrackController {
     }
 
     private void closeWindow() {
-        if (currentWindow() instanceof Stage stage) {
+        if (onBack != null) {
+            onBack.run();
+        } else if (currentWindow() instanceof Stage stage) {
             stage.close();
         }
     }

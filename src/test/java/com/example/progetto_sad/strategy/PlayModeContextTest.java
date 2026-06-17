@@ -42,20 +42,16 @@ public class PlayModeContextTest {
         assertTrue(context.getStrategy() instanceof SequentialModeStrategy);
     }
 
-    // US17-T: Verifica il cambio tra tutte le strategie disponibili
     @Test
     void contextAllowsSwitchingBetweenAllStrategies() {
         PlayModeContext context = new PlayModeContext(new SequentialModeStrategy());
 
-        // 1. Passaggio a Shuffle
         context.setStrategy(new ShuffleModeStrategy());
         assertTrue(context.getStrategy() instanceof ShuffleModeStrategy);
 
-        // 2. Passaggio a Loop
         context.setStrategy(new LoopModeStrategy());
         assertTrue(context.getStrategy() instanceof LoopModeStrategy);
 
-        // 3. Ritorno a Sequenziale
         context.setStrategy(new SequentialModeStrategy());
         assertTrue(context.getStrategy() instanceof SequentialModeStrategy);
     }
@@ -74,7 +70,6 @@ public class PlayModeContextTest {
         assertEquals(track1, context.getNextTrack(tracks, 2));
     }
 
-    // Sicurezza architetturale: proteggere il context da stati nulli
     @Test
     void settingNullStrategyThrowsException() {
         PlayModeContext context = new PlayModeContext(new SequentialModeStrategy());

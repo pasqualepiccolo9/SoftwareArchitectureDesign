@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.SVGPath?>
+
+<!-- US26 - VIEW PER GENERAZIONE AUTOMATICA PLAYLIST PER ANNO -->
+<VBox styleClass="dialog-root"
+      stylesheets="@generate-playlist-view.css"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.example.progetto_sad.controller.GeneratePlaylistController">
+
+    <VBox fx:id="card" styleClass="dialog-card" spacing="14" VBox.vgrow="ALWAYS">
+
+        <!-- HEADER: backBtn visibile in modalità inline, closeBtn in modalità standalone -->
+        <HBox alignment="CENTER_LEFT" spacing="12">
+            <Button fx:id="backBtn" text="← Indietro" styleClass="cancel-btn"
+                    onAction="#onBack" visible="false" managed="false"/>
+            <Label text="Generazione playlist automatica" styleClass="dialog-title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button fx:id="closeBtn" styleClass="close-button" onAction="#onClose">
+                <graphic>
+                    <SVGPath styleClass="close-icon" content="M1 1 L13 13 M13 1 L1 13"/>
+                </graphic>
+            </Button>
+        </HBox>
+
+        <!-- GENERA PER -->
+        <VBox spacing="6">
+            <Label text="Genera per" styleClass="form-label"/>
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Anno" styleClass="active-pill-btn"/>
+            </HBox>
+        </VBox>
+
+        <!-- FILTRO ANNO -->
+        <VBox spacing="6">
+            <Label text="Filtro" styleClass="form-label"/>
+            <TextField fx:id="yearField" promptText="es. 2024"
+                       styleClass="year-field" prefWidth="120" maxWidth="120"/>
+        </VBox>
+
+        <!-- ANTEPRIMA TRACCE -->
+        <VBox spacing="6" VBox.vgrow="ALWAYS">
+            <Label fx:id="previewHeader" text="Anteprima tracce trovate (0)"
+                   styleClass="form-label"/>
+            <ScrollPane styleClass="dialog-scroll" fitToWidth="true"
+                        prefHeight="150" VBox.vgrow="ALWAYS">
+                <VBox fx:id="previewListBox" spacing="0"/>
+            </ScrollPane>
+        </VBox>
+
+        <!-- NOME PLAYLIST -->
+        <VBox spacing="6">
+            <Label text="Nome playlist" styleClass="form-label"/>
+            <TextField fx:id="nameField" promptText="Nome della playlist"
+                       styleClass="year-field" maxWidth="Infinity"/>
+        </VBox>
+
+        <!-- STATO/ERRORE -->
+        <Label fx:id="statusLabel" text="" visible="false" managed="false"/>
+
+        <!-- FOOTER -->
+        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="dialog-footer">
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Annulla" styleClass="cancel-btn" onAction="#onCancel"/>
+            <Button fx:id="generateBtn" text="Genera" styleClass="add-btn"
+                    disable="true" onAction="#onGenerate"/>
+        </HBox>
+
+    </VBox>
+</VBox>

@@ -1,10 +1,15 @@
 package com.example.progetto_sad.view;
 
+import com.example.progetto_sad.controller.PlayerBarController;
 import com.example.progetto_sad.controller.PlaylistController;
+import com.example.progetto_sad.controller.PlaylistSequenceController;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.Track;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -12,6 +17,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -40,6 +46,10 @@ public class AddTrackDialogView {
     private List<Track> allTracks;
     private Consumer<Track> addAction;
     private String customTitle;
+
+    private Runnable onBack;
+    private Runnable onSuccess;
+    private PlayerBarController inlinePlayerBarController;
 
     private final List<Track> selected = new ArrayList<>();
     private final List<RowEntry> rowEntries = new ArrayList<>();
@@ -111,6 +121,97 @@ public class AddTrackDialogView {
     public void show() {
         if (stage != null) {
             stage.showAndWait();
+        }
+    }
+
+    /**
+     * Costruisce la schermata inline "Aggiungi traccia" da usare come root della scena
+     * principale (stessa tecnica di QueueView), senza aprire un nuovo Stage.
+     *
+     * @param availableTracks tracce selezionabili dalla libreria
+     * @param title           titolo mostrato nell'header inline
+     * @param addAction       azione eseguita per ogni traccia selezionata (es. seqController::addToQueue)
+     * @param player          player condiviso, per bindare la PlayerBar
+     * @param seqController   sequenza condivisa, per bindare la PlayerBar
+     * @param onBack          callback: ← Indietro e Annulla tornano alla schermata precedente
+     * @param onSuccess       callback: dopo conferma torna alla schermata precedente
+     * @return il nodo radice da passare a {@code scene.setRoot()}
+     */
+    public Parent buildInlineView(List<Track> availableTracks, String title,
+                                   Consumer<Track> addAction,
+                                   Player player,
+                                   PlaylistSequenceController seqController,
+                                   Runnable onBack, Runnable onSuccess) {
+        this.playlist   = null;
+        this.controller = null;
+        this.addAction  = addAction;
+        this.allTracks  = availableTracks != null ? new ArrayList<>(availableTracks) : new ArrayList<>();
+        selected.clear();
+        rowEntries.clear();
+        buildRowEntries();
+
+        Runnable cleanup = () -> {
+            if (inlinePlayerBarController != null) {
+                inlinePlayerBarController.dispose();
+                inlinePlayerBarController = null;
+            }
+        };
+        this.onBack    = () -> { cleanup.run(); onBack.run(); };
+        this.onSuccess = () -> { cleanup.run(); onSuccess.run(); };
+
+        VBox card = new VBox(16);
+        card.getStyleClass().add("dialog-card");
+        VBox.setVgrow(card, Priority.ALWAYS);
+        card.getChildren().addAll(
+                buildInlineHeader(title),
+                buildFilterBar(),
+                buildTrackScroll(),
+                buildFooter()
+        );
+
+        VBox formArea = new VBox(card);
+        formArea.getStyleClass().add("dialog-root");
+        VBox.setVgrow(formArea, Priority.ALWAYS);
+
+        VBox root = new VBox();
+        root.setStyle("-fx-background-color: #141417;");
+
+        HBox playerBarNode = loadPlayerBar(player, seqController);
+        root.getChildren().add(formArea);
+        if (playerBarNode != null) {
+            root.getChildren().add(playerBarNode);
+        }
+
+        var cssUrl = getClass().getResource("/com/example/progetto_sad/view/add-track-dialog.css");
+        if (cssUrl != null) {
+            root.getStylesheets().add(cssUrl.toExternalForm());
+        }
+        return root;
+    }
+
+    private HBox buildInlineHeader(String title) {
+        Button backBtn = new Button("← Indietro");
+        backBtn.getStyleClass().add("cancel-btn");
+        backBtn.setOnAction(e -> { if (onBack != null) onBack.run(); });
+
+        Label titleLabel = new Label(title);
+        titleLabel.getStyleClass().add("dialog-title");
+
+        HBox header = new HBox(12, backBtn, titleLabel);
+        header.setAlignment(Pos.CENTER_LEFT);
+        return header;
+    }
+
+    private HBox loadPlayerBar(Player player, PlaylistSequenceController seqController) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/example/progetto_sad/view/PlayerBar.fxml"));
+            HBox node = loader.load();
+            inlinePlayerBarController = loader.getController();
+            inlinePlayerBarController.bind(player, seqController, () -> null);
+            return node;
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -250,7 +351,10 @@ public class AddTrackDialogView {
 
         Button cancelBtn = new Button("Annulla");
         cancelBtn.getStyleClass().add("cancel-btn");
-        cancelBtn.setOnAction(e -> stage.close());    // Annulla → chiude senza modifiche
+        cancelBtn.setOnAction(e -> {
+            if (onBack != null) onBack.run();
+            else stage.close();
+        });
 
         addButton = new Button("Aggiungi");
         addButton.getStyleClass().add("add-btn");
@@ -289,7 +393,11 @@ public class AddTrackDialogView {
                 addAction.accept(track);
             }
         }
-        stage.close();
+        if (onSuccess != null) {
+            onSuccess.run();
+        } else if (stage != null) {
+            stage.close();
+        }
     }
 
     private String formatDuration(int totalSeconds) {

@@ -8,6 +8,7 @@ import com.example.progetto_sad.model.PlaylistManager;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
 import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.view.AddTrackPreview;
 import com.example.progetto_sad.view.GeneratePlaylistDialogView;
 import com.example.progetto_sad.view.PlaylistView;
 import com.example.progetto_sad.view.QueueView;
@@ -42,7 +43,6 @@ import java.io.IOException;
  */
 public class LibraryController implements Observer {
 
-    private static final String ADD_TRACK_FXML = "/com/example/progetto_sad/view/add-track-view.fxml";
     private static final String MODIFICA_TRACK_FXML = "/com/example/progetto_sad/view/modifica-track-view.fxml";
 
     private final TrackLibrary library;
@@ -247,31 +247,36 @@ public class LibraryController implements Observer {
 
     @FXML
     private void onAddTrack() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource(ADD_TRACK_FXML));
-            loader.setControllerFactory(type -> new AddTrackController(trackController));
-            Parent form = loader.load();
+        Scene scene = (trackListVBox != null) ? trackListVBox.getScene() : null;
+        if (scene == null) return;
 
-            Stage dialog = new Stage();
-            dialog.initModality(Modality.APPLICATION_MODAL);
-            dialog.initOwner(currentWindow());
-            dialog.setTitle("Aggiungi traccia");
-            dialog.setScene(new Scene(form, 900, 640));
-            dialog.showAndWait();
-        } catch (IOException e) {
-            showError("Impossibile aprire il form: " + e.getMessage());
-        }
+        Parent libraryRoot = scene.getRoot();
+        Parent addTrackRoot = AddTrackPreview.buildInlineView(
+                trackController, player, seqController,
+                () -> scene.setRoot(libraryRoot),
+                () -> scene.setRoot(libraryRoot)
+        );
+        scene.setRoot(addTrackRoot);
     }
 
     @FXML
     private void onGeneratePlaylist() {
+        Scene scene = (trackListVBox != null) ? trackListVBox.getScene() : null;
+        if (scene == null) return;
+
+        Parent libraryRoot = scene.getRoot();
         PlaylistController playlistController = new PlaylistController(playlistManager, commandManager);
-        GeneratePlaylistDialogView dialog = new GeneratePlaylistDialogView();
-        dialog.init(library, playlistController, currentWindow(), () -> {
-            refreshPlaylists();
-            refreshUndoButton();
-        });
-        dialog.show();
+        GeneratePlaylistDialogView generateView = new GeneratePlaylistDialogView();
+        Parent generateRoot = generateView.buildInlineView(
+                library, playlistController, player, seqController,
+                () -> scene.setRoot(libraryRoot),
+                () -> {
+                    refreshPlaylists();
+                    refreshUndoButton();
+                    scene.setRoot(libraryRoot);
+                }
+        );
+        scene.setRoot(generateRoot);
     }
 
     @FXML

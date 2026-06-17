@@ -1,10 +1,15 @@
 package com.example.progetto_sad.view;
 
+import com.example.progetto_sad.controller.PlayerBarController;
 import com.example.progetto_sad.controller.PlaylistController;
+import com.example.progetto_sad.controller.PlaylistSequenceController;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.model.TrackLibrary;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -20,6 +25,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import java.io.IOException;
 import java.time.Year;
 import java.util.List;
 
@@ -35,6 +41,8 @@ public class GeneratePlaylistDialogView {
     private TrackLibrary library;
     private PlaylistController playlistController;
     private Runnable onSuccess;
+    private Runnable onBack;
+    private PlayerBarController inlinePlayerBarController;
 
     private TextField yearField;
     private TextField nameField;
@@ -75,9 +83,7 @@ public class GeneratePlaylistDialogView {
 
     // ── layout ───────────────────────────────────────────────────────────────
 
-    private VBox buildRoot() {
-        // Inizializza i campi prima di costruire il layout, così i listener
-        // possono riferirsi a nameField e generateBtn già inizializzati.
+    private void initFields() {
         previewListBox = new VBox(0);
 
         previewHeader = new Label("Anteprima tracce trovate (0)");
@@ -116,6 +122,10 @@ public class GeneratePlaylistDialogView {
         yearField.setTextFormatter(new TextFormatter<>(change ->
                 change.getControlNewText().matches("\\d{0,4}") ? change : null));
         yearField.textProperty().addListener((obs, old, val) -> onYearChanged(val));
+    }
+
+    private VBox buildRoot() {
+        initFields();
 
         VBox card = new VBox(14);
         card.getStyleClass().add("dialog-card");
@@ -135,6 +145,82 @@ public class GeneratePlaylistDialogView {
         return root;
     }
 
+    /**
+     * Costruisce la schermata inline "Genera playlist automatica" da usare come root
+     * della scena principale (stessa tecnica di QueueView), senza aprire un nuovo Stage.
+     *
+     * @param library            libreria delle tracce
+     * @param playlistController controller per la creazione della playlist
+     * @param player             player condiviso, per bindare la PlayerBar
+     * @param seqController      sequenza condivisa, per bindare la PlayerBar
+     * @param onBack             callback: "← Indietro" e "Annulla" tornano alla Library
+     * @param onSuccess          callback: dopo "Genera" aggiorna sidebar e torna alla Library
+     * @return il nodo radice da passare a {@code scene.setRoot()}
+     */
+    public Parent buildInlineView(TrackLibrary library, PlaylistController playlistController,
+                                   Player player, PlaylistSequenceController seqController,
+                                   Runnable onBack, Runnable onSuccess) {
+        this.library = library;
+        this.playlistController = playlistController;
+        currentTracks = List.of();
+
+        Runnable cleanup = () -> {
+            if (inlinePlayerBarController != null) {
+                inlinePlayerBarController.dispose();
+                inlinePlayerBarController = null;
+            }
+        };
+        this.onBack    = () -> { cleanup.run(); onBack.run(); };
+        this.onSuccess = () -> { cleanup.run(); onSuccess.run(); };
+
+        initFields();
+
+        VBox card = new VBox(14);
+        card.getStyleClass().add("dialog-card");
+        VBox.setVgrow(card, Priority.ALWAYS);
+        card.getChildren().addAll(
+                buildInlineHeader(),
+                buildGeneraPer(),
+                buildYearFilterSection(),
+                buildPreviewSection(),
+                buildNameRow(),
+                statusLabel,
+                buildInlineFooter()
+        );
+
+        VBox formArea = new VBox(card);
+        formArea.getStyleClass().add("dialog-root");
+        VBox.setVgrow(formArea, Priority.ALWAYS);
+
+        VBox root = new VBox();
+        root.setStyle("-fx-background-color: #141417;");
+        root.getChildren().add(formArea);
+
+        HBox playerBarNode = loadPlayerBar(player, seqController);
+        if (playerBarNode != null) {
+            root.getChildren().add(playerBarNode);
+        }
+
+        var cssUrl = getClass().getResource("/com/example/progetto_sad/view/add-track-dialog.css");
+        if (cssUrl != null) {
+            root.getStylesheets().add(cssUrl.toExternalForm());
+        }
+        return root;
+    }
+
+    private HBox loadPlayerBar(Player player, PlaylistSequenceController seqController) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/example/progetto_sad/view/PlayerBar.fxml"));
+            HBox node = loader.load();
+            inlinePlayerBarController = loader.getController();
+            inlinePlayerBarController.bind(player, seqController, () -> null);
+            return node;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
     private HBox buildHeader() {
         Label titleLabel = new Label("Genera playlist automatica");
         titleLabel.getStyleClass().add("dialog-title");
@@ -151,6 +237,19 @@ public class GeneratePlaylistDialogView {
         closeBtn.setOnAction(e -> stage.close());
 
         HBox header = new HBox(titleBox, closeBtn);
+        header.setAlignment(Pos.CENTER_LEFT);
+        return header;
+    }
+
+    private HBox buildInlineHeader() {
+        Button backBtn = new Button("← Indietro");
+        backBtn.getStyleClass().add("cancel-btn");
+        backBtn.setOnAction(e -> { if (onBack != null) onBack.run(); });
+
+        Label titleLabel = new Label("Genera playlist automatica");
+        titleLabel.getStyleClass().add("dialog-title");
+
+        HBox header = new HBox(12, backBtn, titleLabel);
         header.setAlignment(Pos.CENTER_LEFT);
         return header;
     }
@@ -200,6 +299,20 @@ public class GeneratePlaylistDialogView {
         Button cancelBtn = new Button("Annulla");
         cancelBtn.getStyleClass().add("cancel-btn");
         cancelBtn.setOnAction(e -> stage.close());
+
+        HBox footer = new HBox(12, spacer, cancelBtn, generateBtn);
+        footer.setAlignment(Pos.CENTER_LEFT);
+        footer.getStyleClass().add("dialog-footer");
+        return footer;
+    }
+
+    private HBox buildInlineFooter() {
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        Button cancelBtn = new Button("Annulla");
+        cancelBtn.getStyleClass().add("cancel-btn");
+        cancelBtn.setOnAction(e -> { if (onBack != null) onBack.run(); });
 
         HBox footer = new HBox(12, spacer, cancelBtn, generateBtn);
         footer.setAlignment(Pos.CENTER_LEFT);
@@ -307,7 +420,9 @@ public class GeneratePlaylistDialogView {
             if (onSuccess != null) {
                 onSuccess.run();
             }
-            stage.close();
+            if (stage != null) {
+                stage.close();
+            }
         } catch (IllegalArgumentException e) {
             showError("Nome playlist già in uso.");
         }

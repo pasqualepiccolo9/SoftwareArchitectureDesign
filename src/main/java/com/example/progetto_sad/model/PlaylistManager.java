@@ -129,6 +129,34 @@ public class PlaylistManager implements Subject {
     }
 
     /**
+     * US26-T - Filtra le tracce fornite per anno, costruisce una playlist denominata
+     * "Anno &lt;year&gt;" e la registra nel manager. Restituisce null se la lista e' null,
+     * vuota o non contiene tracce per l'anno richiesto; in quel caso nessuna playlist
+     * viene creata.
+     *
+     * @param year   anno di pubblicazione da usare come filtro
+     * @param tracks tracce candidate (tipicamente l'intera libreria)
+     * @return la playlist generata e registrata, oppure null se nessuna traccia corrisponde
+     */
+    public Playlist createPlaylistForYear(int year, List<Track> tracks) {
+        if (tracks == null || tracks.isEmpty()) {
+            return null;
+        }
+        List<Track> matching = new ArrayList<>();
+        for (Track t : tracks) {
+            if (t.getYear() == year) {
+                matching.add(t);
+            }
+        }
+        if (matching.isEmpty()) {
+            return null;
+        }
+        Playlist playlist = buildPlaylistFromTracks("Anno " + year, matching);
+        registerPlaylist(playlist);
+        return playlist;
+    }
+
+    /**
      * US26 - Costruisce una nuova Playlist con il nome e le tracce fornite,
      * senza registrarla nel manager. Restituisce null se la lista e' null o vuota.
      * L'aggiunta al manager e il collegamento con la libreria sono delegati al task INT.

@@ -265,13 +265,22 @@ public class LibraryController implements Observer {
 
     @FXML
     private void onGeneratePlaylist() {
+        Scene scene = (trackListVBox != null) ? trackListVBox.getScene() : null;
+        if (scene == null) return;
+
+        Parent libraryRoot = scene.getRoot();
         PlaylistController playlistController = new PlaylistController(playlistManager, commandManager);
-        GeneratePlaylistDialogView dialog = new GeneratePlaylistDialogView();
-        dialog.init(library, playlistController, currentWindow(), () -> {
-            refreshPlaylists();
-            refreshUndoButton();
-        });
-        dialog.show();
+        GeneratePlaylistDialogView generateView = new GeneratePlaylistDialogView();
+        Parent generateRoot = generateView.buildInlineView(
+                library, playlistController, player, seqController,
+                () -> scene.setRoot(libraryRoot),
+                () -> {
+                    refreshPlaylists();
+                    refreshUndoButton();
+                    scene.setRoot(libraryRoot);
+                }
+        );
+        scene.setRoot(generateRoot);
     }
 
     @FXML

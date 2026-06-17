@@ -13,6 +13,8 @@ import javafx.event.Event;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBase;
 import javafx.scene.control.Label;
@@ -109,14 +111,18 @@ public class QueueController implements Observer {
             return;
         }
 
-        AddTrackDialogView dialog = new AddTrackDialogView();
-        dialog.initForQueue(
+        Scene scene = trackCountLabel.getScene();
+        Parent queueRoot = scene.getRoot();
+        AddTrackDialogView dialogView = new AddTrackDialogView();
+        Parent addTrackRoot = dialogView.buildInlineView(
                 trackLibrary.getTracks(),
-                "Aggiungi traccia alla coda di riproduzione",
+                "Aggiungi traccia alla coda",
                 seqController::addToQueue,
-                trackCountLabel.getScene().getWindow()
+                player, seqController,
+                () -> scene.setRoot(queueRoot),
+                () -> scene.setRoot(queueRoot)
         );
-        dialog.show();
+        scene.setRoot(addTrackRoot);
     }
 
     /**

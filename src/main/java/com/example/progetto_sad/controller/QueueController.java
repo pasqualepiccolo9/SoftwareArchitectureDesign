@@ -246,13 +246,17 @@ public class QueueController implements Observer {
             return;
         }
 
-        AddPlaylistDialogView dialog = new AddPlaylistDialogView();
-        dialog.initForQueue(
+        Scene scene = trackCountLabel.getScene();
+        Parent queueRoot = scene.getRoot();
+        AddPlaylistDialogView dialogView = new AddPlaylistDialogView();
+        Parent addPlaylistRoot = dialogView.buildInlineView(
                 playlistManager.getPlaylists(),
                 seqController::addPlaylistToQueue,
-                trackCountLabel.getScene().getWindow()
+                player, seqController,
+                () -> scene.setRoot(queueRoot),
+                () -> scene.setRoot(queueRoot)
         );
-        dialog.show();
+        scene.setRoot(addPlaylistRoot);
     }
 
     /**

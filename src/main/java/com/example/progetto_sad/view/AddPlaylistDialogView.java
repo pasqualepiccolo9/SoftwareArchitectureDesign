@@ -1,9 +1,14 @@
 package com.example.progetto_sad.view;
 
+import com.example.progetto_sad.controller.PlayerBarController;
+import com.example.progetto_sad.controller.PlaylistSequenceController;
+import com.example.progetto_sad.model.Player;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.Track;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
@@ -11,6 +16,7 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.Window;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -35,6 +41,10 @@ public class AddPlaylistDialogView {
     private Stage stage;
     private List<Playlist> allPlaylists;
     private Consumer<Playlist> addAction;
+
+    private Runnable onBack;
+    private Runnable onSuccess;
+    private PlayerBarController inlinePlayerBarController;
 
     private final List<RowEntry> rowEntries = new ArrayList<>();
     private Playlist currentSelection = null;
@@ -83,6 +93,94 @@ public class AddPlaylistDialogView {
     public void show() {
         if (stage != null) {
             stage.showAndWait();
+        }
+    }
+
+    /**
+     * Costruisce la schermata inline "Aggiungi playlist alla coda" da usare come root
+     * della scena principale, senza aprire un nuovo Stage.
+     *
+     * @param availablePlaylists playlist selezionabili
+     * @param addAction          azione eseguita sulla playlist selezionata (es. seqController::addPlaylistToQueue)
+     * @param player             player condiviso, per bindare la PlayerBar
+     * @param seqController      sequenza condivisa, per bindare la PlayerBar
+     * @param onBack             callback: ← Indietro e Annulla tornano alla Coda
+     * @param onSuccess          callback: dopo conferma torna alla Coda
+     * @return il nodo radice da passare a {@code scene.setRoot()}
+     */
+    public Parent buildInlineView(List<Playlist> availablePlaylists,
+                                   Consumer<Playlist> addAction,
+                                   Player player,
+                                   PlaylistSequenceController seqController,
+                                   Runnable onBack, Runnable onSuccess) {
+        this.allPlaylists = availablePlaylists != null
+                ? new ArrayList<>(availablePlaylists) : new ArrayList<>();
+        this.addAction = addAction;
+        currentSelection = null;
+        rowEntries.clear();
+        buildRowEntries();
+
+        Runnable cleanup = () -> {
+            if (inlinePlayerBarController != null) {
+                inlinePlayerBarController.dispose();
+                inlinePlayerBarController = null;
+            }
+        };
+        this.onBack    = () -> { cleanup.run(); onBack.run(); };
+        this.onSuccess = () -> { cleanup.run(); onSuccess.run(); };
+
+        VBox card = new VBox(16);
+        card.getStyleClass().add("dialog-card");
+        VBox.setVgrow(card, Priority.ALWAYS);
+        card.getChildren().addAll(
+                buildInlineHeader(),
+                buildFilterBar(),
+                buildPlaylistScroll(),
+                buildFooter()
+        );
+
+        VBox formArea = new VBox(card);
+        formArea.getStyleClass().add("dialog-root");
+        VBox.setVgrow(formArea, Priority.ALWAYS);
+
+        VBox root = new VBox();
+        root.setStyle("-fx-background-color: #141417;");
+        HBox playerBarNode = loadPlayerBar(player, seqController);
+        root.getChildren().add(formArea);
+        if (playerBarNode != null) {
+            root.getChildren().add(playerBarNode);
+        }
+
+        var cssUrl = getClass().getResource("/com/example/progetto_sad/view/add-track-dialog.css");
+        if (cssUrl != null) {
+            root.getStylesheets().add(cssUrl.toExternalForm());
+        }
+        return root;
+    }
+
+    private HBox buildInlineHeader() {
+        Button backBtn = new Button("← Indietro");
+        backBtn.getStyleClass().add("cancel-btn");
+        backBtn.setOnAction(e -> { if (onBack != null) onBack.run(); });
+
+        Label titleLabel = new Label("Aggiungi playlist alla coda");
+        titleLabel.getStyleClass().add("dialog-title");
+
+        HBox header = new HBox(12, backBtn, titleLabel);
+        header.setAlignment(Pos.CENTER_LEFT);
+        return header;
+    }
+
+    private HBox loadPlayerBar(Player player, PlaylistSequenceController seqController) {
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/example/progetto_sad/view/PlayerBar.fxml"));
+            HBox node = loader.load();
+            inlinePlayerBarController = loader.getController();
+            inlinePlayerBarController.bind(player, seqController, () -> null);
+            return node;
+        } catch (IOException e) {
+            return null;
         }
     }
 
@@ -208,7 +306,10 @@ public class AddPlaylistDialogView {
 
         Button cancelBtn = new Button("Annulla");
         cancelBtn.getStyleClass().add("cancel-btn");
-        cancelBtn.setOnAction(e -> stage.close());
+        cancelBtn.setOnAction(e -> {
+            if (onBack != null) onBack.run();
+            else stage.close();
+        });
 
         addButton = new Button("Aggiungi");
         addButton.getStyleClass().add("add-btn");
@@ -217,7 +318,8 @@ public class AddPlaylistDialogView {
             if (currentSelection != null && addAction != null) {
                 addAction.accept(currentSelection);
             }
-            stage.close();
+            if (onSuccess != null) onSuccess.run();
+            else if (stage != null) stage.close();
         });
 
         HBox footer = new HBox(12, selectedCountLabel, cancelBtn, addButton);

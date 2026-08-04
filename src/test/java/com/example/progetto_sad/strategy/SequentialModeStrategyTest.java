@@ -4,6 +4,7 @@
  */
 package com.example.progetto_sad.strategy;
 
+import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
 import java.util.ArrayList;
 import java.util.List;
@@ -82,9 +83,51 @@ public class SequentialModeStrategyTest {
     }
 
     
+    // US17-T - contratto comune alle tre strategie: un indice fuori da [0, size) non
+    // individua alcuna posizione valida nella coda, quindi non esiste un brano successivo.
     @Test
-    void getNextTrackReturnsFirstElementWhenIndexIsNegativeOne() {
-        assertEquals(track1, strategy.getNextTrack(tracks, -1));
+    void getNextTrackReturnsNullForNegativeIndex() {
+        assertNull(strategy.getNextTrack(tracks, -1));
     }
-    
+
+    // US17-T - la strategia dichiara la propria modalità: nessun controllo di tipo altrove
+    @Test
+    void modeIdentifiesSequentialPlayback() {
+        assertEquals(PlayMode.SEQUENTIAL, strategy.getMode());
+    }
+
+    // US17-T - l'avanzamento sequenziale sposta la sequenza senza riordinare la coda
+    @Test
+    void moveToNextTrackAdvancesKeepingQueueOrder() {
+        PlaylistSequence sequence = new PlaylistSequence(tracks);
+
+        assertTrue(strategy.moveToNextTrack(sequence));
+
+        assertEquals(track2, sequence.getCurrentTrack());
+        assertEquals(List.of(track1, track2, track3), sequence.getTracks());
+    }
+
+    // US17-T - sull'ultimo brano segnala l'assenza di successivi senza terminare la sequenza
+    @Test
+    void moveToNextTrackReturnsFalseOnLastTrackWithoutFinishingSequence() {
+        PlaylistSequence sequence = new PlaylistSequence(tracks);
+        sequence.moveToIndex(2);
+
+        assertFalse(strategy.moveToNextTrack(sequence));
+
+        assertEquals(track3, sequence.getCurrentTrack());
+        assertFalse(sequence.isFinished());
+    }
+
+    // US17-T - hasNextTrack segue la posizione nella coda
+    @Test
+    void hasNextTrackFollowsQueuePosition() {
+        PlaylistSequence sequence = new PlaylistSequence(tracks);
+
+        assertTrue(strategy.hasNextTrack(sequence));
+
+        sequence.moveToIndex(2);
+
+        assertFalse(strategy.hasNextTrack(sequence));
+    }
 }

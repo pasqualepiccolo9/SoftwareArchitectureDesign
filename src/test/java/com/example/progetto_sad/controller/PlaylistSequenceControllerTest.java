@@ -3,6 +3,8 @@ package com.example.progetto_sad.controller;
 import com.example.progetto_sad.model.Playlist;
 import com.example.progetto_sad.model.Track;
 import com.example.progetto_sad.observer.Observer;
+import com.example.progetto_sad.strategy.LoopModeStrategy;
+import com.example.progetto_sad.strategy.PlayModeContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -253,6 +255,44 @@ class PlaylistSequenceControllerTest {
         controller.addPlaylistToQueue(playlist);
 
         assertEquals(List.of(track1, track2, track3), playlist.getTracks());
+    }
+
+    // US17-T - la modalità riportata dal controller segue sempre la strategia collegata al
+    // Context: sostituendo il Context dall'esterno non resta alcun flag disallineato.
+    @Test
+    void injectedPlayModeContextDrivesReportedModeAndAdvancement() {
+        controller.startPlaylist(playlist);
+
+        controller.setPlayModeContext(new PlayModeContext(new LoopModeStrategy()));
+
+        assertTrue(controller.isLoopMode());
+        assertFalse(controller.isSequentialMode());
+
+        controller.onTrackFinished();
+
+        assertEquals(track2, controller.getCurrentTrack());
+        assertEquals(List.of(track2, track3, track1), controller.getSequence().getTracks());
+    }
+
+    // US19-T - ripremere il pulsante della modalità già attiva non deve toccare la coda:
+    // la preparazione della coda avviene solo al cambio effettivo di modalità.
+    @Test
+    void reapplyingTheActiveModeLeavesTheQueueUntouched() {
+        Track track4 = new Track("Song D", "Artist D", "Soul", 2023, null, 210);
+        controller.addToQueue(track1);
+        controller.addToQueue(track2);
+        controller.addToQueue(track3);
+        controller.addToQueue(track4);
+        controller.setLoopMode();
+        controller.goToTrack(track3);
+
+        List<Track> queueBeforeSecondPress = controller.getSequence().getTracks();
+
+        controller.setLoopMode();
+
+        assertEquals(queueBeforeSecondPress, controller.getSequence().getTracks());
+        assertEquals(track3, controller.getCurrentTrack());
+        assertTrue(controller.isLoopMode());
     }
 
     @Test

@@ -4,6 +4,7 @@
  */
 package com.example.progetto_sad.strategy;
 
+import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,5 +80,51 @@ public class LoopModeStrategyTest {
     void getNextTrackReturnsNullForNullList() {
         assertNull(strategy.getNextTrack(null, 0));
     }
-    
+
+    // US19-T - la strategia dichiara la propria modalità: nessun controllo di tipo altrove
+    @Test
+    void modeIdentifiesLoopPlayback() {
+        assertEquals(PlayMode.LOOP, strategy.getMode());
+    }
+
+    // US19-T - l'avanzamento in loop ruota la coda riportando in fondo la traccia conclusa
+    @Test
+    void moveToNextTrackRotatesQueue() {
+        PlaylistSequence sequence = new PlaylistSequence(tracks);
+
+        assertTrue(strategy.moveToNextTrack(sequence));
+
+        assertEquals(track2, sequence.getCurrentTrack());
+        assertEquals(List.of(track2, track3, track1), sequence.getTracks());
+    }
+
+    // US19-T - con un solo brano in coda la riproduzione prosegue sullo stesso brano
+    @Test
+    void moveToNextTrackKeepsPlayingSingleTrackQueue() {
+        PlaylistSequence sequence = new PlaylistSequence(List.of(track1));
+
+        assertTrue(strategy.moveToNextTrack(sequence));
+
+        assertEquals(track1, sequence.getCurrentTrack());
+        assertFalse(sequence.isFinished());
+    }
+
+    // US19-T - in loop esiste sempre un successivo finché la coda non è vuota
+    @Test
+    void hasNextTrackIsTrueWhileQueueIsNotEmpty() {
+        assertTrue(strategy.hasNextTrack(new PlaylistSequence(tracks)));
+        assertFalse(strategy.hasNextTrack(new PlaylistSequence(List.of())));
+    }
+
+    // US19-T - all'attivazione la rotazione riguarda solo la coda ancora attiva
+    @Test
+    void activationDiscardsAlreadyPlayedTracks() {
+        PlaylistSequence sequence = new PlaylistSequence(tracks);
+        sequence.moveToIndex(2);
+
+        assertEquals(2, strategy.onActivated(sequence));
+
+        assertEquals(List.of(track3), sequence.getTracks());
+        assertEquals(track3, sequence.getCurrentTrack());
+    }
 }

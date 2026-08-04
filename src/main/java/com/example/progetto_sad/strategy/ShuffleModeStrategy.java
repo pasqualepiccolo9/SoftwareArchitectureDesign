@@ -1,28 +1,32 @@
 package com.example.progetto_sad.strategy;
 
+import com.example.progetto_sad.model.PlaylistSequence;
 import com.example.progetto_sad.model.Track;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
 /**
  * US18 - Pattern Strategy: modalità di riproduzione casuale (shuffle).
  *
- * ConcreteStrategy che seleziona il prossimo brano in ordine casuale restando
- * entro i limiti della sequenza corrente. Evita ripetizioni immediate finché
- * non sono stati riprodotti tutti gli altri brani disponibili nel ciclo;
- * al termine del ciclo o al cambio coda/playlist il mescolamento viene resettato.
+ * ConcreteStrategy che riproduce in ordine casuale <em>tutti</em> i brani ancora da
+ * riprodurre, ciascuno una sola volta, e poi termina: come la modalità sequenziale
+ * copre l'intera coda, ma in ordine imprevedibile. Solo {@link LoopModeStrategy}
+ * riparte all'infinito.
  *
- * La selezione mantiene le occorrenze ancora disponibili, così anche tracce
- * duplicate presenti più volte in coda partecipano al ciclo casuale.
+ * La strategia è priva di stato interno: i brani non ancora riprodotti sono per
+ * definizione quelli che seguono la posizione corrente, perché ogni brano estratto
+ * viene portato subito dopo quello corrente da
+ * {@link PlaylistSequence#moveShuffledTrackNext(Track)}. È quindi la coda stessa a
+ * tenere traccia del ciclo: non serve invalidare alcuna cache quando la coda cambia,
+ * e i brani accodati durante la riproduzione entrano automaticamente nel giro.
+ *
+ * Le occorrenze duplicate presenti più volte in coda vengono riprodotte tutte, perché
+ * l'estrazione avviene per posizione e non per identità della traccia.
  */
 public class ShuffleModeStrategy implements PlayModeStrategy {
 
     private final Random random;
-    private final List<Track> remainingTracks = new ArrayList<>();
-    private int trackedQueueSize = -1;
 
     public ShuffleModeStrategy() {
         this(new Random());
@@ -35,73 +39,66 @@ public class ShuffleModeStrategy implements PlayModeStrategy {
         this.random = random;
     }
 
-    /**
-     * US18 - Reinizializza il ciclo casuale per la coda corrente.
-     *
-     * Va invocato quando cambia playlist, cambia la coda o si attiva la modalità shuffle.
-     *
-     * @param queueSize    numero di brani nella sequenza
-     * @param currentIndex indice del brano attualmente in riproduzione
-     */
-    public void reset(int queueSize, int currentIndex) {
-        trackedQueueSize = queueSize;
-        remainingTracks.clear();
+    /** {@inheritDoc} */
+    @Override
+    public PlayMode getMode() {
+        return PlayMode.SHUFFLE;
     }
 
     /**
-     * US18 - Restituisce il prossimo brano in ordine casuale senza ripetizioni
-     * immediate finché restano indici disponibili nel ciclo corrente.
+     * US18 - Estrae casualmente uno dei brani non ancora riprodotti, ovvero uno di quelli
+     * che seguono {@code currentIndex}, senza modificare la lista ricevuta.
      *
-     * @param tracks       lista dei brani nella sequenza corrente; non deve essere null
+     * @param tracks       lista dei brani nella sequenza corrente; può essere null
      * @param currentIndex indice zero-based del brano attualmente in riproduzione
-     * @return il prossimo {@link Track}, oppure {@code null} se la coda è vuota,
-     *         contiene un solo brano o l'indice corrente non è valido
+     * @return il brano estratto, oppure {@code null} se non restano brani da riprodurre
+     *         o se i parametri non individuano una posizione valida nella coda
      */
     @Override
     public Track getNextTrack(List<Track> tracks, int currentIndex) {
-        if (tracks == null || tracks.isEmpty()) {
-            reset(0, 0);
+        if (tracks == null || currentIndex < 0 || currentIndex >= tracks.size()) {
             return null;
         }
-        if (tracks.size() == 1) {
-            reset(1, currentIndex);
+        int firstUpcoming = currentIndex + 1;
+        int upcomingCount = tracks.size() - firstUpcoming;
+        if (upcomingCount <= 0) {
             return null;
         }
-        if (currentIndex < 0 || currentIndex >= tracks.size()) {
-            return null;
-        }
-
-        if (tracks.size() != trackedQueueSize) {
-            reset(tracks.size(), currentIndex);
-        }
-
-        if (remainingTracks.isEmpty()) {
-            refillRemainingTracks(tracks, currentIndex);
-        }
-        if (remainingTracks.isEmpty()) {
-            return null;
-        }
-
-        int pick = random.nextInt(remainingTracks.size());
-        Track nextTrack = remainingTracks.remove(pick);
-        if (nextTrack == null || !tracks.contains(nextTrack)) {
-            return null;
-        }
-        return nextTrack;
+        return tracks.get(firstUpcoming + random.nextInt(upcomingCount));
     }
 
-    private void refillRemainingTracks(List<Track> tracks, int currentIndex) {
-        remainingTracks.clear();
-        if (tracks == null || tracks.size() <= 1 || currentIndex < 0 || currentIndex >= tracks.size()) {
-            trackedQueueSize = tracks == null ? 0 : tracks.size();
-            return;
+    /**
+     * US18 - Porta il brano estratto subito dopo quello corrente e vi avanza, preservando
+     * in coda tutti gli altri brani non ancora riprodotti.
+     *
+     * Poiché l'estrazione avviene sempre tra i brani successivi a quello corrente, lo
+     * spostamento trova sempre il brano cercato: quando non resta nulla da riprodurre il
+     * metodo si limita a segnalare la fine del ciclo.
+     *
+     * @param sequence la sequenza da far avanzare; può essere null
+     * @return {@code true} se la sequenza è stata spostata sul brano estratto,
+     *         {@code false} quando tutti i brani della coda sono stati riprodotti
+     */
+    @Override
+    public boolean moveToNextTrack(PlaylistSequence sequence) {
+        if (sequence == null) {
+            return false;
         }
-        trackedQueueSize = tracks.size();
-        for (int i = 0; i < tracks.size(); i++) {
-            if (i != currentIndex) {
-                remainingTracks.add(tracks.get(i));
-            }
+        Track next = getNextTrack(sequence.getTracks(), sequence.getCurrentIndex());
+        if (next == null) {
+            return false;
         }
-        Collections.shuffle(remainingTracks, random);
+        return sequence.moveShuffledTrackNext(next);
+    }
+
+    /**
+     * Indica se resta almeno un brano da estrarre dopo quello corrente.
+     *
+     * @param sequence la sequenza corrente; può essere null
+     * @return {@code true} se il ciclo casuale non è ancora completo
+     */
+    @Override
+    public boolean hasNextTrack(PlaylistSequence sequence) {
+        return sequence != null && sequence.hasNextTrack();
     }
 }

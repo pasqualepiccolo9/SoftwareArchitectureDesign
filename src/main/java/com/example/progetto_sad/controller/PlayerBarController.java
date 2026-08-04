@@ -257,8 +257,8 @@ public class PlayerBarController implements Observer {
         
         
         if (nextButton != null) {
-            boolean canGoNext = seqController != null && seqController.hasActiveSequence() 
-                    && (seqController.hasNextTrack() || seqController.isLoopMode());
+            boolean canGoNext = seqController != null && seqController.hasActiveSequence()
+                    && seqController.hasNextTrack();
             nextButton.setDisable(!canGoNext);
         }
         
